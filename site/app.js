@@ -88,28 +88,29 @@ const DIAG = [
 const AV_COL = ['#2F6FB5', '#4F46E5', '#0C9C98', '#6D3FC0', '#C8463E', '#1D8F5F', '#E6A413'];
 const ROLES = {
   trial: { ic: '🎛️', name: 'Trial lead', job: n => `Run <b>trial ${n}</b> on the shared simulation.` },
-  recorder: { ic: '📋', name: 'Recorder', job: () => 'Read the instruments and fill in the <b>table of record</b>.' },
+  recorder: { ic: '📋', name: 'Recorder', job: () => 'Take the <b>readings</b> for the table of record.' },
   analyst: { ic: '🔍', name: 'Analyst', job: () => 'Spot the <b>pattern</b> and lead the group\'s explanation.' }
 };
 const STN = {
   A: {
     title: 'The electron gun', icon: '⚡', img: 'img/filament.webp',
-    goal: 'What does the gap do? What does the voltage do?',
-    readHint: 'Read the <b>voltmeter</b>, and read the <b>gap d</b> on the ruler under the plates.',
+    goal: 'What does the gun give the electrons? Does the gap matter?',
+    readHint: 'Drag the <b>cyan marker</b> onto the glowing trace at the 8 cm line, then tap <b>Record</b>. The reading goes straight into the table.',
+    quest: true,
     scene: [
-      { img: 'img/filament.webp', cap: 'Hot metal boils off electrons.', sub: 'A heated filament, like this one, is the electron source.' },
-      { anim: 'gun', cap: 'A voltage pulls them across the gap.', sub: 'The field between cathode and anode speeds every electron up.' },
-      { anim: 'strobe', cap: 'Your mission: measure V and the gap.', sub: 'Work out the field, the force and the speed the gun gives.' }],
-    pred: { q: 'You DOUBLE the gap d. Same voltage. The electron leaves the gun…', o: ['at the same speed', 'faster', 'slower'] },
-    cols: [{ k: 'V', label: 'V / V', tol: v => 0.6 }, { k: 'd', label: 'd / cm', tol: v => 0.051 }],
+      { img: 'img/filament.webp', cap: 'Hot metal boils off electrons.', sub: 'The heated cathode is the source.' },
+      { anim: 'gun', cap: 'The anode pulls them into a beam.', sub: 'A steady stream shoots through the hole in the anode.' },
+      { img: 'img/hero.webp', cap: 'Your mission: make a beam, then test it.', sub: 'In a vacuum the beam is invisible. It only shows where it grazes the screen.' }],
+    pred: { q: 'Swap to the NARROW gun: same voltage, half the gap, so twice the field. The trace bends…', o: ['the same', 'less (a stiffer beam)', 'more'] },
+    cols: [{ k: 'kV', label: 'V / kV', tol: v => 0.01 }, { k: 'd', label: 'gun gap d / cm', tol: v => 0.01 }, { k: 'y', label: 'y at 8 cm / cm', tol: v => 0.01 }],
     steps: [
-      { m: EQ.EVd, w: 'Cathode and anode make a uniform field: the same push everywhere in the gap. A wider gap means a weaker field.' },
-      { m: EQ.FqE, w: 'The field pushes the electron towards the positive anode.' },
-      { m: EQ.W, w: 'Work = force × distance. Since E = V/d, the gap cancels: the work is qV.', gap: true, opts: [EQ.W, M(mi('W') + mo('=') + frac(mi('q') + mi('V'), mi('d'))), M(mi('W') + mo('=') + frac(mn(1), mn(2)) + mi('q') + mi('V'))] },
-      { m: EQ.KE, w: 'It starts from rest, so all that work becomes kinetic energy.' },
-      { m: EQ.vV, w: 'Past the anode there is no field, so no force: the speed stays constant all the way to the screen.' }],
-    concept: { p: 'Doubling the gap halves the field E, yet the speed is the same. Why?', o: ['The force is half as big but acts over twice the distance, so the work qV is the same', 'The electron gets lighter in a wider gap', 'The speed does not depend on the force at all'], a: 0, hint: 'Work = force × distance. What happens to each one?', why: 'Half the force × twice the distance = the same work, qV.' },
-    hist: { yr: '1890s', t: 'Physicists argued: were cathode rays waves, or tiny charged particles? An electric field speeding them up is a clue. A field can only push something that carries charge.', q: { p: 'Speeding up in an electric field tells us cathode rays…', o: ['carry electric charge', 'are a kind of light', 'have no mass'], a: 0, hint: 'An electric force needs a charge to act on.', why: 'An electric force acts only on charges.' } },
+      { m: EQ.EVd, w: 'Cathode and anode make a uniform field. Half the gap, twice the field.' },
+      { m: EQ.FqE, w: 'The field pushes each (negative) electron towards the positive anode.' },
+      { m: EQ.W, w: 'Work = force × distance. Twice the force over half the distance: the gap cancels and the work is qV.', gap: true, opts: [EQ.W, M(mi('W') + mo('=') + frac(mi('q') + mi('V'), mi('d'))), M(mi('W') + mo('=') + frac(mn(1), mn(2)) + mi('q') + mi('V'))] },
+      { m: EQ.KE, w: 'It starts from rest, so all that work becomes kinetic energy. Only V sets the energy.' },
+      { m: '<b>no field past the anode → no force → constant speed</b>', w: 'A faster beam spends less time between the deflecting plates, so it bends less: y ∝ 1/V.' }],
+    concept: { p: 'The narrow gun has twice the field, yet the trace did not change. Why?', o: ['Twice the force acts over half the distance, so the work qV is the same', 'The narrow gun makes fewer electrons', 'The field has no effect on electrons'], a: 0, hint: 'Work = force × distance. What happens to each one?', why: 'Twice the force × half the distance = the same work, qV.' },
+    hist: { yr: '1890s', t: 'Physicists argued: were cathode rays waves, or tiny charged particles? Rays that come from the hot cathode, are pulled by a positive anode and bent by charged plates must carry negative charge.', q: { p: 'The beam bends towards the positive plate. So cathode rays…', o: ['carry negative charge', 'are a kind of light', 'have no mass'], a: 0, hint: 'Opposite charges attract.', why: 'Attracted to + means negative.' } },
     find: { eq: EQ.KE, t: 'The gun gives every electron the energy qV, whatever the gap.' }
   },
   B: {
@@ -153,16 +154,14 @@ const STN = {
 /* personal analysis: columns by level, computed from the RECORDED values */
 const AN = {
   A: {
-    formula: `${M(mi('E') + mo('=') + frac(mi('V'), mi('d')))} (d in metres) &nbsp; ${M(mi('F') + mo('=') + mi('e') + mi('E'))} &nbsp; ${M(mi('W') + mo('=') + mi('F') + mi('d'))} &nbsp; ${EQ.vV} &nbsp; <span class="small">e = 1.60 × 10⁻¹⁹ C · m = 9.11 × 10⁻³¹ kg (today's values)</span>`,
-    cols: { 1: ['E', 'v'], 2: ['E', 'F', 'v'], 3: ['E', 'F', 'W', 'v'] },
-    def: {
-      E: { label: 'E / V m⁻¹', f: r => r.V / (r.d / 100), ph: '1.0e4' },
-      F: { label: 'F / N', f: r => 1.60e-19 * r.V / (r.d / 100), ph: '1.6e-15' },
-      W: { label: 'W / J', f: r => 1.60e-19 * r.V, ph: '3.2e-17' },
-      v: { label: 'v / m s⁻¹', f: r => Math.sqrt(2 * 1.60e-19 * r.V / 9.11e-31), ph: '8.4e6' }
-    },
-    extra: { 3: [{ k: 'grad', p: 'Gradient of W against V (best line through the origin). Which quantity is it?', unit: 'C', f: rows => fitOrigin(rows.map(r => [r.V, 1.60e-19 * r.V])), tol: 0.05 }] },
-    graph: rows => ({ pts: rows.map(r => [r.V, 1.60e-19 * r.V / 1e-17]), xl: 'V / V', yl: 'W / 10⁻¹⁷ J', fit: 'origin', note: 'Every gap lands on the same line: W = eV. The gap changes the field, not the energy, so not the speed.' })
+    tasks: true,
+    formula: `${M(mi('E') + mo('=') + frac(mi('V'), mi('d')))} (V in volts, d in metres) &nbsp;&nbsp; ${M(mi('y') + mo('∝') + frac(mn(1), mi('V')))} &nbsp;&nbsp; ${M(mi('W') + mo('=') + mi('q') + mi('V'))}`,
+    list: (lvl, rows) => { const r = rows[0], out = [
+      { id: 'E', p: `Trial 1: V = ${r.kV} kV across a gap of ${r.d} cm. What is the field E in the gun?`, unit: 'V m⁻¹', ph: '1.5e5', exp: r.kV * 1000 / (r.d / 100), tol: 0.03, hint: `Change to volts and metres: ${r.kV * 1000} V ÷ ${r.d / 100} m.` }];
+      if (lvl >= 2) { const Vn = r.kV >= 4 ? 1.5 : 4.0; out.push({ id: 'y', p: `Use y ∝ 1/V and trial 1 to predict the deflection at ${Vn} kV.`, unit: 'cm', ph: '0.8', exp: r.y * r.kV / Vn, tol: 0.06, hint: `V changes by × ${fx(Vn / r.kV, 2)}, so y changes by ÷ ${fx(Vn / r.kV, 2)}.` }); }
+      if (lvl >= 3) out.push({ id: 'W', p: `Each electron in trial 1 gains W = qV. Give W in electronvolts (1 eV = the energy one electron gains through 1 V).`, unit: 'eV', ph: '2000', exp: r.kV * 1000, tol: 0.01, hint: 'One electron through V volts gains V electronvolts.' });
+      return out; },
+    graph: rows => ({ pts: rows.map(r => [1 / r.kV, r.y]), xl: '1/V / kV⁻¹', yl: 'y / cm', fit: 'origin', note: 'Straight line through the origin: y ∝ 1/V. Readings from both guns sit on the same line, so the gap does not change the energy.' })
   },
   B: {
     formula: `${M(mi('r') + mo('=') + frac(mi('d'), mn(2)))} (in metres) &nbsp;&nbsp; ${M(mi('B') + mo('=') + mn('0.78 mT') + mo('×') + mi('I'))}`,
@@ -429,17 +428,22 @@ function labExperiment(body) {
     <div>
       <div class="card"><div class="role" id="rolecard"><span class="ic">${role.ic}</span><div><b>${role.name}${S.role === 'trial' ? ' ' + S.trial : ''}</b><div class="small muted">${role.job(S.trial)} Everyone can run trials and fill the table.</div></div></div>
         <div class="team" id="team" style="margin-top:10px"></div></div>
-      <div class="card" id="predcard"><h3>Predict first</h3><div class="q" style="font-size:1rem">${st.pred.q}</div><div class="pred" id="pred"></div></div>
+      <div class="card" id="predcard">${st.quest ? '<div id="quest"></div>' : ''}<div id="predwrap" ${st.quest && !S.questDone ? 'hidden' : ''}><h3>Predict first</h3><div class="q" style="font-size:1rem">${st.pred.q}</div><div class="pred" id="pred"></div></div></div>
       <div class="card" id="reccard"><div class="row between"><h3 style="margin:0">Table of record</h3><span class="tiny muted" id="cnt"></span></div>
-        <div class="tiny muted" style="margin:2px 0 8px">Read each new reading off the instruments and type it in. ✓ means it matches.</div>
+        <div class="tiny muted" style="margin:2px 0 8px">${st.quest ? 'Each Record adds the reading straight to the table. 3 to 5 readings.' : 'Read each new reading off the instruments and type it in. ✓ means it matches. 3 to 5 readings.'}</div>
         <div id="rectbl"></div><div id="recnext"></div></div>
     </div></div>`;
   sim = ({ A: simA, B: simB, C: simC })[k]($('#sim'));
   sim.onChange = s => { localEditT = Date.now(); clearTimeout(sim._t); sim._t = setTimeout(() => roomOp('sim', { sim: s }), 220); };
-  sim.onRun = raw => { const id = Date.now().toString(36) + Math.random().toString(36).slice(2, 5); seenRows.add(id); roomOp('run', { row: { id, raw } }); paintTable(); };
+  sim.onRun = (raw, rec) => {
+    if (R.rows.length >= 5) { toast('The table is full (5 readings). Delete one with × to add another.'); return false; }
+    const same = R.rows.find(r => st.cols.every(c => c.k === 'y' || r.raw[c.k] === raw[c.k]));
+    if (same) { toast('You already have a reading with these settings. Change something first.'); return false; }
+    const id = Date.now().toString(36) + Math.random().toString(36).slice(2, 5); seenRows.add(id); roomOp('run', { row: { id, raw, rec: rec || {} } }); paintTable(); return true; };
+  if (st.quest) { sim.onObserve = paintQuest; sim.setState({}); }
   if (R.sim && R.sim.t) { sim.setState(R.sim); lastSimT = R.sim.t; }
   const refresh = () => {
-    paintTeam(); paintPred(); paintTable();
+    paintTeam(); paintPred(); paintTable(); if (st.quest) paintQuest();
     if (R.sim && R.sim.t > lastSimT && R.sim.by !== S.name && Date.now() - localEditT > 1200) { lastSimT = R.sim.t; sim.setState(R.sim); $('#remote').textContent = `${R.sim.by} changed the settings`; }
     for (const row of R.rows) if (!seenRows.has(row.id)) { seenRows.add(row.id); if (row.by !== S.name) { sim.playRow(row); $('#remote').textContent = `${row.by} ran a trial`; } }
   };
@@ -448,11 +452,26 @@ function labExperiment(body) {
   if (!S.seen['scene' + k]) playScene($('#simwrap'), st.scene, () => { S.seen['scene' + k] = 1; save(false); roleCoach(); });
   else roleCoach();
 }
+/* Station A discovery: make a beam (observations of the shared tube) */
+function paintQuest(obs) {
+  const host = $('#quest'); if (!host) return;
+  S.quest = S.quest || {};
+  if (obs) { let ch = false; for (const k of ['off', 'on', 'rev']) if (obs[k] && !S.quest[k]) { S.quest[k] = 1; ch = true; } if (ch) save(false); }
+  if (S.questDone) { host.innerHTML = `<div class="fb good" style="margin:0 0 10px">✓ Beam made: negative particles from the hot cathode, pulled through the anode.</div>`; return; }
+  const items = [['off', 'Heater OFF, anode +: is there a beam?'], ['on', 'Heater ON, anode +: get a beam on the screen'], ['rev', 'Now switch the anode to −. What happens?']];
+  const all = items.every(x => S.quest[x[0]]);
+  if (host.dataset.all === String(all) && host.dataset.sig === JSON.stringify(S.quest)) return;
+  host.dataset.all = String(all); host.dataset.sig = JSON.stringify(S.quest);
+  host.innerHTML = `<h3>Make a beam</h3><div class="tiny muted" style="margin-bottom:6px">Use the heater, the voltage and the anode switch. Anyone in the team can do it.</div>
+    ${items.map(x => `<div class="row" style="gap:8px;margin:4px 0"><span style="font-size:1.1rem">${S.quest[x[0]] ? '✅' : '⬜'}</span><span class="${S.quest[x[0]] ? '' : 'muted'}">${x[1]}</span></div>`).join('')}<div id="qq"></div>`;
+  if (all) mcq(host.querySelector('#qq'), { p: 'So what are cathode rays?', o: ['Negative particles that leave the hot cathode and are pulled towards the + anode', 'Light given out by the hot filament', 'Positive particles pushed out by the anode'], a: 0, hint: 'No heat, no beam. Anode −, no beam. What does that say about where they come from and their charge?', why: 'They need the hot cathode, and they are attracted to +, so they are negative.' }, 'A·beam', () => {
+    setTimeout(() => { S.questDone = true; save(); paintQuest(); $('#predwrap').hidden = false; paintPred(); if (sim && sim.unlock) sim.unlock(); roleCoachA2(); }, 900); });
+}
 function paintTeam() {
   $('#team').innerHTML = R.members.map((m, i) => `<span class="mem ${m.name === S.name ? 'me' : ''}">${avatar(m.name, i)}${esc(m.name.split(' ')[0])} <span class="tiny muted">${ROLES[m.role] ? ROLES[m.role].ic : ''}${m.trial || ''}</span></span>`).join('') || '<span class="muted small">Waiting for your team…</span>';
 }
 function paintPred() {
-  const st = STN[S.station], mine = R.pred[S.name];
+  const st = STN[S.station], mine = R.pred[S.name]; if (!$('#pred')) return;
   $('#pred').innerHTML = st.pred.o.map((o, i) => { const who = R.members.map((m, j) => R.pred[m.name] === i ? `<i style="background:${AV_COL[j % AV_COL.length]}">${esc(m.name[0]).toUpperCase()}</i>` : '').join('');
     return `<button data-i="${i}" class="${mine === i ? 'mine' : ''}"><span>${o}</span><span class="who">${who}</span></button>`; }).join('');
   $('#pred').querySelectorAll('button').forEach(b => b.onclick = () => { roomOp('pred', { value: +b.dataset.i }); paintPred(); });
@@ -483,8 +502,17 @@ function paintTable() {
   if (n >= 3 && !nx.dataset.on) { nx.dataset.on = 1; nx.innerHTML = `<div class="fb good">Three complete trials. Now everyone processes the data on their own.</div>`; nextBtn(nx, () => { S.step = 1; save(); render(); }, 'Process the data'); }
   if (n < 3 && nx.dataset.on) { nx.dataset.on = ''; nx.innerHTML = ''; }
 }
+function roleCoachA2() {
+  const predicted = () => R.pred[S.name] != null, ranMine = () => R.rows.some(r => r.by === S.name);
+  const steps = [{ el: '#predcard', t: 'Now <b>predict</b>. Your team\'s picks show up live.', until: predicted },
+    { el: sim.platesEl, t: 'The deflecting plates are on. Set a voltage and pick a gun.' },
+    { el: sim.runEl, t: STN.A.readHint, until: ranMine },
+    { el: '#reccard', t: 'Take <b>3 to 5</b> readings: different voltages, and both guns. Then test your prediction.' }];
+  steps.forEach((x, i) => { x.n = i + 1; x.of = steps.length; }); coach(steps, 'roleA2');
+}
 function roleCoach() {
   const k = S.station, n = () => S.trial;
+  if (k === 'A') { if (S.questDone) { sim.unlock && sim.unlock(); roleCoachA2(); } else coach([{ el: '#predcard', t: 'Start by making a <b>beam</b>. Use the switches under the tube.', n: 1, of: 2 }, { el: sim.ctrlEl, t: 'Heater, anode voltage and the anode switch are here. Watch the screen.', n: 2, of: 2, until: () => S.questDone }], 'questA'); return; }
   const startState = JSON.stringify(sim.getState());
   const changed = () => JSON.stringify(sim.getState()) !== startState;
   const ranMine = () => R.rows.some(r => r.by === S.name);
@@ -547,70 +575,97 @@ function playScene(host, frames, done) {
   show();
 }
 
-/* ===== SIM A: electron gun (cathode–anode gap, voltmeter, ruler, equal-time trail) ===== */
+/* ===== SIM A: Teltron-style deflection tube. Steady beam, invisible except where it grazes the gridded screen ===== */
 function simA(host) {
-  const X0 = 80, PXC = 50, SCR = 596, CY = 140;      // cathode x, px per cm, screen x, beam axis
-  let V = 200, d = 2.0;
-  host.innerHTML = `<svg class="sim" viewBox="0 0 640 300">
-   <defs><radialGradient id="glw"><stop offset="0" stop-color="#9fd0ff"/><stop offset="1" stop-color="#9fd0ff" stop-opacity="0"/></radialGradient>
-   <radialGradient id="spotg"><stop offset="0" stop-color="#d6ffe6"/><stop offset=".4" stop-color="#7CFFB2"/><stop offset="1" stop-color="#7CFFB2" stop-opacity="0"/></radialGradient>
-   <linearGradient id="tube" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#1b2640"/><stop offset="1" stop-color="#121a2e"/></linearGradient>
-   <marker id="ar" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8z" fill="#F2BD45"/></marker></defs>
-   <rect x="20" y="40" width="600" height="200" rx="100" fill="url(#tube)" stroke="#3a4a70" stroke-width="2"/>
-   <rect x="${SCR}" y="78" width="10" height="124" rx="3" fill="#1f5a45"/><text x="${SCR - 4}" y="70" fill="#7CFFB2" font-size="11" text-anchor="end">fluorescent screen</text>
-   <circle id="spot" cx="${SCR}" cy="${CY}" r="13" fill="url(#spotg)" opacity="0"/>
-   <path d="M${X0 - 7} 112 q-9 14 0 28 q9 14 0 28" stroke="#FDBA4D" stroke-width="3" fill="none" id="fil" opacity=".65"/>
-   <rect x="${X0}" y="82" width="9" height="116" fill="#c9d3e8"/><text x="${X0 + 4}" y="74" fill="#F07A71" font-size="13" font-weight="800" text-anchor="middle">− cathode</text>
-   <g id="anode"><rect x="0" y="82" width="9" height="46" fill="#c9d3e8"/><rect x="0" y="152" width="9" height="46" fill="#c9d3e8"/><text x="4" y="74" fill="#45C58C" font-size="13" font-weight="800" text-anchor="middle">+ anode</text>
-     <line x1="4.5" y1="198" x2="4.5" y2="236" stroke="#A5B4FC" stroke-width="1.5" stroke-dasharray="3 2"/></g>
-   <g id="field"></g>
-   <g id="ruler"></g>
-   <g id="trail"></g>
-   <g id="eA" opacity="0"><circle r="12" fill="url(#glw)"/><circle r="5" fill="#8DB8EA"/></g>
-   <text id="tnote" x="612" y="286" fill="#9AA4B8" font-size="12" text-anchor="end"></text>
+  const GUN = { 1: { d: 2.0, name: 'Gun 1 · wide gap' }, 2: { d: 1.0, name: 'Gun 2 · narrow gap' } };
+  const VP = 750, DP = 0.06;                                   // deflecting plates: 750 V across 6.0 cm
+  const SX = 220, PXC = 34, CY = 160, XR = 8;                  // screen left edge, px per cm, axis, reading line (cm)
+  const CX = 64, GPX = 40;                                     // cathode x, gun ruler px per cm
+  let kV = 2.0, gun = 1, heater = false, pol = 1, plates = false, mark = 0, unlocked = false;
+  host.innerHTML = `<svg class="sim" viewBox="0 0 640 330">
+   <defs><filter id="glA"><feGaussianBlur stdDeviation="2.4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+   <radialGradient id="bulbA" cx=".5" cy=".5"><stop offset="0" stop-color="#18223b"/><stop offset="1" stop-color="#0f1628"/></radialGradient>
+   <marker id="arA" markerWidth="7" markerHeight="7" refX="5" refY="3.5" orient="auto"><path d="M0,0 L7,3.5 L0,7z" fill="#F2BD45"/></marker></defs>
+   <rect x="14" y="30" width="612" height="272" rx="120" fill="url(#bulbA)" stroke="#3a4a70" stroke-width="2"/>
+   <text x="30" y="24" fill="#9AA4B8" font-size="11">vacuum tube</text>
+   <g id="gun"></g>
+   <rect x="${SX}" y="${CY - 3 * PXC}" width="${10 * PXC}" height="${6 * PXC}" fill="#13324a" opacity=".55"/>
+   <g id="grid"></g>
+   <rect x="${SX}" y="${CY - 3 * PXC - 12}" width="${10 * PXC}" height="7" fill="#c9d3e8"/><rect x="${SX}" y="${CY + 3 * PXC + 5}" width="${10 * PXC}" height="7" fill="#c9d3e8"/>
+   <text id="ptop" x="${SX + 10 * PXC + 6}" y="${CY - 3 * PXC - 4}" fill="#9AA4B8" font-size="11"></text><text x="${SX + 10 * PXC + 6}" y="${CY + 3 * PXC + 13}" fill="#9AA4B8" font-size="11">0 V</text>
+   <text x="${SX + 5 * PXC}" y="${CY - 3 * PXC - 18}" fill="#9AA4B8" font-size="11" text-anchor="middle">deflecting plates · gridded fluorescent screen</text>
+   <path id="trace" fill="none" stroke="#7CFFB2" stroke-width="3" filter="url(#glA)" opacity="0"/>
+   <line x1="${SX + XR * PXC}" y1="${CY - 3 * PXC}" x2="${SX + XR * PXC}" y2="${CY + 3 * PXC}" stroke="#22D3EE" stroke-width="1.5" stroke-dasharray="4 3" opacity=".8"/>
+   <text x="${SX + XR * PXC + 5}" y="${CY - 3 * PXC + 13}" fill="#22D3EE" font-size="11">read here</text>
+   <g id="mk" style="cursor:ns-resize"><line x1="${SX + XR * PXC - 16}" x2="${SX + XR * PXC + 16}" stroke="#22D3EE" stroke-width="3"/><polygon points="${SX + XR * PXC + 18},0 ${SX + XR * PXC + 30},-7 ${SX + XR * PXC + 30},7" fill="#22D3EE"/><rect x="${SX + XR * PXC - 30}" y="-14" width="70" height="28" fill="transparent"/></g>
+   <text id="msgA" x="320" y="322" fill="#9AA4B8" font-size="12" text-anchor="middle"></text>
   </svg>
-  <div class="ctrl" id="cV"><label>Supply voltage V <output id="oV"></output></label><input type="range" id="sV" min="50" max="400" step="10" value="${V}"></div>
-  <div class="ctrl" id="cD"><label>Move the anode (sets the gap d) <output>read the ruler</output></label><input type="range" id="sD" min="1" max="3.5" step="0.1" value="${d}"></div>
-  <div class="row"><button class="btn primary big" id="fire">⚡ Fire</button><div class="inst" id="inst"><div>voltmeter: <b id="iV"></b> V</div></div></div>`;
-  const q = sel => host.querySelector(sel), sV = q('#sV'), sD = q('#sD');
-  // ruler: 0 to 4.0 cm from the cathode face, mm ticks
-  let rl = `<line x1="${X0 + 9}" y1="236" x2="${X0 + 9 + 4 * PXC}" y2="236" stroke="#e6dcff"/>`;
-  for (let mm = 0; mm <= 40; mm++) { const x = X0 + 9 + mm * PXC / 10, big = mm % 10 === 0, mid = mm % 5 === 0;
-    rl += `<line x1="${x}" y1="236" x2="${x}" y2="${236 + (big ? 11 : mid ? 8 : 5)}" stroke="#e6dcff" stroke-width="${big ? 1.4 : .8}"/>` + (big ? `<text x="${x}" y="259" fill="#e6dcff" font-size="11" text-anchor="middle">${mm / 10}</text>` : ''); }
-  q('#ruler').innerHTML = rl + `<text x="${X0 + 9 + 4 * PXC + 8}" y="259" fill="#e6dcff" font-size="11">cm</text>`;
-  const o = { ctrlEl: q('#cV'), runEl: q('#fire'), instEl: q('#inst') };
-  const ax = () => X0 + 9 + d * PXC;            // anode inner face
+  <div class="ctrl" id="cA">
+   <div class="row" style="gap:8px"><button class="btn" id="bH">🔥 Heater: OFF</button><button class="btn" id="bP">Anode: +</button><span class="seg" id="segG">${[1, 2].map(g => `<button data-g="${g}">${GUN[g].name}</button>`).join('')}</span></div>
+   <label style="margin-top:8px">Anode voltage V <output id="oV"></output></label><input type="range" id="sV" min="0" max="5" step="0.5" value="${kV}">
+  </div>
+  <div class="row" id="platesRow"><button class="btn" id="bD" disabled>Deflecting plates: OFF 🔒</button><button class="btn primary big" id="recA" disabled>📏 Record</button><div class="inst" id="inst"><div>voltmeter: <b id="iV"></b> kV</div><div>y = <b id="iY">–</b> cm</div></div></div>`;
+  const q = x => host.querySelector(x), svg = q('svg');
+  // screen grid
+  let gr = ''; for (let c = 0; c <= 10; c++) { const x = SX + c * PXC; gr += `<line x1="${x}" y1="${CY - 3 * PXC}" x2="${x}" y2="${CY + 3 * PXC}" stroke="#4d7f9c" stroke-width="${c % 5 ? .6 : 1.1}" opacity=".7"/><text x="${x}" y="${CY + 3 * PXC + 24}" fill="#9AA4B8" font-size="10" text-anchor="middle">${c}</text>`; }
+  for (let c = -3; c <= 3; c++) { const y = CY - c * PXC; gr += `<line x1="${SX}" y1="${y}" x2="${SX + 10 * PXC}" y2="${y}" stroke="#4d7f9c" stroke-width="${c ? .6 : 1.1}" opacity=".7"/><text x="${SX - 5}" y="${y + 4}" fill="#9AA4B8" font-size="10" text-anchor="end">${c > 0 ? '+' : ''}${c}</text>`;
+    if (c < 3) for (let m = 1; m < 10; m++) { const yy = y - m * PXC / 10; gr += `<line x1="${SX + XR * PXC - 4}" y1="${yy}" x2="${SX + XR * PXC + 4}" y2="${yy}" stroke="#22D3EE" stroke-width=".6" opacity=".6"/>`; } }
+  q('#grid').innerHTML = gr;
+  const o = { ctrlEl: q('#cA'), runEl: q('#recA'), instEl: q('#inst'), platesEl: q('#platesRow') };
+  const beamOn = () => heater && pol > 0 && kV > 0;
+  const yAt = xcm => plates ? (VP / DP) * (xcm / 100) ** 2 / (4 * kV * 1000) * 100 : 0;     // cm, towards the + plate
+  const drawGun = () => {
+    const d = GUN[gun].d, AX = CX + 9 + d * GPX, E = kV * 1000 / (d / 100), n = kV > 0 ? Math.max(1, Math.min(9, Math.round(E / 3e4))) : 0;
+    let g = `<path d="M${CX - 9} 140 q-8 10 0 20 q8 10 0 20" stroke="${heater ? '#FDBA4D' : '#5b6478'}" stroke-width="3" fill="none" ${heater ? 'filter="url(#glA)"' : ''}/>
+      <rect x="${CX}" y="118" width="9" height="84" fill="#c9d3e8"/><text x="${CX + 4}" y="110" fill="${pol > 0 ? '#F07A71' : '#45C58C'}" font-size="12" font-weight="800" text-anchor="middle">${pol > 0 ? '−' : '+'} cathode</text>
+      <rect x="${AX}" y="118" width="8" height="34" fill="#c9d3e8"/><rect x="${AX}" y="168" width="8" height="34" fill="#c9d3e8"/>
+      <text x="${AX + 4}" y="110" fill="${pol > 0 ? '#45C58C' : '#F07A71'}" font-size="12" font-weight="800" text-anchor="middle">${pol > 0 ? '+' : '−'} anode</text>
+      <line x1="${AX + 4}" y1="202" x2="${AX + 4}" y2="236" stroke="#A5B4FC" stroke-dasharray="3 2"/>`;
+    for (let i = 0; i < n; i++) { const y = 124 + (i + .5) * 72 / n; if (Math.abs(y - CY) < 5) continue;
+      g += pol > 0 ? `<line x1="${AX - 2}" y1="${y}" x2="${CX + 14}" y2="${y}" stroke="#F2BD45" stroke-width="1.3" marker-end="url(#arA)" opacity=".85"/>` : `<line x1="${CX + 12}" y1="${y}" x2="${AX - 4}" y2="${y}" stroke="#F2BD45" stroke-width="1.3" marker-end="url(#arA)" opacity=".85"/>`; }
+    let rl = `<line x1="${CX + 9}" y1="236" x2="${CX + 9 + 2.5 * GPX}" y2="236" stroke="#e6dcff"/>`;
+    for (let mm = 0; mm <= 25; mm++) { const x = CX + 9 + mm * GPX / 10, big = mm % 10 === 0, mid = mm % 5 === 0; rl += `<line x1="${x}" y1="236" x2="${x}" y2="${236 + (big ? 9 : mid ? 7 : 4)}" stroke="#e6dcff" stroke-width="${big ? 1.2 : .7}"/>` + (mid ? `<text x="${x}" y="256" fill="#e6dcff" font-size="9" text-anchor="middle">${mm / 10}</text>` : ''); }
+    g += rl + `<text x="${CX + 9 + 1.25 * GPX}" y="270" fill="#e6dcff" font-size="9" text-anchor="middle">gap / cm</text>`;
+    // the beam: invisible in vacuum, a faint hint only in the gun's anode hole
+    if (beamOn()) g += `<circle cx="${AX + 4}" cy="${CY}" r="3" fill="#7CFFB2" opacity=".6" filter="url(#glA)"/>`;
+    q('#gun').innerHTML = g;
+  };
   const draw = () => {
-    q('#anode').setAttribute('transform', `translate(${ax()},0)`);
-    const E = V / (d / 100), op = Math.max(.25, Math.min(1, E / 2e4)); let f = '';
-    [104, 176].forEach(y => f += `<line x1="${ax() - 6}" y1="${y}" x2="${X0 + 16}" y2="${y}" stroke="#F2BD45" stroke-width="1.6" stroke-dasharray="5 4" marker-end="url(#ar)" opacity="${op}"/>`);
-    f += `<text x="${(X0 + 9 + ax()) / 2}" y="${CY - 14}" fill="#F2BD45" font-size="13" text-anchor="middle" opacity="${op}">E</text>`;
-    q('#field').innerHTML = f;
-    q('#oV').textContent = V + ' V'; q('#iV').textContent = V;
+    drawGun();
+    const tr = q('#trace');
+    if (beamOn()) { let pts = []; for (let i = 0; i <= 50; i++) { const x = i / 5, y = yAt(x); if (y > 2.95) break; pts.push(`${(SX + x * PXC).toFixed(1)} ${(CY - y * PXC).toFixed(1)}`); }
+      tr.setAttribute('d', 'M' + pts.join(' L')); tr.setAttribute('opacity', .55 + Math.random() * .2 + Math.min(.25, kV / 20)); }
+    else tr.setAttribute('opacity', 0);
+    q('#mk').setAttribute('transform', `translate(0,${CY - mark * PXC})`);
+    q('#oV').textContent = fx(kV, 1) + ' kV'; q('#iV').textContent = fx(kV, 1); q('#iY').textContent = fx(mark, 1);
+    q('#bH').textContent = '🔥 Heater: ' + (heater ? 'ON' : 'OFF'); q('#bH').classList.toggle('primary', heater);
+    q('#bP').textContent = 'Anode: ' + (pol > 0 ? '+' : '−');
+    q('#ptop').textContent = plates ? `+${VP} V` : '0 V';
+    host.querySelectorAll('#segG button').forEach(b => b.classList.toggle('on', +b.dataset.g === gun));
+    q('#bD').disabled = !unlocked; q('#bD').textContent = 'Deflecting plates: ' + (plates ? 'ON' : 'OFF') + (unlocked ? '' : ' 🔒'); q('#bD').classList.toggle('primary', plates);
+    q('#recA').disabled = !(unlocked && plates && beamOn());
+    q('#msgA').textContent = !heater ? 'Heater off: the cathode is cold.' : kV === 0 ? 'No voltage on the anode.' : pol < 0 ? 'Anode is negative.' : plates ? 'Line up the marker with the trace at 8 cm.' : 'The beam grazes the screen and glows.';
+    o.onObserve && o.onObserve({ off: !heater && kV > 0 && pol > 0, on: beamOn(), rev: heater && kV > 0 && pol < 0 });
   };
-  const clearTrail = () => { q('#trail').innerHTML = ''; q('#tnote').textContent = ''; q('#spot').setAttribute('opacity', 0); };
-  const changed = () => { clearTrail(); draw(); o.onChange && o.onChange(o.getState()); };
-  sV.oninput = () => { V = +sV.value; changed(); }; sD.oninput = () => { d = Math.round(+sD.value * 10) / 10; changed(); };
-  o.getState = () => ({ V, d }); o.setState = s => { if (s.V) { V = s.V; sV.value = V; } if (s.d) { d = s.d; sD.value = d; } clearTrail(); draw(); };
-  let busy = false;
-  const animate = (cb) => {
-    busy = true; clearTrail();
-    const vf = speed(V), dm = d / 100, a = vf * vf / (2 * dm), tg = 2 * dm / vf, Lm = (SCR - ax()) / PXC / 100, td = Lm / vf, T = tg + td;
-    const k = Math.min(110, 3600 / (T * 1e9));            // visual ms per real ns
-    const N = 18, step = T / N; let nextDot = step;
-    const e = q('#eA'), tr = q('#trail'); e.setAttribute('opacity', 1); q('#fil').setAttribute('opacity', 1);
-    const pos = t => t < tg ? 0.5 * a * t * t : dm + vf * (t - tg);
-    const t0 = performance.now();
-    const frame = now => { const t = Math.min(T, (now - t0) / k * 1e-9), x = X0 + 9 + pos(t) * 100 * PXC;
-      e.setAttribute('transform', `translate(${x},${CY})`);
-      while (t >= nextDot && nextDot <= T + 1e-15) { const xd = X0 + 9 + pos(nextDot) * 100 * PXC; tr.insertAdjacentHTML('beforeend', `<circle cx="${xd.toFixed(1)}" cy="${CY}" r="3.5" fill="${nextDot < tg ? '#F2BD45' : '#7CFFB2'}"/>`); nextDot += step; }
-      if (t < T) requestAnimationFrame(frame);
-      else { e.setAttribute('opacity', 0); q('#fil').setAttribute('opacity', .65); q('#spot').setAttribute('opacity', 1);
-        q('#tnote').textContent = 'dots = equal time steps: spreading in the gap, then evenly spaced'; busy = false; cb && cb(); } };
-    requestAnimationFrame(frame);
-  };
-  q('#fire').onclick = () => { if (busy) return; animate(() => o.onRun && o.onRun({ V, d })); };
-  o.playRow = row => { if (busy) return; o.setState(row.raw); animate(); };
+  const changed = () => { draw(); o.onChange && o.onChange(o.getState()); };
+  q('#bH').onclick = () => { heater = !heater; changed(); }; q('#bP').onclick = () => { pol = -pol; changed(); };
+  q('#bD').onclick = () => { if (!unlocked) return; plates = !plates; changed(); };
+  host.querySelectorAll('#segG button').forEach(b => b.onclick = () => { gun = +b.dataset.g; changed(); });
+  q('#sV').oninput = () => { kV = +q('#sV').value; changed(); };
+  const mk = q('#mk'); let drag = false;
+  const toCm = ev => { const p = svg.createSVGPoint(); p.x = ev.clientX; p.y = ev.clientY; const z = p.matrixTransform(svg.getScreenCTM().inverse()); return Math.max(-3, Math.min(3, (CY - z.y) / PXC)); };
+  mk.addEventListener('pointerdown', e => { drag = true; mk.setPointerCapture(e.pointerId); });
+  mk.addEventListener('pointermove', e => { if (!drag) return; mark = Math.round(toCm(e) * 10) / 10; changed(); });
+  mk.addEventListener('pointerup', () => drag = false);
+  svg.addEventListener('click', e => { const p = svg.createSVGPoint(); p.x = e.clientX; p.y = e.clientY; const z = p.matrixTransform(svg.getScreenCTM().inverse()); if (Math.abs(z.x - (SX + XR * PXC)) < 40 && !e.target.closest('#mk')) { mark = Math.round(toCm(e) * 10) / 10; changed(); } });
+  q('#recA').onclick = () => { const yt = yAt(XR);
+    if (Math.abs(mark - yt) > 0.15) { toast('Not lined up yet: put the marker exactly on the glowing trace at the 8 cm line.'); return; }
+    o.onRun && o.onRun({ kV, d: GUN[gun].d, y: mark, yTrue: +yt.toFixed(3) }, { kV: String(kV), d: String(GUN[gun].d), y: String(mark) }); };
+  o.getState = () => ({ kV, gun, heater, pol, plates, mark });
+  o.setState = s => { if (s.kV != null) { kV = s.kV; q('#sV').value = kV; } if (s.gun) gun = s.gun; if (s.heater != null) heater = s.heater; if (s.pol) pol = s.pol; if (s.plates != null && unlocked) plates = s.plates; if (s.mark != null) mark = s.mark; draw(); };
+  o.unlock = () => { if (!unlocked) { unlocked = true; plates = true; changed(); } };
+  o.playRow = row => { o.setState({ kV: row.raw.kV, gun: row.raw.d === 1 ? 2 : 1, mark: row.raw.y }); q('#trace').animate([{ opacity: .3 }, { opacity: 1 }], { duration: 600 }); };
+  setInterval(() => { if (beamOn() && document.body.contains(svg)) q('#trace').setAttribute('opacity', .6 + Math.random() * .25); }, 220);   // gentle flicker of a real trace
   draw(); return o;
 }
 
@@ -716,6 +771,7 @@ function simC(host) {
 
 /* ----- Process (individual) ----- */
 function labProcess(body) {
+  if (AN[S.station].tasks) return labProcessTasks(body);
   const k = S.station, A = AN[k], cols = A.cols[S.level], rows = completeRows(), ex = (A.extra[S.level] || []);
   startPoll(null);
   const c = card(body, `<div class="row between"><div><span class="tag acc">Process your team's data</span> <span class="tiny muted">on your own · then check your mark</span></div><span id="mk"></span></div>
@@ -746,6 +802,23 @@ function labProcess(body) {
     if (!c.querySelector('#gonext')) { const nb = nextBtn(c, () => { S.step = 2; save(); render(); }, 'Explain it'); nb.id = 'gonext'; }
   }
   if (!rows.length) T.innerHTML = '<div class="fb hint">Your table of record has no complete rows. Go back and finish it with your team.</div>';
+  const back = document.createElement('button'); back.className = 'btn ghost small'; back.textContent = '← back to the experiment'; back.style.marginTop = '8px';
+  back.onclick = () => { S.step = 0; save(); render(); }; c.appendChild(back);
+}
+
+function labProcessTasks(body) {
+  const k = S.station, A = AN[k], rows = completeRows(); startPoll(null);
+  const c = card(body, `<div class="row between"><div><span class="tag acc">Make sense of your team's data</span> <span class="tiny muted">on your own</span></div><span id="mk"></span></div>
+    <div class="grid2" style="margin-top:8px"><div id="gr"></div><div><h3>What does the graph show?</h3><p id="gnote" class="muted">Look at the pattern first.</p><div class="formula">${A.formula}</div></div></div><div id="tasks"></div>`);
+  if (!rows.length) { c.querySelector('#tasks').innerHTML = '<div class="fb hint">No complete readings yet. Go back to the experiment.</div>'; return; }
+  const g = A.graph(rows); c.querySelector('#gr').innerHTML = graph(g.pts, g).svg; c.querySelector('#gnote').textContent = g.note;
+  const list = A.list(S.level, rows), host = c.querySelector('#tasks');
+  const fin = () => { const got = list.filter(t => S.first[k + '·p·' + t.id]).length; if (S.mark == null) { S.mark = `${got}/${list.length}`; save(); }
+    c.querySelector('#mk').innerHTML = `<span class="mark">${S.mark}</span> <span class="tiny muted">right first time</span>`;
+    if (!c.querySelector('#gonext')) { const nb = nextBtn(c, () => { S.step = 2; save(); render(); }, 'Explain it'); nb.id = 'gonext'; } };
+  const run = i => { if (i >= list.length) { fin(); return; } const t = list[i];
+    numTask(host, { p: t.p, unit: t.unit, ph: t.ph, check: v => within(v, t.exp, t.tol), hint: t.hint, why: () => `${sci(t.exp, 3)} ${t.unit}` }, k + '·p·' + t.id, () => run(i + 1)); };
+  run(0);
   const back = document.createElement('button'); back.className = 'btn ghost small'; back.textContent = '← back to the experiment'; back.style.marginTop = '8px';
   back.onclick = () => { S.step = 0; save(); render(); }; c.appendChild(back);
 }
@@ -788,7 +861,7 @@ async function rFinal() {
   const open = S.unlocked || (board && (board.unlock || ['A', 'B', 'C'].every(k => (done[k] || 0) > 0)));
   if (open && !S.unlocked) { S.unlocked = true; save(); }
   const disc = ['A', 'B', 'C'].map(k => { const rows = board && board.rooms && board.rooms[k] ? board.rooms[k].rows : [];
-    const data = rows.length ? (k === 'A' ? 'Fields: ' + rows.slice(0, 3).map(r => sci(r.raw.V / (r.raw.d / 100), 2)).join(', ') + ' V/m' : k === 'B' ? 'Diameters: ' + rows.slice(0, 3).map(r => r.raw.d + ' cm').join(', ') : 'Speeds: ' + rows.slice(0, 3).map(r => sci(r.raw.Vp / 0.04 / (KCOIL * r.raw.I), 2)).join(', ') + ' m/s') : '';
+    const data = rows.length ? (k === 'A' ? 'Deflections: ' + rows.slice(0, 3).map(r => r.raw.y + ' cm at ' + r.raw.kV + ' kV').join(', ') : k === 'B' ? 'Diameters: ' + rows.slice(0, 3).map(r => r.raw.d + ' cm').join(', ') : 'Speeds: ' + rows.slice(0, 3).map(r => sci(r.raw.Vp / 0.04 / (KCOIL * r.raw.I), 2)).join(', ') + ' m/s') : '';
     return `<div class="d ${k === S.station ? 'mine' : ''}"><div class="ph" style="background-image:url(${STN[k].img})"></div><b>${STN[k].icon} ${STN[k].title}</b><div class="eqbig">${STN[k].find.eq}</div><div class="small">${STN[k].find.t}</div>
       <div class="tiny muted" style="margin-top:4px">${(done[k] || 0) > 0 ? '✅ ' + (done[k] || 0) + ' finished' : '⏳ still working'}${data ? ' · ' + data : ''}</div></div>`; }).join('');
   if (!open) {

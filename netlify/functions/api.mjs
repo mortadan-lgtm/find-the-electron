@@ -99,9 +99,10 @@ export default async (req) => {
     }
     if (op === "run") {
       const r = await update(roomKey(cls, st), emptyRoom, room => {
-        if (room.rows.length >= 8) return null;
+        if (room.rows.length >= 5) return null;
         if (room.rows.some(x => x.id === b.row.id)) return null;
-        room.rows.push({ id: b.row.id, by: name, t: Date.now(), raw: b.row.raw, rec: {} });
+        const rec = {}; for (const [c, v] of Object.entries(b.row.rec || {}).slice(0, 6)) rec[String(c).slice(0, 10)] = { v: String(v).slice(0, 20), by: name };
+        room.rows.push({ id: b.row.id, by: name, t: Date.now(), raw: b.row.raw, rec });
         return room;
       });
       return json({ room: r });
