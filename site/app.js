@@ -292,6 +292,7 @@ function coachPlace() {   // positions ring, hand and bubble from the target's C
   const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
   if (st.drag) { hand.style.left = (coachFlip ? r.left + r.width * .8 : r.left + r.width * .2) + 'px'; hand.style.top = (cy - 4) + 'px'; }
   else if (st.vdrag) { hand.style.left = (cx - 8) + 'px'; hand.style.top = (coachFlip ? r.top + r.height * .22 : r.top + r.height * .78) + 'px'; }
+  else if (!st.until) { hand.style.left = (r.right - 34) + 'px'; hand.style.top = (r.bottom - 22) + 'px'; }
   else { hand.style.left = (cx - 8) + 'px'; hand.style.top = (cy - 4) + 'px'; }
   const bw = Math.min(300, innerWidth - 20), bh = bub.offsetHeight || 130;
   let bx = Math.min(Math.max(10, r.left), innerWidth - bw - 10), by = r.bottom + 16;
@@ -424,7 +425,7 @@ const completeRows = () => R.rows.map(recVals).filter(Boolean);
 function labExperiment(body) {
   const k = S.station, st = STN[k], role = ROLES[S.role] || ROLES.trial;
   body.innerHTML = `<div class="grid2">
-    <div class="card"><div class="simwrap" id="simwrap"><div id="sim"></div></div><div class="remote" id="remote"></div></div>
+    <div class="card"><div class="mbox" id="mbox"></div><div class="simwrap" id="simwrap"><div id="sim"></div></div><div class="remote" id="remote"></div></div>
     <div>
       <div class="card"><div class="role" id="rolecard"><span class="ic">${role.ic}</span><div><b>${role.name}${S.role === 'trial' ? ' ' + S.trial : ''}</b><div class="small muted">${role.job(S.trial)} Everyone can run trials and fill the table.</div></div></div>
         <div class="team" id="team" style="margin-top:10px"></div></div>
@@ -443,7 +444,7 @@ function labExperiment(body) {
   if (st.quest) { sim.onObserve = paintQuest; sim.setState({}); }
   if (R.sim && R.sim.t) { sim.setState(R.sim); lastSimT = R.sim.t; }
   const refresh = () => {
-    paintTeam(); paintPred(); paintTable(); if (st.quest) paintQuest();
+    paintTeam(); paintPred(); paintTable(); if (st.quest) paintQuest(); paintMission();
     if (R.sim && R.sim.t > lastSimT && R.sim.by !== S.name && Date.now() - localEditT > 1200) { lastSimT = R.sim.t; sim.setState(R.sim); $('#remote').textContent = `${R.sim.by} changed the settings`; }
     for (const row of R.rows) if (!seenRows.has(row.id)) { seenRows.add(row.id); if (row.by !== S.name) { sim.playRow(row); $('#remote').textContent = `${row.by} ran a trial`; } }
   };
@@ -466,6 +467,29 @@ function paintQuest(obs) {
     ${items.map(x => `<div class="row" style="gap:8px;margin:4px 0"><span style="font-size:1.1rem">${S.quest[x[0]] ? '✅' : '⬜'}</span><span class="${S.quest[x[0]] ? '' : 'muted'}">${x[1]}</span></div>`).join('')}<div id="qq"></div>`;
   if (all) mcq(host.querySelector('#qq'), { p: 'So what are cathode rays?', o: ['Negative particles that leave the hot cathode and are pulled towards the + anode', 'Light given out by the hot filament', 'Positive particles pushed out by the anode'], a: 0, hint: 'No heat, no beam. Anode −, no beam. What does that say about where they come from and their charge?', why: 'They need the hot cathode, and they are attracted to +, so they are negative.' }, 'A·beam', () => {
     setTimeout(() => { S.questDone = true; save(); paintQuest(); $('#predwrap').hidden = false; paintPred(); if (sim && sim.unlock) sim.unlock(); roleCoachA2(); }, 900); });
+}
+/* mission panel: why + what, 2–3 lines, changes with progress */
+const MISSION = {
+  A: [['Make a beam', 'In 1897 nobody knew what cathode rays were. What makes the beam appear, and what makes it vanish?', 'Try the heater, the voltage and the anode switch. Watch the screen each time.'],
+      ['Test the gun', 'Does a stronger field in the gun give the electrons more energy? More energy means a stiffer beam that bends less.', 'Predict first. Then record 3 to 5 readings: change the voltage, and try both guns.'],
+      ['Check your prediction', 'Did swapping guns move the trace? Did changing the voltage?', 'Agree on an answer as a team, then tap Process the data.']],
+  B: [['Predict', 'A magnetic field bends a moving electron into a circle. What sets the size of the circle?', 'Make your prediction first. Your team\'s picks show live.'],
+      ['Measure the circle', 'If B controls the circle, changing the coil current should change the diameter.', 'Change the current, put the marker on the top of the ring, tap Record. 3 to 5 readings.'],
+      ['Check your prediction', 'Did a stronger field make the circle bigger or smaller?', 'Agree on an answer as a team, then tap Process the data.']],
+  C: [['Predict', 'The electric field pushes the beam up, the magnetic field pushes it down. Balanced, the beam goes straight.', 'Make your prediction first. Your team\'s picks show live.'],
+      ['Balance each beam', 'At balance qE = qvB, so you get the speed without knowing q or m.', 'Pick a beam, adjust E and B until the spot sits on 0, tap Record. Do all three beams.'],
+      ['Check your prediction', 'Which beam needed the biggest E? What does that say about its speed?', 'Agree on an answer as a team, then tap Process the data.']]
+};
+function paintMission() {
+  const host = $('#mbox'); if (!host || !R) return;
+  const k = S.station, n = completeRows().length;
+  const stage = STN[k].quest ? (!S.questDone ? 0 : n < 3 ? 1 : 2) : (R.pred[S.name] == null ? 0 : n < 3 ? 1 : 2);
+  if (host.dataset.stage === String(stage)) return; host.dataset.stage = stage;
+  const m = MISSION[k][stage];
+  host.innerHTML = `<div class="row between"><span class="st">Step ${stage + 1} of 3 · ${m[0]}</span><button class="linkbtn" id="replay">↺ Show me again</button></div>
+    <div><b>Why:</b> ${m[1]}</div><div><b>Do:</b> ${m[2]}</div>`;
+  host.classList.remove('pulse'); void host.offsetWidth; host.classList.add('pulse');
+  host.querySelector('#replay').onclick = () => { ['questA', 'roleA2', 'role' + k].forEach(x => delete S.seen[x]); save(false); roleCoach(); };
 }
 function paintTeam() {
   $('#team').innerHTML = R.members.map((m, i) => `<span class="mem ${m.name === S.name ? 'me' : ''}">${avatar(m.name, i)}${esc(m.name.split(' ')[0])} <span class="tiny muted">${ROLES[m.role] ? ROLES[m.role].ic : ''}${m.trial || ''}</span></span>`).join('') || '<span class="muted small">Waiting for your team…</span>';
@@ -504,15 +528,15 @@ function paintTable() {
 }
 function roleCoachA2() {
   const predicted = () => R.pred[S.name] != null, ranMine = () => R.rows.some(r => r.by === S.name);
-  const steps = [{ el: '#predcard', t: 'Now <b>predict</b>. Your team\'s picks show up live.', until: predicted },
-    { el: sim.platesEl, t: 'The deflecting plates are on. Set a voltage and pick a gun.' },
+  const steps = [{ el: '#predcard', t: 'Now <b>predict</b>: does twice the field in the gun make a stiffer beam? Your team\'s picks show live.', until: predicted },
+    { el: sim.platesEl, t: 'The plates bend the beam. <b>Less bend = more energy.</b> Set a voltage and pick a gun.' },
     { el: sim.runEl, t: STN.A.readHint, until: ranMine },
-    { el: '#reccard', t: 'Take <b>3 to 5</b> readings: different voltages, and both guns. Then test your prediction.' }];
+    { el: '#reccard', t: '<b>3 to 5</b> readings: change the voltage AND swap guns. Watch whether the trace moves.' }];
   steps.forEach((x, i) => { x.n = i + 1; x.of = steps.length; }); coach(steps, 'roleA2');
 }
 function roleCoach() {
   const k = S.station, n = () => S.trial;
-  if (k === 'A') { if (S.questDone) { sim.unlock && sim.unlock(); roleCoachA2(); } else coach([{ el: '#predcard', t: 'Start by making a <b>beam</b>. Use the switches under the tube.', n: 1, of: 2 }, { el: sim.ctrlEl, t: 'Heater, anode voltage and the anode switch are here. Watch the screen.', n: 2, of: 2, until: () => S.questDone }], 'questA'); return; }
+  if (k === 'A') { if (S.questDone) { sim.unlock && sim.unlock(); roleCoachA2(); } else coach([{ el: '#mbox', t: 'This panel always tells you <b>why</b> and <b>what</b>. It changes as you go.', n: 1, of: 3 }, { el: '#predcard', t: 'Thomson started here: find out what the rays <b>need</b>. Each box ticks when your team sees it happen.', n: 2, of: 3 }, { el: sim.ctrlEl, t: 'Switch the <b>heater</b> on and off, and flip the <b>anode</b> between + and −. Watch the screen each time.', n: 3, of: 3, until: () => S.questDone }], 'questA'); return; }
   const startState = JSON.stringify(sim.getState());
   const changed = () => JSON.stringify(sim.getState()) !== startState;
   const ranMine = () => R.rows.some(r => r.by === S.name);

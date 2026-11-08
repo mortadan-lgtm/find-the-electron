@@ -180,3 +180,10 @@ table.rec .mk{font-weight:800}
 .toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:#15171C;color:#fff;padding:10px 16px;border-radius:12px;z-index:70;font-weight:650;max-width:90vw}
 .lock{font-size:2.4rem}
 .kbd{font-family:ui-monospace,Menlo,monospace;background:var(--surface-2);padding:1px 6px;border-radius:6px}
+
+.mbox{background:var(--accent-soft);border-left:4px solid var(--accent);border-radius:12px;padding:9px 12px;margin-bottom:10px;font-size:.92rem;line-height:1.4}
+.mbox .st{font-size:.72rem;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--accent-ink)}
+.mbox b{color:var(--accent-ink)}
+.mbox.pulse{animation:mpulse 1.2s ease}
+@keyframes mpulse{0%{box-shadow:0 0 0 0 rgba(79,70,229,.5)}100%{box-shadow:0 0 0 10px rgba(79,70,229,0)}}
+.linkbtn{border:none;background:none;color:var(--accent-ink);font-weight:700;font-size:.78rem;padding:0;cursor:pointer}
