@@ -94,22 +94,23 @@ const ROLES = {
 const STN = {
   A: {
     title: 'The electron gun', icon: '⚡', img: 'img/filament.webp',
-    goal: 'How does the voltage set the electron\'s speed?',
+    goal: 'What does the gap do? What does the voltage do?',
+    readHint: 'Read the <b>voltmeter</b>, and read the <b>gap d</b> on the ruler under the plates.',
     scene: [
       { img: 'img/filament.webp', cap: 'Hot metal boils off electrons.', sub: 'A heated filament, like this one, is the electron source.' },
-      { anim: 'gun', cap: 'A voltage pulls them across the gap.', sub: 'The field between the plates speeds every electron up.' },
-      { anim: 'gates', cap: 'Your mission: time them.', sub: 'Two light gates 10.0 cm apart. Faster electron, shorter time.' }],
-    pred: { q: 'You turn the voltage UP. The electron reaches the gates…', o: ['faster', 'slower', 'at the same speed'] },
-    cols: [{ k: 'V', label: 'V / V', tol: v => 0.6 }, { k: 't', label: 't / ns', tol: v => Math.max(0.02, v * 0.01) }],
+      { anim: 'gun', cap: 'A voltage pulls them across the gap.', sub: 'The field between cathode and anode speeds every electron up.' },
+      { anim: 'strobe', cap: 'Your mission: measure V and the gap.', sub: 'Work out the field, the force and the speed the gun gives.' }],
+    pred: { q: 'You DOUBLE the gap d. Same voltage. The electron leaves the gun…', o: ['at the same speed', 'faster', 'slower'] },
+    cols: [{ k: 'V', label: 'V / V', tol: v => 0.6 }, { k: 'd', label: 'd / cm', tol: v => 0.051 }],
     steps: [
-      { m: EQ.EVd, w: 'The plates make a uniform field: the same push everywhere in the gap.' },
-      { m: EQ.FqE, w: 'The field pushes the electron towards the positive plate.' },
-      { m: EQ.W, w: 'Work = force × distance. Since E = V/d, the distance cancels: the work is qV.', gap: true, opts: [EQ.W, M(mi('W') + mo('=') + frac(mi('q') + mi('V'), mi('d'))), M(mi('W') + mo('=') + frac(mn(1), mn(2)) + mi('q') + mi('V'))] },
+      { m: EQ.EVd, w: 'Cathode and anode make a uniform field: the same push everywhere in the gap. A wider gap means a weaker field.' },
+      { m: EQ.FqE, w: 'The field pushes the electron towards the positive anode.' },
+      { m: EQ.W, w: 'Work = force × distance. Since E = V/d, the gap cancels: the work is qV.', gap: true, opts: [EQ.W, M(mi('W') + mo('=') + frac(mi('q') + mi('V'), mi('d'))), M(mi('W') + mo('=') + frac(mn(1), mn(2)) + mi('q') + mi('V'))] },
       { m: EQ.KE, w: 'It starts from rest, so all that work becomes kinetic energy.' },
-      { m: EQ.vV, w: 'So v ∝ √V: four times the voltage gives twice the speed.' }],
-    concept: { p: 'Your table shows v² ∝ V. So if you make V four times bigger, v becomes…', o: ['2 times bigger', '4 times bigger', '16 times bigger'], a: 0, hint: 'v² goes up 4 times. What is √4?', why: 'v ∝ √V, and √4 = 2.' },
+      { m: EQ.vV, w: 'Past the anode there is no field, so no force: the speed stays constant all the way to the screen.' }],
+    concept: { p: 'Doubling the gap halves the field E, yet the speed is the same. Why?', o: ['The force is half as big but acts over twice the distance, so the work qV is the same', 'The electron gets lighter in a wider gap', 'The speed does not depend on the force at all'], a: 0, hint: 'Work = force × distance. What happens to each one?', why: 'Half the force × twice the distance = the same work, qV.' },
     hist: { yr: '1890s', t: 'Physicists argued: were cathode rays waves, or tiny charged particles? An electric field speeding them up is a clue. A field can only push something that carries charge.', q: { p: 'Speeding up in an electric field tells us cathode rays…', o: ['carry electric charge', 'are a kind of light', 'have no mass'], a: 0, hint: 'An electric force needs a charge to act on.', why: 'An electric force acts only on charges.' } },
-    find: { eq: EQ.KE, t: 'The voltage sets the speed: v² ∝ V.' }
+    find: { eq: EQ.KE, t: 'The gun gives every electron the energy qV, whatever the gap.' }
   },
   B: {
     title: 'The circle in a magnetic field', icon: '🧲', img: 'img/finebeam.webp',
@@ -152,15 +153,16 @@ const STN = {
 /* personal analysis: columns by level, computed from the RECORDED values */
 const AN = {
   A: {
-    formula: `${M(mi('v') + mo('=') + frac(mn('0.100 m'), mi('t')))} &nbsp; (1 ns = 10⁻⁹ s) &nbsp;&nbsp; ${M(sq(mi('v')) + mo('=') + mi('v') + mo('×') + mi('v'))}`,
-    cols: { 1: ['v'], 2: ['v', 'v2'], 3: ['v', 'v2'] },
+    formula: `${M(mi('E') + mo('=') + frac(mi('V'), mi('d')))} (d in metres) &nbsp; ${M(mi('F') + mo('=') + mi('e') + mi('E'))} &nbsp; ${M(mi('W') + mo('=') + mi('F') + mi('d'))} &nbsp; ${EQ.vV} &nbsp; <span class="small">e = 1.60 × 10⁻¹⁹ C · m = 9.11 × 10⁻³¹ kg (today's values)</span>`,
+    cols: { 1: ['E', 'v'], 2: ['E', 'F', 'v'], 3: ['E', 'F', 'W', 'v'] },
     def: {
-      v: { label: 'v / m s⁻¹', f: r => 0.1 / (r.t * 1e-9), ph: '8.4e6' },
-      v2: { label: 'v² / m² s⁻²', f: r => (0.1 / (r.t * 1e-9)) ** 2, ph: '7.0e13' }
+      E: { label: 'E / V m⁻¹', f: r => r.V / (r.d / 100), ph: '1.0e4' },
+      F: { label: 'F / N', f: r => 1.60e-19 * r.V / (r.d / 100), ph: '1.6e-15' },
+      W: { label: 'W / J', f: r => 1.60e-19 * r.V, ph: '3.2e-17' },
+      v: { label: 'v / m s⁻¹', f: r => Math.sqrt(2 * 1.60e-19 * r.V / 9.11e-31), ph: '8.4e6' }
     },
-    extra: { 3: [{ k: 'grad', p: 'Gradient of v² against V (best line through the origin)', unit: 'm² s⁻² V⁻¹', f: rows => fitOrigin(rows.map(r => [r.V, (0.1 / (r.t * 1e-9)) ** 2])), tol: 0.06 },
-                 { k: 'qm', p: `From ${EQ.KE}, the gradient is 2q/m. Find ${EQ.qmFrac}.`, unit: 'C kg⁻¹', f: rows => fitOrigin(rows.map(r => [r.V, (0.1 / (r.t * 1e-9)) ** 2])) / 2, tol: 0.07 }] },
-    graph: rows => ({ pts: rows.map(r => [r.V, (0.1 / (r.t * 1e-9)) ** 2 / 1e12]), xl: 'V / V', yl: 'v² / 10¹² m² s⁻²', fit: 'origin', note: 'A straight line through the origin: v² ∝ V.' })
+    extra: { 3: [{ k: 'grad', p: 'Gradient of W against V (best line through the origin). Which quantity is it?', unit: 'C', f: rows => fitOrigin(rows.map(r => [r.V, 1.60e-19 * r.V])), tol: 0.05 }] },
+    graph: rows => ({ pts: rows.map(r => [r.V, 1.60e-19 * r.V / 1e-17]), xl: 'V / V', yl: 'W / 10⁻¹⁷ J', fit: 'origin', note: 'Every gap lands on the same line: W = eV. The gap changes the field, not the energy, so not the speed.' })
   },
   B: {
     formula: `${M(mi('r') + mo('=') + frac(mi('d'), mn(2)))} (in metres) &nbsp;&nbsp; ${M(mi('B') + mo('=') + mn('0.78 mT') + mo('×') + mi('I'))}`,
@@ -490,10 +492,10 @@ function roleCoach() {
   const predicted = () => R.pred[S.name] != null;
   const steps = [{ el: '#predcard', t: 'First, <b>predict</b>. Your team\'s picks show up live.', until: predicted }];
   if (S.role === 'trial') {
-    steps.push({ el: sim.ctrlEl, drag: true, t: k === 'A' ? 'Set the <b>voltage</b> for your trial.' : k === 'B' ? 'Set the <b>coil current</b> for your trial.' : 'Pick a beam, then move the sliders to <b>balance</b> it.', until: changed });
-    steps.push({ el: sim.runEl, t: k === 'B' ? 'Drag the orange marker to the <b>top of the ring</b>, then tap <b>Record</b>.' : k === 'C' ? 'When the spot sits on 0, tap <b>Record</b>.' : 'Tap <b>Fire</b> and watch the electron.', until: ranMine });
+    steps.push({ el: sim.ctrlEl, drag: true, t: k === 'A' ? 'Set the <b>voltage</b>, then move the <b>anode</b> to choose a gap. Try two gaps at the same voltage.' : k === 'B' ? 'Set the <b>coil current</b> for your trial.' : 'Pick a beam, then move the sliders to <b>balance</b> it.', until: changed });
+    steps.push({ el: sim.runEl, t: k === 'B' ? 'Drag the orange marker to the <b>top of the ring</b>, then tap <b>Record</b>.' : k === 'C' ? 'When the spot sits on 0, tap <b>Record</b>.' : 'Tap <b>Fire</b>. Watch the trail of equal time steps: where does the electron speed up?', until: ranMine });
   } else if (S.role === 'recorder') {
-    steps.push({ el: sim.instEl, t: 'Watch the <b>instruments</b>. When a trial lead runs a trial, read the numbers here.' });
+    steps.push({ el: sim.instEl, t: STN[k].readHint || 'Watch the <b>instruments</b>. When a trial lead runs a trial, read the numbers here.' });
     steps.push({ el: '#reccard', t: 'Type each reading into the <b>table of record</b>. A green box means it matches the instrument.', until: typed });
   } else {
     steps.push({ el: '#reccard', t: 'You lead the thinking. As rows arrive, look for the <b>pattern</b>. Ask: does it match our prediction?' });
@@ -512,11 +514,11 @@ function sceneAnim(kind) {
     <path d="M100 100 q-14 22 0 44 q14 22 0 44" stroke="#FF8A50" stroke-width="4" fill="none"/>
     ${[0, 1, 2, 3].map(i => `<circle r="7" fill="#8DB8EA"><animate attributeName="cx" values="128;128;420;640" keyTimes="0;.12;.82;1" calcMode="spline" keySplines=".6 0 1 1;.6 0 1 1;0 0 1 1" dur="2.4s" begin="${i * .6}s" repeatCount="indefinite"/><animate attributeName="cy" values="${130 + i * 10};${130 + i * 10};145;145" keyTimes="0;.12;.82;1" dur="2.4s" begin="${i * .6}s" repeatCount="indefinite"/></circle>`).join('')}
     <text x="270" y="270" fill="#F2BD45" font-size="18" text-anchor="middle">← electric field E</text></svg>`;
-  if (kind === 'gates') return `<svg class="anim" viewBox="0 0 640 300" preserveAspectRatio="xMidYMid slice"><rect width="640" height="300" fill="#0E1424"/>
-    ${[220, 460].map(x => `<rect x="${x - 5}" y="90" width="10" height="26" fill="#6c7a99"/><rect x="${x - 5}" y="184" width="10" height="26" fill="#6c7a99"/><line x1="${x}" y1="116" x2="${x}" y2="184" stroke="#F07A71" stroke-width="3"/>`).join('')}
-    <circle r="8" fill="#8DB8EA"><animate attributeName="cx" values="0;640" dur="1.4s" repeatCount="indefinite"/><animate attributeName="cy" values="150;150" dur="1.4s" repeatCount="indefinite"/></circle>
-    <line x1="220" y1="235" x2="460" y2="235" stroke="#9AA4B8"/><text x="340" y="258" fill="#cfd8ea" font-size="18" text-anchor="middle">10.0 cm</text>
-    <rect x="250" y="30" width="180" height="40" rx="8" fill="#0B0F1A" stroke="#3a4a70"/><text x="340" y="57" fill="#45C58C" font-family="monospace" font-size="20" text-anchor="middle">t = 11.92 ns</text></svg>`;
+  if (kind === 'strobe') return `<svg class="anim" viewBox="0 0 640 300" preserveAspectRatio="xMidYMid slice"><rect width="640" height="300" fill="#0E1424"/>
+    <rect x="110" y="70" width="10" height="160" fill="#c9d3e8"/><rect x="300" y="70" width="10" height="66" fill="#c9d3e8"/><rect x="300" y="164" width="10" height="66" fill="#c9d3e8"/>
+    <rect x="640" y="60" width="0" height="0"/><text x="115" y="58" fill="#F07A71" font-size="24" font-weight="900" text-anchor="middle">−</text><text x="305" y="58" fill="#45C58C" font-size="24" font-weight="900" text-anchor="middle">+</text>
+    <circle cx="127" cy="150" r="7" fill="#8DB8EA" opacity="0"><animate attributeName="opacity" values="0;1" begin="0.00s" dur=".2s" fill="freeze"/></circle><circle cx="149" cy="150" r="7" fill="#8DB8EA" opacity="0"><animate attributeName="opacity" values="0;1" begin="0.25s" dur=".2s" fill="freeze"/></circle><circle cx="185" cy="150" r="7" fill="#8DB8EA" opacity="0"><animate attributeName="opacity" values="0;1" begin="0.50s" dur=".2s" fill="freeze"/></circle><circle cx="235" cy="150" r="7" fill="#8DB8EA" opacity="0"><animate attributeName="opacity" values="0;1" begin="0.75s" dur=".2s" fill="freeze"/></circle><circle cx="300" cy="150" r="7" fill="#8DB8EA" opacity="0"><animate attributeName="opacity" values="0;1" begin="1.00s" dur=".2s" fill="freeze"/></circle><circle cx="372" cy="150" r="7" fill="#8DB8EA" opacity="0"><animate attributeName="opacity" values="0;1" begin="1.25s" dur=".2s" fill="freeze"/></circle><circle cx="444" cy="150" r="7" fill="#8DB8EA" opacity="0"><animate attributeName="opacity" values="0;1" begin="1.50s" dur=".2s" fill="freeze"/></circle><circle cx="516" cy="150" r="7" fill="#8DB8EA" opacity="0"><animate attributeName="opacity" values="0;1" begin="1.75s" dur=".2s" fill="freeze"/></circle><circle cx="588" cy="150" r="7" fill="#8DB8EA" opacity="0"><animate attributeName="opacity" values="0;1" begin="2.00s" dur=".2s" fill="freeze"/></circle><circle cx="660" cy="150" r="7" fill="#8DB8EA" opacity="0"><animate attributeName="opacity" values="0;1" begin="2.25s" dur=".2s" fill="freeze"/></circle>
+    <text x="210" y="265" fill="#F2BD45" font-size="17" text-anchor="middle">speeds up in the gap</text><text x="480" y="265" fill="#7CFFB2" font-size="17" text-anchor="middle">equal steps: constant speed</text></svg>`;
   if (kind === 'curl') return `<svg class="anim" viewBox="0 0 640 300" preserveAspectRatio="xMidYMid slice"><rect width="640" height="300" fill="#0E1424"/>
     ${Array.from({ length: 40 }, (_, i) => `<text x="${30 + (i % 10) * 62}" y="${40 + Math.floor(i / 10) * 70}" fill="#d39a5c" font-size="16" opacity=".35">⊙</text>`).join('')}
     <path d="M320 260 A95 95 0 1 0 320 70 A95 95 0 1 0 320 260" fill="none" stroke="#7CFFB2" stroke-width="4" opacity=".9"><animate attributeName="stroke-dasharray" values="0 700;700 0" dur="2.2s" repeatCount="indefinite"/></path>
@@ -545,45 +547,71 @@ function playScene(host, frames, done) {
   show();
 }
 
-/* ===== SIM A: electron gun ===== */
+/* ===== SIM A: electron gun (cathode–anode gap, voltmeter, ruler, equal-time trail) ===== */
 function simA(host) {
+  const X0 = 80, PXC = 50, SCR = 596, CY = 140;      // cathode x, px per cm, screen x, beam axis
+  let V = 200, d = 2.0;
   host.innerHTML = `<svg class="sim" viewBox="0 0 640 300">
    <defs><radialGradient id="glw"><stop offset="0" stop-color="#9fd0ff"/><stop offset="1" stop-color="#9fd0ff" stop-opacity="0"/></radialGradient>
+   <radialGradient id="spotg"><stop offset="0" stop-color="#d6ffe6"/><stop offset=".4" stop-color="#7CFFB2"/><stop offset="1" stop-color="#7CFFB2" stop-opacity="0"/></radialGradient>
    <linearGradient id="tube" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#1b2640"/><stop offset="1" stop-color="#121a2e"/></linearGradient>
    <marker id="ar" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8z" fill="#F2BD45"/></marker></defs>
    <rect x="20" y="40" width="600" height="200" rx="100" fill="url(#tube)" stroke="#3a4a70" stroke-width="2"/>
-   <rect x="80" y="80" width="10" height="120" fill="#c9d3e8"/><text x="85" y="72" fill="#F07A71" font-size="20" font-weight="800" text-anchor="middle">−</text>
-   <path d="M74 110 q-9 15 0 30 q9 15 0 30" stroke="#FF8A50" stroke-width="3" fill="none" id="fil" opacity=".6"/>
-   <rect x="270" y="80" width="10" height="52" fill="#c9d3e8"/><rect x="270" y="148" width="10" height="52" fill="#c9d3e8"/>
-   <text x="275" y="72" fill="#45C58C" font-size="20" font-weight="800" text-anchor="middle">+</text>
-   ${[105, 140, 175].map(y => `<line x1="250" y1="${y}" x2="112" y2="${y}" stroke="#F2BD45" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#ar)" opacity=".7"/>`).join('')}
-   <text x="180" y="98" fill="#F2BD45" font-size="12" text-anchor="middle">field E</text>
-   <line x1="90" y1="255" x2="270" y2="255" stroke="#9AA4B8"/><text x="180" y="270" fill="#9AA4B8" font-size="12" text-anchor="middle">5.0 cm</text>
-   ${[400, 560].map((x, i) => `<rect x="${x - 4}" y="96" width="8" height="18" fill="#6c7a99"/><rect x="${x - 4}" y="166" width="8" height="18" fill="#6c7a99"/><line x1="${x}" y1="114" x2="${x}" y2="166" stroke="#F07A71" stroke-width="2" opacity=".55" id="las${i}"/><text x="${x}" y="90" fill="#9AA4B8" font-size="11" text-anchor="middle">gate ${i + 1}</text>`).join('')}
-   <line x1="400" y1="255" x2="560" y2="255" stroke="#9AA4B8"/><text x="480" y="270" fill="#9AA4B8" font-size="12" text-anchor="middle">10.0 cm</text>
+   <rect x="${SCR}" y="78" width="10" height="124" rx="3" fill="#1f5a45"/><text x="${SCR - 4}" y="70" fill="#7CFFB2" font-size="11" text-anchor="end">fluorescent screen</text>
+   <circle id="spot" cx="${SCR}" cy="${CY}" r="13" fill="url(#spotg)" opacity="0"/>
+   <path d="M${X0 - 7} 112 q-9 14 0 28 q9 14 0 28" stroke="#FF8A50" stroke-width="3" fill="none" id="fil" opacity=".65"/>
+   <rect x="${X0}" y="82" width="9" height="116" fill="#c9d3e8"/><text x="${X0 + 4}" y="74" fill="#F07A71" font-size="13" font-weight="800" text-anchor="middle">− cathode</text>
+   <g id="anode"><rect x="0" y="82" width="9" height="46" fill="#c9d3e8"/><rect x="0" y="152" width="9" height="46" fill="#c9d3e8"/><text x="4" y="74" fill="#45C58C" font-size="13" font-weight="800" text-anchor="middle">+ anode</text>
+     <line x1="4.5" y1="198" x2="4.5" y2="236" stroke="#FFB894" stroke-width="1.5" stroke-dasharray="3 2"/></g>
+   <g id="field"></g>
+   <g id="ruler"></g>
+   <g id="trail"></g>
    <g id="eA" opacity="0"><circle r="12" fill="url(#glw)"/><circle r="5" fill="#8DB8EA"/></g>
+   <text id="tnote" x="470" y="286" fill="#9AA4B8" font-size="12" text-anchor="middle"></text>
   </svg>
-  <div class="ctrl" id="cV"><label>Accelerating voltage V <output id="oV">200 V</output></label><input type="range" id="sV" min="50" max="400" step="10" value="200"></div>
-  <div class="row"><button class="btn primary big" id="fire">⚡ Fire</button><div class="inst" id="inst"><div>V = <b id="iV">200</b> V</div><div>t = <b id="iT">–</b> ns</div></div></div>`;
-  const sV = host.querySelector('#sV'), oV = host.querySelector('#oV');
-  const o = { ctrlEl: host.querySelector('#cV'), runEl: host.querySelector('#fire'), instEl: host.querySelector('#inst') };
-  const paint = () => { oV.textContent = sV.value + ' V'; host.querySelector('#iV').textContent = sV.value; };
-  sV.oninput = () => { paint(); o.onChange && o.onChange(o.getState()); };
-  o.getState = () => ({ V: +sV.value }); o.setState = s => { if (s.V) { sV.value = s.V; paint(); } };
-  let busy = false;
-  const animate = (V, tns, cb) => {
-    busy = true; const e = host.querySelector('#eA'); e.setAttribute('opacity', 1); host.querySelector('#fil').setAttribute('opacity', 1);
-    const sc = Math.min(1.6, Math.sqrt(200 / V)), t1 = 1100 * sc, t2 = 900 * sc, t0 = performance.now(); host.querySelector('#iT').textContent = '…';
-    const step = now => { const dt = now - t0; const x = dt < t1 ? 92 + 178 * (dt / t1) ** 2 : 270 + 360 * ((dt - t1) / t2);
-      e.setAttribute('transform', `translate(${x},140)`);
-      host.querySelector('#las0').setAttribute('opacity', Math.abs(x - 400) < 12 ? 1 : .55); host.querySelector('#las1').setAttribute('opacity', Math.abs(x - 560) < 12 ? 1 : .55);
-      if (x >= 400 && x < 560) host.querySelector('#iT').textContent = fx(tns * (x - 400) / 160, 2);
-      if (dt < t1 + t2) requestAnimationFrame(step); else { e.setAttribute('opacity', 0); host.querySelector('#fil').setAttribute('opacity', .6); host.querySelector('#iT').textContent = fx(tns, 2); busy = false; cb && cb(); } };
-    requestAnimationFrame(step);
+  <div class="ctrl" id="cV"><label>Supply voltage V <output id="oV"></output></label><input type="range" id="sV" min="50" max="400" step="10" value="${V}"></div>
+  <div class="ctrl" id="cD"><label>Move the anode (sets the gap d) <output>read the ruler</output></label><input type="range" id="sD" min="1" max="3.5" step="0.1" value="${d}"></div>
+  <div class="row"><button class="btn primary big" id="fire">⚡ Fire</button><div class="inst" id="inst"><div>voltmeter: <b id="iV"></b> V</div></div></div>`;
+  const q = sel => host.querySelector(sel), sV = q('#sV'), sD = q('#sD');
+  // ruler: 0 to 4.0 cm from the cathode face, mm ticks
+  let rl = `<line x1="${X0 + 9}" y1="236" x2="${X0 + 9 + 4 * PXC}" y2="236" stroke="#e6dcff"/>`;
+  for (let mm = 0; mm <= 40; mm++) { const x = X0 + 9 + mm * PXC / 10, big = mm % 10 === 0, mid = mm % 5 === 0;
+    rl += `<line x1="${x}" y1="236" x2="${x}" y2="${236 + (big ? 11 : mid ? 8 : 5)}" stroke="#e6dcff" stroke-width="${big ? 1.4 : .8}"/>` + (big ? `<text x="${x}" y="259" fill="#e6dcff" font-size="11" text-anchor="middle">${mm / 10}</text>` : ''); }
+  q('#ruler').innerHTML = rl + `<text x="${X0 + 9 + 4 * PXC + 8}" y="259" fill="#e6dcff" font-size="11">cm</text>`;
+  const o = { ctrlEl: q('#cV'), runEl: q('#fire'), instEl: q('#inst') };
+  const ax = () => X0 + 9 + d * PXC;            // anode inner face
+  const draw = () => {
+    q('#anode').setAttribute('transform', `translate(${ax()},0)`);
+    const E = V / (d / 100), op = Math.max(.25, Math.min(1, E / 2e4)); let f = '';
+    [104, 176].forEach(y => f += `<line x1="${ax() - 6}" y1="${y}" x2="${X0 + 16}" y2="${y}" stroke="#F2BD45" stroke-width="1.6" stroke-dasharray="5 4" marker-end="url(#ar)" opacity="${op}"/>`);
+    f += `<text x="${(X0 + 9 + ax()) / 2}" y="${CY - 14}" fill="#F2BD45" font-size="13" text-anchor="middle" opacity="${op}">E</text>`;
+    q('#field').innerHTML = f;
+    q('#oV').textContent = V + ' V'; q('#iV').textContent = V;
   };
-  host.querySelector('#fire').onclick = () => { if (busy) return; const V = +sV.value, tns = +fx(jitter(0.100 / speed(V) * 1e9, 0.005), 2); animate(V, tns, () => o.onRun && o.onRun({ V, t: tns })); };
-  o.playRow = row => { if (busy) return; o.setState({ V: row.raw.V }); animate(row.raw.V, row.raw.t); };
-  return o;
+  const clearTrail = () => { q('#trail').innerHTML = ''; q('#tnote').textContent = ''; q('#spot').setAttribute('opacity', 0); };
+  const changed = () => { clearTrail(); draw(); o.onChange && o.onChange(o.getState()); };
+  sV.oninput = () => { V = +sV.value; changed(); }; sD.oninput = () => { d = Math.round(+sD.value * 10) / 10; changed(); };
+  o.getState = () => ({ V, d }); o.setState = s => { if (s.V) { V = s.V; sV.value = V; } if (s.d) { d = s.d; sD.value = d; } clearTrail(); draw(); };
+  let busy = false;
+  const animate = (cb) => {
+    busy = true; clearTrail();
+    const vf = speed(V), dm = d / 100, a = vf * vf / (2 * dm), tg = 2 * dm / vf, Lm = (SCR - ax()) / PXC / 100, td = Lm / vf, T = tg + td;
+    const k = Math.min(110, 3600 / (T * 1e9));            // visual ms per real ns
+    const N = 18, step = T / N; let nextDot = step;
+    const e = q('#eA'), tr = q('#trail'); e.setAttribute('opacity', 1); q('#fil').setAttribute('opacity', 1);
+    const pos = t => t < tg ? 0.5 * a * t * t : dm + vf * (t - tg);
+    const t0 = performance.now();
+    const frame = now => { const t = Math.min(T, (now - t0) / k * 1e-9), x = X0 + 9 + pos(t) * 100 * PXC;
+      e.setAttribute('transform', `translate(${x},${CY})`);
+      while (t >= nextDot && nextDot <= T + 1e-15) { const xd = X0 + 9 + pos(nextDot) * 100 * PXC; tr.insertAdjacentHTML('beforeend', `<circle cx="${xd.toFixed(1)}" cy="${CY}" r="3.5" fill="${nextDot < tg ? '#F2BD45' : '#7CFFB2'}"/>`); nextDot += step; }
+      if (t < T) requestAnimationFrame(frame);
+      else { e.setAttribute('opacity', 0); q('#fil').setAttribute('opacity', .65); q('#spot').setAttribute('opacity', 1);
+        q('#tnote').textContent = 'dots = equal time steps: spacing grows in the gap, then stays the same'; busy = false; cb && cb(); } };
+    requestAnimationFrame(frame);
+  };
+  q('#fire').onclick = () => { if (busy) return; animate(() => o.onRun && o.onRun({ V, d })); };
+  o.playRow = row => { if (busy) return; o.setState(row.raw); animate(); };
+  draw(); return o;
 }
 
 /* ===== SIM B: fine-beam tube (also the final Thomson tube) ===== */
@@ -702,7 +730,7 @@ function labProcess(body) {
   const X = c.querySelector('#ex');
   ex.forEach(e => X.insertAdjacentHTML('beforeend', `<div class="row" style="margin-top:10px"><div style="flex:1;min-width:220px">${e.p}</div><input data-x="${e.k}" placeholder="e.g. 3.5e11" style="width:170px" value="${esc(my['x|' + e.k] || '')}"><span class="small">${e.unit}</span><span class="auto" data-ax="${e.k}"></span></div>`));
   X.querySelectorAll('input').forEach(inp => inp.addEventListener('input', () => { my['x|' + inp.dataset.x] = inp.value; save(false); }));
-  if (ex.length) X.insertAdjacentHTML('afterbegin', `<div class="tiny muted" style="margin-top:8px">Use your own v² values. Plot them in your head or on paper: v² against V.</div>`);
+  if (ex.length) X.insertAdjacentHTML('afterbegin', `<div class="tiny muted" style="margin-top:8px">Use your own W values. Picture W against V for all your trials.</div>`);
   const chk = nextBtn(c, () => check(), 'Check my work'); chk.querySelector('button').className = 'btn dark';
   function check() {
     let got = 0, tot = 0;
@@ -760,7 +788,7 @@ async function rFinal() {
   const open = S.unlocked || (board && (board.unlock || ['A', 'B', 'C'].every(k => (done[k] || 0) > 0)));
   if (open && !S.unlocked) { S.unlocked = true; save(); }
   const disc = ['A', 'B', 'C'].map(k => { const rows = board && board.rooms && board.rooms[k] ? board.rooms[k].rows : [];
-    const data = rows.length ? (k === 'A' ? 'Speeds: ' + rows.slice(0, 3).map(r => sci(0.1 / (r.raw.t * 1e-9), 2)).join(', ') + ' m/s' : k === 'B' ? 'Diameters: ' + rows.slice(0, 3).map(r => r.raw.d + ' cm').join(', ') : 'Speeds: ' + rows.slice(0, 3).map(r => sci(r.raw.Vp / 0.04 / (KCOIL * r.raw.I), 2)).join(', ') + ' m/s') : '';
+    const data = rows.length ? (k === 'A' ? 'Fields: ' + rows.slice(0, 3).map(r => sci(r.raw.V / (r.raw.d / 100), 2)).join(', ') + ' V/m' : k === 'B' ? 'Diameters: ' + rows.slice(0, 3).map(r => r.raw.d + ' cm').join(', ') : 'Speeds: ' + rows.slice(0, 3).map(r => sci(r.raw.Vp / 0.04 / (KCOIL * r.raw.I), 2)).join(', ') + ' m/s') : '';
     return `<div class="d ${k === S.station ? 'mine' : ''}"><div class="ph" style="background-image:url(${STN[k].img})"></div><b>${STN[k].icon} ${STN[k].title}</b><div class="eqbig">${STN[k].find.eq}</div><div class="small">${STN[k].find.t}</div>
       <div class="tiny muted" style="margin-top:4px">${(done[k] || 0) > 0 ? '✅ ' + (done[k] || 0) + ' finished' : '⏳ still working'}${data ? ' · ' + data : ''}</div></div>`; }).join('');
   if (!open) {
