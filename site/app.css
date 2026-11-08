@@ -187,3 +187,8 @@ table.rec .mk{font-weight:800}
 .mbox.pulse{animation:mpulse 1.2s ease}
 @keyframes mpulse{0%{box-shadow:0 0 0 0 rgba(79,70,229,.5)}100%{box-shadow:0 0 0 10px rgba(79,70,229,0)}}
 .linkbtn{border:none;background:none;color:var(--accent-ink);font-weight:700;font-size:.78rem;padding:0;cursor:pointer}
+
+table.rec td.rv{font-weight:750;font-variant-numeric:tabular-nums}
+table.rec th.pc{background:var(--accent-soft);color:var(--accent-ink);font-size:.82rem;line-height:1.2}
+table.rec th.pc small{display:block;font-weight:600;font-size:.7rem;opacity:.8}
+table.rec td input{min-width:92px;font-size:.88rem}

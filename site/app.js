@@ -88,8 +88,8 @@ const DIAG = [
 const AV_COL = ['#2F6FB5', '#4F46E5', '#0C9C98', '#6D3FC0', '#C8463E', '#1D8F5F', '#E6A413'];
 const ROLES = {
   trial: { ic: '🎛️', name: 'Trial lead', job: n => `Run <b>trial ${n}</b> on the shared simulation.` },
-  recorder: { ic: '📋', name: 'Recorder', job: () => 'Take the <b>readings</b> for the table of record.' },
-  analyst: { ic: '🔍', name: 'Analyst', job: () => 'Spot the <b>pattern</b> and lead the group\'s explanation.' }
+  processor: { ic: '🧮', name: 'Data processor', job: () => 'Readings arrive by themselves. You <b>process</b> them in the coloured columns.' },
+  leader: { ic: '⭐', name: 'Team leader + processor', job: () => 'Lead the team and the prediction, and <b>process</b> the data with the processor.' }
 };
 const STN = {
   A: {
@@ -97,6 +97,7 @@ const STN = {
     goal: 'What does the gun give the electrons? Does the gap matter?',
     readHint: 'Drag the <b>cyan marker</b> onto the glowing trace at the 8 cm line, then tap <b>Record</b>. The reading goes straight into the table.',
     quest: true,
+    proc: [{ k: 'E', h: 'E = V ÷ d', u: 'V m⁻¹', ph: '1e5', f: r => r.kV * 1000 / (r.d / 100) }, { k: 'yV', h: 'y × V', u: 'cm kV', ph: '2.0', f: r => r.y * r.kV }],
     scene: [
       { img: 'img/filament.webp', cap: 'Hot metal boils off electrons.', sub: 'The heated cathode is the source.' },
       { anim: 'gun', cap: 'The anode pulls them into a beam.', sub: 'A steady stream shoots through the hole in the anode.' },
@@ -122,6 +123,7 @@ const STN = {
       { anim: 'curl', cap: 'Your mission: measure the circle.', sub: 'Change B. Read the diameter on the ruler.' }],
     pred: { q: 'You make the magnetic field STRONGER. The circle gets…', o: ['smaller', 'bigger', 'no change'] },
     cols: [{ k: 'V', label: 'V / V', tol: v => 0.6 }, { k: 'I', label: 'I / A', tol: v => 0.051 }, { k: 'd', label: 'd / cm', tol: v => 0.21 }],
+    proc: [{ k: 'r', h: 'r = d ÷ 2', u: 'm', ph: '0.04', f: r => r.d / 200 }, { k: 'B', h: 'B = 0.78 mT × I', u: 'T', ph: '1.2e-3', f: r => KCOIL * r.I }, { k: 'rB', h: 'r × B', u: 'T m', ph: '5e-5', f: r => r.d / 200 * KCOIL * r.I }],
     steps: [
       { m: EQ.FqvB, w: 'A moving charge feels a force at right angles to its velocity.' },
       { m: '<b>sideways force → no work → constant speed</b>', w: 'It never speeds the electron up, it only turns it: a circle.' },
@@ -140,6 +142,7 @@ const STN = {
       { anim: 'straight', cap: 'Your mission: balance them.', sub: 'Spot on the centre line means the forces cancel.' }],
     pred: { q: 'A FASTER beam, same B. To keep it straight you need…', o: ['a bigger E', 'a smaller E', 'the same E'] },
     cols: [{ k: 'beam', label: 'beam', tol: v => 0.01 }, { k: 'Vp', label: 'plate V / V', tol: v => 1.5 }, { k: 'I', label: 'I / A', tol: v => 0.011 }],
+    proc: [{ k: 'E', h: 'E = V ÷ 0.040 m', u: 'V m⁻¹', ph: '5e3', f: r => r.Vp / 0.04 }, { k: 'B', h: 'B = 0.78 mT × I', u: 'T', ph: '7.8e-4', f: r => KCOIL * r.I }, { k: 'v', h: 'v = E ÷ B', u: 'm s⁻¹', ph: '7e6', f: r => r.Vp / 0.04 / (KCOIL * r.I) }],
     steps: [
       { m: EQ.FqE, w: 'The electric field pushes the electron up, towards the positive plate.' },
       { m: EQ.FqvB, w: 'The magnetic field pushes it down.' },
@@ -164,28 +167,24 @@ const AN = {
     graph: rows => ({ pts: rows.map(r => [1 / r.kV, r.y]), xl: '1/V / kV⁻¹', yl: 'y / cm', fit: 'origin', note: 'Straight line through the origin: y ∝ 1/V. Readings from both guns sit on the same line, so the gap does not change the energy.' })
   },
   B: {
-    formula: `${M(mi('r') + mo('=') + frac(mi('d'), mn(2)))} (in metres) &nbsp;&nbsp; ${M(mi('B') + mo('=') + mn('0.78 mT') + mo('×') + mi('I'))}`,
-    cols: { 1: ['r'], 2: ['r', 'B', 'rB'], 3: ['r', 'B', 'qm'] },
-    def: {
-      r: { label: 'r / m', f: r => r.d / 200, ph: '0.041' },
-      B: { label: 'B / T', f: r => KCOIL * r.I, ph: '1.17e-3' },
-      rB: { label: 'r × B / T m', f: r => (r.d / 200) * KCOIL * r.I, ph: '4.8e-5' },
-      qm: { label: 'q/m / C kg⁻¹', f: r => speed(r.V) / (KCOIL * r.I * r.d / 200), ph: '1.8e11', hint: r => `v at ${r.V} V = ${sci(speed(r.V), 3)} m/s; q/m = v ÷ (B r)` }
-    },
-    extra: {},
-    graph: rows => ({ pts: rows.map(r => [1 / (KCOIL * r.I * 1e3), r.d / 2]), xl: '1/B / mT⁻¹', yl: 'r / cm', fit: 'origin', note: 'Same beam, straight line through the origin: r ∝ 1/B.' })
+    tasks: true,
+    formula: `${M(mi('B') + mo('=') + mn('0.78 mT') + mo('×') + mi('I'))} &nbsp;&nbsp; ${EQ.r} &nbsp;&nbsp; ${M(mi('r') + mi('B') + mo('=') + frac(mi('m') + mi('v'), mi('q')))}`,
+    list: (lvl, rows) => { const r = rows[0], out = [
+      { id: 'B', p: `Trial 1: the coil current is ${r.I} A. What is B? (0.78 mT for every amp)`, unit: 'T', ph: '1.2e-3', exp: KCOIL * r.I, tol: 0.03, hint: `0.78 × 10⁻³ × ${r.I}` }];
+      if (lvl >= 2) out.push({ id: 'r2', p: `Same beam, but B made twice as strong. Predict the new radius from trial 1.`, unit: 'cm', ph: '2.0', exp: r.d / 4, tol: 0.05, hint: `r ∝ 1/B. Trial 1 radius = ${fx(r.d / 2, 2)} cm.` });
+      if (lvl >= 3) out.push({ id: 'I2', p: `Same beam. What coil current would make the diameter ${fx(r.d * 0.8, 1)} cm?`, unit: 'A', ph: '1.9', exp: r.I / 0.8, tol: 0.04, hint: 'r × B stays the same, so I × d stays the same.' });
+      return out; },
+    graph: rows => { const V0 = rows[0].V, same = rows.filter(r => r.V === V0); return { pts: same.map(r => [1 / (KCOIL * r.I * 1e3), r.d / 2]), xl: `1/B / mT⁻¹ (beam at ${V0} V)`, yl: 'r / cm', fit: 'origin', note: 'Same beam, straight line through the origin: r ∝ 1/B. That is why r × B stays the same.' }; }
   },
   C: {
-    formula: `${M(mi('E') + mo('=') + frac(mi('V'), mn('0.040 m')))} &nbsp;&nbsp; ${M(mi('B') + mo('=') + mn('0.78 mT') + mo('×') + mi('I'))} &nbsp;&nbsp; ${EQ.vEB}`,
-    cols: { 1: ['E'], 2: ['E', 'B', 'v'], 3: ['E', 'B', 'v', 'qm'] },
-    def: {
-      E: { label: 'E / V m⁻¹', f: r => r.Vp / 0.040, ph: '9.8e3' },
-      B: { label: 'B / T', f: r => KCOIL * r.I, ph: '1.17e-3' },
-      v: { label: 'v / m s⁻¹', f: r => (r.Vp / 0.040) / (KCOIL * r.I), ph: '8.4e6' },
-      qm: { label: 'q/m / C kg⁻¹', f: r => ((r.Vp / 0.040) / (KCOIL * r.I)) ** 2 / (2 * GUN[r.beam]), ph: '1.8e11', hint: r => `Beam ${r.beam} came from a ${GUN[r.beam]} V gun. qV = ½mv², so q/m = v² ÷ 2V` }
-    },
-    extra: {},
-    graph: rows => ({ pts: rows.map(r => [r.beam, (r.Vp / 0.040) / (KCOIL * r.I) / 1e6]), xl: 'beam', yl: 'v / 10⁶ m s⁻¹', fit: null, note: 'Each beam has its own speed: v = E/B.' })
+    tasks: true,
+    formula: `${M(mi('E') + mo('=') + frac(mi('V'), mi('d')))} &nbsp;&nbsp; ${M(mi('B') + mo('=') + mn('0.78 mT') + mo('×') + mi('I'))} &nbsp;&nbsp; ${EQ.vEB}`,
+    list: (lvl, rows) => { const r = rows[0], E = r.Vp / 0.04, B = KCOIL * r.I, v = E / B, out = [
+      { id: 'v', p: `Beam ${r.beam} balanced at E = ${sci(E, 3)} V m⁻¹ and B = ${sci(B, 3)} T. How fast is it?`, unit: 'm s⁻¹', ph: '7e6', exp: v, tol: 0.03, hint: 'Balanced: qE = qvB, so v = E ÷ B.' }];
+      if (lvl >= 2 && rows[1]) { const r2 = rows[1]; out.push({ id: 'E2', p: `Beam ${r2.beam} has the speed in your table. If B were doubled, what E would balance it?`, unit: 'V m⁻¹', ph: '1e4', exp: 2 * r2.Vp / 0.04, tol: 0.03, hint: 'v = E/B must stay the same, so E doubles too.' }); }
+      if (lvl >= 3) out.push({ id: 'qm', p: `Beam ${r.beam} came from a ${GUN[r.beam]} V gun. Use qV = ½mv² to find q/m.`, unit: 'C kg⁻¹', ph: '1.8e11', exp: v * v / (2 * GUN[r.beam]), tol: 0.05, hint: 'q/m = v² ÷ (2V)' });
+      return out; },
+    graph: rows => ({ pts: rows.map(r => [r.beam, (r.Vp / 0.04) / (KCOIL * r.I) / 1e6]), xl: 'beam', yl: 'v / 10⁶ m s⁻¹', fit: null, xint: true, note: 'Each beam has its own speed, v = E/B, found without knowing q or m.' })
   }
 };
 function fitOrigin(pts) { let a = 0, b = 0; pts.forEach(p => { a += p[0] * p[1]; b += p[0] * p[0]; }); return a / b; }
@@ -198,7 +197,9 @@ function load() { try { const s = JSON.parse(localStorage.getItem(KEY)); if (s &
 let pT = null;
 function save(push = true) { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { } paintTop(); if (push) { clearTimeout(pT); pT = setTimeout(postProgress, 700); } }
 const ONLINE = location.protocol.startsWith('http');
-let netOK = ONLINE;
+let netOK = ONLINE, netFails = 0;
+function netFail() { if (++netFails >= 3 && netOK) { netOK = false; paintTop(); } }
+function netGood() { netFails = 0; if (!netOK) { netOK = true; paintTop(); } }
 async function apiGet(params) { if (!ONLINE) throw new Error('offline'); const r = await fetch(API + '?' + new URLSearchParams(params), { cache: 'no-store' }); if (!r.ok) throw new Error(r.status); netOK = true; return r.json(); }
 async function apiPost(body) { if (!ONLINE) throw new Error('offline'); const r = await fetch(API, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) }); if (!r.ok) throw new Error(r.status); netOK = true; return r.json(); }
 function summary() {
@@ -207,7 +208,7 @@ function summary() {
     diag: S.diag.map((d, i) => d == null ? '' : d === DIAG[i].a ? '✓' : '✗'), mark: S.mark, first: S.first, doneStation: S.doneStation,
     qm: S.final.qm || null, m: S.final.m || null, dRead: S.final.dRead || null, exit: S.exit == null ? '' : (S.exit === EXIT.a ? '✓' : '✗'), minutes: Math.round((Date.now() - S.t0) / 60000) };
 }
-function postProgress() { if (!S.name) return; apiPost({ op: 'progress', cls: S.cls, name: S.name, data: summary() }).catch(() => { netOK = false; paintTop(); }); }
+function postProgress() { if (!S.name) return; apiPost({ op: 'progress', cls: S.cls, name: S.name, data: summary() }).catch(() => { netFail(); }); }
 
 /* ============ TOP BAR ============ */
 function paintTop() {
@@ -265,7 +266,7 @@ function numTask(host, cfg, id, onDone) {
 function graph(pts, o) {
   if (!pts.length) return { m: 0, svg: '' };
   const W = 420, H = 250, L = 58, B = 44, T = 14, R = 14;
-  const xmax = Math.max(...pts.map(p => p[0])) * 1.15 || 1, ymax = Math.max(...pts.map(p => p[1])) * 1.15 || 1;
+  const xmax = o.xint ? Math.max(...pts.map(p => p[0])) + 1 : Math.max(...pts.map(p => p[0])) * 1.15 || 1, ymax = Math.max(...pts.map(p => p[1])) * 1.15 || 1;
   const X = x => L + (W - L - R) * x / xmax, Y = y => H - B - (H - B - T) * y / ymax;
   const m = o.fit === 'origin' ? fitOrigin(pts) : 0;
   const nice = v => Math.abs(v) >= 100 ? Math.round(v) : Math.abs(v) >= 10 ? v.toFixed(0) : v.toFixed(1);
@@ -394,7 +395,7 @@ async function rLab() {
   // join room (once)
   if (!R) {
     try { const res = await apiPost({ op: 'join', cls: S.cls, st: k, name: S.name, level: S.level }); R = res.room; S.role = res.me.role; S.trial = res.me.trial; }
-    catch (e) { netOK = false; R = R || { ver: 0, members: [{ name: S.name, role: 'trial', trial: 1 }], rows: [], sim: {}, pred: {} }; S.role = S.role || 'trial'; S.trial = S.trial || 1; }
+    catch (e) { netFail(); R = R || { ver: 0, members: [{ name: S.name, role: 'trial', trial: 1 }], rows: [], sim: {}, pred: {} }; S.role = S.role || 'trial'; S.trial = S.trial || 1; }
     R.rows.forEach(r => seenRows.add(r.id)); save();
   }
   [labExperiment, labProcess, labExplain][S.step]($('#body'));
@@ -402,9 +403,9 @@ async function rLab() {
 function startPoll(onUpdate) {
   stopPoll(); if (!ONLINE) return;
   pollT = setInterval(async () => {
-    try { const r = await apiGet({ op: 'room', cls: S.cls, st: S.station }); if (!netOK) { netOK = true; paintTop(); }
+    try { const r = await apiGet({ op: 'room', cls: S.cls, st: S.station }); netGood();
       if (!R || r.ver !== R.ver) { R = r; onUpdate && onUpdate(); } }
-    catch (e) { if (netOK) { netOK = false; paintTop(); } }
+    catch (e) { if (netOK) { netFail(); } }
   }, 1500);
 }
 function roomOp(op, payload) {   // optimistic local apply + server
@@ -414,9 +415,10 @@ function roomOp(op, payload) {   // optimistic local apply + server
   if (op === 'run') { if (!R.rows.some(x => x.id === payload.row.id)) R.rows.push({ ...payload.row, by: S.name, t: Date.now(), rec: {} }); }
   if (op === 'cell') { const row = R.rows.find(x => x.id === payload.id); if (row) row.rec[payload.col] = { v: payload.value, by: S.name }; }
   if (op === 'delrow') R.rows = R.rows.filter(x => x.id !== payload.id);
-  apiPost({ op, cls: S.cls, st: S.station, name: S.name, ...payload }).then(res => { if (res && res.room && res.room.ver >= (R.ver || 0)) R = res.room; }).catch(() => { netOK = false; paintTop(); });
+  apiPost({ op, cls: S.cls, st: S.station, name: S.name, ...payload }).then(res => { if (res && res.room && res.room.ver >= (R.ver || 0)) R = res.room; }).catch(() => { netFail(); });
 }
-function recVals(row) {   // parsed recorded values, or null if incomplete
+function recVals(row) {   // readings come straight from the instruments
+  if (STN[S.station].proc) { const o = {}; for (const c of STN[S.station].cols) { if (!isFinite(row.raw[c.k])) return null; o[c.k] = row.raw[c.k]; } return o; }
   const out = {}; for (const c of STN[S.station].cols) { const v = parseNum(row.rec[c.k] && row.rec[c.k].v); if (!isFinite(v)) return null; out[c.k] = v; } return out;
 }
 const completeRows = () => R.rows.map(recVals).filter(Boolean);
@@ -427,11 +429,11 @@ function labExperiment(body) {
   body.innerHTML = `<div class="grid2">
     <div class="card"><div class="mbox" id="mbox"></div><div class="simwrap" id="simwrap"><div id="sim"></div></div><div class="remote" id="remote"></div></div>
     <div>
-      <div class="card"><div class="role" id="rolecard"><span class="ic">${role.ic}</span><div><b>${role.name}${S.role === 'trial' ? ' ' + S.trial : ''}</b><div class="small muted">${role.job(S.trial)} Everyone can run trials and fill the table.</div></div></div>
+      <div class="card"><div class="role" id="rolecard"><span class="ic">${role.ic}</span><div><b>${role.name}${S.role === 'trial' ? ' ' + S.trial : ''}</b><div class="small muted">${role.job(S.trial)} Anyone can help with any job.</div></div></div>
         <div class="team" id="team" style="margin-top:10px"></div></div>
       <div class="card" id="predcard">${st.quest ? '<div id="quest"></div>' : ''}<div id="predwrap" ${st.quest && !S.questDone ? 'hidden' : ''}><h3>Predict first</h3><div class="q" style="font-size:1rem">${st.pred.q}</div><div class="pred" id="pred"></div></div></div>
       <div class="card" id="reccard"><div class="row between"><h3 style="margin:0">Table of record</h3><span class="tiny muted" id="cnt"></span></div>
-        <div class="tiny muted" style="margin:2px 0 8px">${st.quest ? 'Each Record adds the reading straight to the table. 3 to 5 readings.' : 'Read each new reading off the instruments and type it in. ✓ means it matches. 3 to 5 readings.'}</div>
+        <div class="tiny muted" style="margin:2px 0 8px">Readings arrive by themselves. Processors fill the <b style="color:var(--accent-ink)">coloured columns</b>: the header says how. Green = right. 3 to 5 readings.</div>
         <div id="rectbl"></div><div id="recnext"></div></div>
     </div></div>`;
   sim = ({ A: simA, B: simB, C: simC })[k]($('#sim'));
@@ -471,14 +473,14 @@ function paintQuest(obs) {
 /* mission panel: why + what, 2–3 lines, changes with progress */
 const MISSION = {
   A: [['Make a beam', 'In 1897 nobody knew what cathode rays were. What makes the beam appear, and what makes it vanish?', 'Try the heater, the voltage and the anode switch. Watch the screen each time.'],
-      ['Test the gun', 'Does a stronger field in the gun give the electrons more energy? More energy means a stiffer beam that bends less.', 'Predict first. Then record 3 to 5 readings: change the voltage, and try both guns.'],
-      ['Check your prediction', 'Did swapping guns move the trace? Did changing the voltage?', 'Agree on an answer as a team, then tap Process the data.']],
+      ['Test the gun', 'Does a stronger field in the gun give the electrons more energy? More energy means a stiffer beam that bends less.', 'Predict first. Trial leads: 3 to 5 readings (change V, try both guns). Processors: fill the coloured columns.'],
+      ['Check your prediction', 'Look at y × V: is it the same every time? Did swapping guns change anything?', 'Agree on an answer as a team, then tap Process the data.']],
   B: [['Predict', 'A magnetic field bends a moving electron into a circle. What sets the size of the circle?', 'Make your prediction first. Your team\'s picks show live.'],
-      ['Measure the circle', 'If B controls the circle, changing the coil current should change the diameter.', 'Change the current, put the marker on the top of the ring, tap Record. 3 to 5 readings.'],
-      ['Check your prediction', 'Did a stronger field make the circle bigger or smaller?', 'Agree on an answer as a team, then tap Process the data.']],
+      ['Measure the circle', 'If B controls the circle, changing the coil current should change the diameter.', 'Trial leads: change the current, marker on top of the ring, Record. Processors: fill the coloured columns.'],
+      ['Check your prediction', 'Look at r × B: the same for one beam? So r ∝ 1/B.', 'Agree on an answer as a team, then tap Process the data.']],
   C: [['Predict', 'The electric field pushes the beam up, the magnetic field pushes it down. Balanced, the beam goes straight.', 'Make your prediction first. Your team\'s picks show live.'],
-      ['Balance each beam', 'At balance qE = qvB, so you get the speed without knowing q or m.', 'Pick a beam, adjust E and B until the spot sits on 0, tap Record. Do all three beams.'],
-      ['Check your prediction', 'Which beam needed the biggest E? What does that say about its speed?', 'Agree on an answer as a team, then tap Process the data.']]
+      ['Balance each beam', 'At balance qE = qvB, so you get the speed without knowing q or m.', 'Trial leads: balance each beam and Record. Processors: work out E, B and the speed v = E ÷ B.'],
+      ['Check your prediction', 'Look at the v column: each beam has its own speed, found without q or m.', 'Agree on an answer as a team, then tap Process the data.']]
 };
 function paintMission() {
   const host = $('#mbox'); if (!host || !R) return;
@@ -501,37 +503,42 @@ function paintPred() {
   $('#pred').querySelectorAll('button').forEach(b => b.onclick = () => { roomOp('pred', { value: +b.dataset.i }); paintPred(); });
 }
 function cellOK(col, row, v) { const raw = row.raw[col.k]; return isFinite(v) && Math.abs(v - raw) <= col.tol(raw); }
+function procOK(row, p) { const v = parseNum(row.rec['p_' + p.k] && row.rec['p_' + p.k].v); return within(v, p.f(row.raw), 0.03); }
+const rowDone = row => STN[S.station].proc.every(p => procOK(row, p));
+const fmtRaw = v => typeof v === 'number' ? (Number.isInteger(v) ? v : +v.toFixed(2)) : v;
 function paintTable() {
   const st = STN[S.station], host = $('#rectbl'); if (!host) return;
   const focus = document.activeElement && document.activeElement.dataset && document.activeElement.dataset.cell;
   const key = R.rows.map(r => r.id).join(',');
   if (host.dataset.key !== key) {
     host.dataset.key = key;
-    host.innerHTML = R.rows.length ? `<table class="rec"><tr><th>#</th>${st.cols.map(c => `<th>${c.label}</th>`).join('')}<th></th></tr>${R.rows.map((r, i) => `<tr><td><b>${i + 1}</b><span class="by">${esc(r.by.split(' ')[0])}</span></td>${st.cols.map(c => `<td><input data-cell="${r.id}|${c.k}" inputmode="decimal" placeholder="?"></td>`).join('')}<td><button class="x" data-del="${r.id}" title="delete this trial">×</button></td></tr>`).join('')}</table>`
-      : `<div class="muted small">No trials yet. Trial lead 1: set the controls and run the first trial.</div>`;
+    host.innerHTML = R.rows.length ? `<div style="overflow-x:auto"><table class="rec"><tr><th>#</th>${st.cols.map(c => `<th>${c.label}</th>`).join('')}${st.proc.map(p => `<th class="pc">${p.h}<small>${p.u}</small></th>`).join('')}<th></th></tr>
+      ${R.rows.map((r, i) => `<tr><td><b>${i + 1}</b><span class="by">${esc(r.by.split(' ')[0])}</span></td>${st.cols.map(c => `<td class="rv">${fmtRaw(r.raw[c.k])}</td>`).join('')}${st.proc.map(p => `<td><input data-cell="${r.id}|p_${p.k}" inputmode="decimal" placeholder="${p.ph}"></td>`).join('')}<td><button class="x" data-del="${r.id}" title="delete this reading">×</button></td></tr>`).join('')}</table></div>`
+      : `<div class="muted small">No readings yet. Trial leads: run the first trial.</div>`;
     host.querySelectorAll('input').forEach(inp => {
       const commit = () => { const [id, col] = inp.dataset.cell.split('|'); const v = inp.value.trim(); const row = R.rows.find(x => x.id === id); if (!row) return; if ((row.rec[col] && row.rec[col].v) === v) return; roomOp('cell', { id, col, value: v }); paintTable(); };
       inp.addEventListener('change', commit); inp.addEventListener('keydown', e => { if (e.key === 'Enter') { commit(); inp.blur(); } });
     });
-    host.querySelectorAll('[data-del]').forEach(b => b.onclick = () => { if (confirm('Delete this trial for the whole team?')) { roomOp('delrow', { id: b.dataset.del }); paintTable(); } });
+    host.querySelectorAll('[data-del]').forEach(b => b.onclick = () => { if (confirm('Delete this reading for the whole team?')) { roomOp('delrow', { id: b.dataset.del }); paintTable(); } });
   }
   host.querySelectorAll('input').forEach(inp => {
-    const [id, col] = inp.dataset.cell.split('|'); const row = R.rows.find(x => x.id === id); if (!row) return; const c = st.cols.find(x => x.k === col);
+    const [id, col] = inp.dataset.cell.split('|'); const row = R.rows.find(x => x.id === id); if (!row) return; const p = st.proc.find(x => 'p_' + x.k === col);
     const cur = row.rec[col]; if (inp.dataset.cell !== focus && cur && inp.value !== cur.v) { inp.value = cur.v; inp.classList.add('flash'); setTimeout(() => inp.classList.remove('flash'), 1200); }
-    const v = parseNum(inp.value); inp.classList.toggle('ok', inp.value !== '' && cellOK(c, row, v)); inp.classList.toggle('chk', inp.value !== '' && !cellOK(c, row, v));
-    inp.title = cur ? `entered by ${cur.by}` : '';
+    const ok = within(parseNum(inp.value), p.f(row.raw), 0.03); inp.classList.toggle('ok', inp.value !== '' && ok); inp.classList.toggle('chk', inp.value !== '' && !ok);
+    inp.title = cur ? `by ${cur.by}` : p.h;
   });
-  const n = completeRows().length; $('#cnt').textContent = `${n} complete trial${n === 1 ? '' : 's'} · need 3`;
+  const n = R.rows.filter(rowDone).length; $('#cnt').textContent = `${R.rows.length} reading${R.rows.length === 1 ? '' : 's'} · ${n} processed · need 3`;
   const nx = $('#recnext');
-  if (n >= 3 && !nx.dataset.on) { nx.dataset.on = 1; nx.innerHTML = `<div class="fb good">Three complete trials. Now everyone processes the data on their own.</div>`; nextBtn(nx, () => { S.step = 1; save(); render(); }, 'Process the data'); }
+  if (n >= 3 && !nx.dataset.on) { nx.dataset.on = 1; nx.innerHTML = `<div class="fb good">Three readings processed. Everyone: make sense of the data on your own.</div>`; nextBtn(nx, () => { S.step = 1; save(); render(); }, 'Make sense of it'); }
   if (n < 3 && nx.dataset.on) { nx.dataset.on = ''; nx.innerHTML = ''; }
 }
 function roleCoachA2() {
   const predicted = () => R.pred[S.name] != null, ranMine = () => R.rows.some(r => r.by === S.name);
   const steps = [{ el: '#predcard', t: 'Now <b>predict</b>: does twice the field in the gun make a stiffer beam? Your team\'s picks show live.', until: predicted },
-    { el: sim.platesEl, t: 'The plates bend the beam. <b>Less bend = more energy.</b> Set a voltage and pick a gun.' },
-    { el: sim.runEl, t: STN.A.readHint, until: ranMine },
-    { el: '#reccard', t: '<b>3 to 5</b> readings: change the voltage AND swap guns. Watch whether the trace moves.' }];
+    ...(S.role === 'trial' ? [{ el: sim.platesEl, t: 'The plates bend the beam. <b>Less bend = more energy.</b> Set a voltage and pick a gun.' },
+      { el: sim.runEl, t: STN.A.readHint, until: ranMine },
+      { el: '#reccard', t: '<b>3 to 5</b> readings: change the voltage AND swap guns. Watch whether the trace moves.' }]
+    : [{ el: '#reccard', t: 'Readings arrive by themselves. <b>You process them</b>: the coloured headers show the formula. Watch the <b>y × V</b> column: what do you notice?', until: () => R.rows.some(r => Object.entries(r.rec).some(([c, x]) => c.startsWith('p_') && x.by === S.name)) }])];
   steps.forEach((x, i) => { x.n = i + 1; x.of = steps.length; }); coach(steps, 'roleA2');
 }
 function roleCoach() {
@@ -545,13 +552,10 @@ function roleCoach() {
   const steps = [{ el: '#predcard', t: 'First, <b>predict</b>. Your team\'s picks show up live.', until: predicted }];
   if (S.role === 'trial') {
     steps.push({ el: sim.ctrlEl, drag: true, t: k === 'A' ? 'Set the <b>voltage</b>, then move the <b>anode</b> to choose a gap. Try two gaps at the same voltage.' : k === 'B' ? 'Set the <b>coil current</b> for your trial.' : 'Pick a beam, then move the sliders to <b>balance</b> it.', until: changed });
-    steps.push({ el: sim.runEl, t: k === 'B' ? 'Drag the orange marker to the <b>top of the ring</b>, then tap <b>Record</b>.' : k === 'C' ? 'When the spot sits on 0, tap <b>Record</b>.' : 'Tap <b>Fire</b>. Watch the trail of equal time steps: where does the electron speed up?', until: ranMine });
-  } else if (S.role === 'recorder') {
-    steps.push({ el: sim.instEl, t: STN[k].readHint || 'Watch the <b>instruments</b>. When a trial lead runs a trial, read the numbers here.' });
-    steps.push({ el: '#reccard', t: 'Type each reading into the <b>table of record</b>. A green box means it matches the instrument.', until: typed });
+    steps.push({ el: sim.runEl, t: k === 'B' ? 'Drag the cyan marker to the <b>top of the ring</b>, then tap <b>Record</b>.' : k === 'C' ? 'When the spot sits on 0, tap <b>Record</b>.' : 'Tap <b>Fire</b>. Watch the trail of equal time steps: where does the electron speed up?', until: ranMine });
   } else {
-    steps.push({ el: '#reccard', t: 'You lead the thinking. As rows arrive, look for the <b>pattern</b>. Ask: does it match our prediction?' });
-    steps.push({ el: sim.ctrlEl, t: 'You can run a trial too. Try an extreme setting to test the pattern.' });
+    steps.push({ el: '#reccard', t: `Readings arrive by themselves. <b>You process them</b>: the coloured headers show the formula. ${k === 'C' ? 'The last column is the <b>speed</b>.' : 'Watch the <b>r × B</b> column: what do you notice?'}`, until: () => R.rows.some(r => Object.entries(r.rec).some(([c, x]) => c.startsWith('p_') && x.by === S.name)) });
+    if (S.role === 'leader') steps.push({ el: '#predcard', t: 'Team leader: when 3 rows are processed, ask the team: <b>was our prediction right?</b>' });
   }
   steps.forEach((s, i) => { s.n = i + 1; s.of = steps.length; });
   coach(steps, 'role' + k);

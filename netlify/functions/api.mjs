@@ -34,8 +34,8 @@ async function update(key, init, fn) {
 
 function assignRole(members, level) {
   const has = r => members.filter(m => m.role === r).length;
-  const order = level >= 3 ? ["analyst", "recorder", "trial"] : level === 2 ? ["recorder", "trial", "analyst"] : ["trial", "recorder", "analyst"];
-  const cap = { trial: 3, recorder: 1, analyst: 1 };
+  const order = level >= 3 ? ["leader", "processor", "trial"] : level === 2 ? ["processor", "trial", "leader"] : ["trial", "processor", "leader"];
+  const cap = { trial: 3, processor: 1, leader: 1 };
   for (const r of order) if (has(r) < cap[r]) return r;
   return "trial";
 }
