@@ -66,13 +66,13 @@ const FIG = {
    <text x="45" y="15" fill="#F07A71" font-size="18" font-weight="800" text-anchor="middle">−</text><text x="335" y="15" fill="#45C58C" font-size="18" font-weight="800" text-anchor="middle">+</text>
    <circle r="7" fill="#8DB8EA"><animate attributeName="cx" values="56;56;330;400" keyTimes="0;.15;.85;1" keySplines=".5 0 1 1;.5 0 1 1;0 0 1 1" calcMode="spline" dur="2.4s" repeatCount="indefinite"/><animate attributeName="cy" values="75;75;75;75" dur="2.4s" repeatCount="indefinite"/></circle>
    <text x="190" y="145" fill="#9AA4B8" font-size="13" text-anchor="middle">accelerating voltage V</text></svg>`,
-  circle: `<svg viewBox="0 0 420 170">${Array.from({ length: 24 }, (_, i) => `<text x="${30 + (i % 8) * 50}" y="${30 + Math.floor(i / 8) * 55}" fill="#d39a5c" font-size="14" opacity=".55">⊙</text>`).join('')}
+  circle: `<svg viewBox="0 0 420 170">${Array.from({ length: 24 }, (_, i) => `<text x="${30 + (i % 8) * 50}" y="${30 + Math.floor(i / 8) * 55}" fill="#F472B6" font-size="14" opacity=".55">⊙</text>`).join('')}
    <circle cx="210" cy="85" r="60" fill="none" stroke="#7CFFB2" stroke-width="2" stroke-dasharray="4 6" opacity=".6"/>
    <circle r="7" fill="#8DB8EA"><animateMotion dur="3s" repeatCount="indefinite" path="M210,145 A60,60 0 1,0 210,25 A60,60 0 1,0 210,145"/></circle>
    <text x="210" y="165" fill="#9AA4B8" font-size="13" text-anchor="middle">uniform magnetic field B</text></svg>`,
   crossed: `<svg viewBox="0 0 420 150"><rect x="120" y="30" width="180" height="7" fill="#c9d3e8"/><rect x="120" y="113" width="180" height="7" fill="#c9d3e8"/>
    <text x="110" y="38" fill="#45C58C" font-size="16" font-weight="800" text-anchor="end">+</text><text x="110" y="121" fill="#F07A71" font-size="16" font-weight="800" text-anchor="end">−</text>
-   ${[0, 1, 2, 3].map(i => `<text x="${150 + i * 40}" y="70" fill="#d39a5c" font-size="13" opacity=".6">⊗</text><text x="${150 + i * 40}" y="96" fill="#d39a5c" font-size="13" opacity=".6">⊗</text>`).join('')}
+   ${[0, 1, 2, 3].map(i => `<text x="${150 + i * 40}" y="70" fill="#F472B6" font-size="13" opacity=".6">⊗</text><text x="${150 + i * 40}" y="96" fill="#F472B6" font-size="13" opacity=".6">⊗</text>`).join('')}
    <line x1="20" y1="75" x2="400" y2="75" stroke="#7CFFB2" stroke-width="2.5"/><circle r="6" fill="#b6ffd6"><animate attributeName="cx" values="20;400" dur="1.6s" repeatCount="indefinite"/><animate attributeName="cy" values="75;75" dur="1.6s" repeatCount="indefinite"/></circle>
    <text x="210" y="142" fill="#9AA4B8" font-size="13" text-anchor="middle">electric field E and magnetic field B together</text></svg>`
 };
@@ -85,7 +85,7 @@ const DIAG = [
 ];
 
 /* ============ STATIONS ============ */
-const AV_COL = ['#2F6FB5', '#E8622A', '#0C9C98', '#6D3FC0', '#C8463E', '#1D8F5F', '#E6A413'];
+const AV_COL = ['#2F6FB5', '#4F46E5', '#0C9C98', '#6D3FC0', '#C8463E', '#1D8F5F', '#E6A413'];
 const ROLES = {
   trial: { ic: '🎛️', name: 'Trial lead', job: n => `Run <b>trial ${n}</b> on the shared simulation.` },
   recorder: { ic: '📋', name: 'Recorder', job: () => 'Read the instruments and fill in the <b>table of record</b>.' },
@@ -275,7 +275,7 @@ function graph(pts, o) {
     <line x1="${L}" y1="${Y(yv)}" x2="${W - R}" y2="${Y(yv)}" stroke="#E8ECF3"/><text x="${L - 6}" y="${Y(yv) + 4}" font-size="11" text-anchor="end" fill="#5E6470">${nice(yv)}</text>`; }
   return { m, svg: `<svg viewBox="0 0 ${W} ${H}" style="width:100%;background:#fff;border:1px solid var(--line);border-radius:12px">${t}
    <line x1="${L}" y1="${H - B}" x2="${W - R}" y2="${H - B}" stroke="#15171C"/><line x1="${L}" y1="${H - B}" x2="${L}" y2="${T}" stroke="#15171C"/>
-   ${o.fit ? `<line x1="${X(0)}" y1="${Y(0)}" x2="${X(xmax)}" y2="${Y(m * xmax)}" stroke="#E8622A" stroke-width="2" stroke-dasharray="6 4"/>` : ''}
+   ${o.fit ? `<line x1="${X(0)}" y1="${Y(0)}" x2="${X(xmax)}" y2="${Y(m * xmax)}" stroke="#4F46E5" stroke-width="2" stroke-dasharray="6 4"/>` : ''}
    ${pts.map(p => `<circle cx="${X(p[0])}" cy="${Y(p[1])}" r="6" fill="#2F6FB5" stroke="#fff" stroke-width="1.5"/>`).join('')}
    <text x="${(L + W - R) / 2}" y="${H - 8}" font-size="12" text-anchor="middle" font-weight="600">${o.xl}</text>
    <text x="14" y="${(T + H - B) / 2}" font-size="12" text-anchor="middle" font-weight="600" transform="rotate(-90 14 ${(T + H - B) / 2})">${o.yl}</text></svg>` };
@@ -511,7 +511,7 @@ function sceneAnim(kind) {
   if (kind === 'gun') return `<svg class="anim" viewBox="0 0 640 300" preserveAspectRatio="xMidYMid slice"><rect width="640" height="300" fill="#0E1424"/>
     <rect x="110" y="60" width="12" height="170" fill="#c9d3e8"/><rect x="420" y="60" width="12" height="70" fill="#c9d3e8"/><rect x="420" y="160" width="12" height="70" fill="#c9d3e8"/>
     <text x="116" y="50" fill="#F07A71" font-size="26" font-weight="900" text-anchor="middle">−</text><text x="426" y="50" fill="#45C58C" font-size="26" font-weight="900" text-anchor="middle">+</text>
-    <path d="M100 100 q-14 22 0 44 q14 22 0 44" stroke="#FF8A50" stroke-width="4" fill="none"/>
+    <path d="M100 100 q-14 22 0 44 q14 22 0 44" stroke="#FDBA4D" stroke-width="4" fill="none"/>
     ${[0, 1, 2, 3].map(i => `<circle r="7" fill="#8DB8EA"><animate attributeName="cx" values="128;128;420;640" keyTimes="0;.12;.82;1" calcMode="spline" keySplines=".6 0 1 1;.6 0 1 1;0 0 1 1" dur="2.4s" begin="${i * .6}s" repeatCount="indefinite"/><animate attributeName="cy" values="${130 + i * 10};${130 + i * 10};145;145" keyTimes="0;.12;.82;1" dur="2.4s" begin="${i * .6}s" repeatCount="indefinite"/></circle>`).join('')}
     <text x="270" y="270" fill="#F2BD45" font-size="18" text-anchor="middle">← electric field E</text></svg>`;
   if (kind === 'strobe') return `<svg class="anim" viewBox="0 0 640 300" preserveAspectRatio="xMidYMid slice"><rect width="640" height="300" fill="#0E1424"/>
@@ -520,14 +520,14 @@ function sceneAnim(kind) {
     <circle cx="127" cy="150" r="7" fill="#8DB8EA" opacity="0"><animate attributeName="opacity" values="0;1" begin="0.00s" dur=".2s" fill="freeze"/></circle><circle cx="149" cy="150" r="7" fill="#8DB8EA" opacity="0"><animate attributeName="opacity" values="0;1" begin="0.25s" dur=".2s" fill="freeze"/></circle><circle cx="185" cy="150" r="7" fill="#8DB8EA" opacity="0"><animate attributeName="opacity" values="0;1" begin="0.50s" dur=".2s" fill="freeze"/></circle><circle cx="235" cy="150" r="7" fill="#8DB8EA" opacity="0"><animate attributeName="opacity" values="0;1" begin="0.75s" dur=".2s" fill="freeze"/></circle><circle cx="300" cy="150" r="7" fill="#8DB8EA" opacity="0"><animate attributeName="opacity" values="0;1" begin="1.00s" dur=".2s" fill="freeze"/></circle><circle cx="372" cy="150" r="7" fill="#8DB8EA" opacity="0"><animate attributeName="opacity" values="0;1" begin="1.25s" dur=".2s" fill="freeze"/></circle><circle cx="444" cy="150" r="7" fill="#8DB8EA" opacity="0"><animate attributeName="opacity" values="0;1" begin="1.50s" dur=".2s" fill="freeze"/></circle><circle cx="516" cy="150" r="7" fill="#8DB8EA" opacity="0"><animate attributeName="opacity" values="0;1" begin="1.75s" dur=".2s" fill="freeze"/></circle><circle cx="588" cy="150" r="7" fill="#8DB8EA" opacity="0"><animate attributeName="opacity" values="0;1" begin="2.00s" dur=".2s" fill="freeze"/></circle><circle cx="660" cy="150" r="7" fill="#8DB8EA" opacity="0"><animate attributeName="opacity" values="0;1" begin="2.25s" dur=".2s" fill="freeze"/></circle>
     <text x="210" y="265" fill="#F2BD45" font-size="17" text-anchor="middle">speeds up in the gap</text><text x="480" y="265" fill="#7CFFB2" font-size="17" text-anchor="middle">equal steps: constant speed</text></svg>`;
   if (kind === 'curl') return `<svg class="anim" viewBox="0 0 640 300" preserveAspectRatio="xMidYMid slice"><rect width="640" height="300" fill="#0E1424"/>
-    ${Array.from({ length: 40 }, (_, i) => `<text x="${30 + (i % 10) * 62}" y="${40 + Math.floor(i / 10) * 70}" fill="#d39a5c" font-size="16" opacity=".35">⊙</text>`).join('')}
+    ${Array.from({ length: 40 }, (_, i) => `<text x="${30 + (i % 10) * 62}" y="${40 + Math.floor(i / 10) * 70}" fill="#F472B6" font-size="16" opacity=".35">⊙</text>`).join('')}
     <path d="M320 260 A95 95 0 1 0 320 70 A95 95 0 1 0 320 260" fill="none" stroke="#7CFFB2" stroke-width="4" opacity=".9"><animate attributeName="stroke-dasharray" values="0 700;700 0" dur="2.2s" repeatCount="indefinite"/></path>
     <line x1="320" y1="260" x2="320" y2="70" stroke="#cfd8ea" stroke-dasharray="5 5"/><text x="334" y="170" fill="#cfd8ea" font-size="18">diameter</text></svg>`;
   if (kind === 'push') return `<svg class="anim" viewBox="0 0 640 300" preserveAspectRatio="xMidYMid slice"><rect width="640" height="300" fill="#0E1424"/>
     <rect x="170" y="70" width="300" height="10" fill="#c9d3e8"/><rect x="170" y="220" width="300" height="10" fill="#c9d3e8"/><text x="150" y="82" fill="#45C58C" font-size="24" font-weight="900">+</text><text x="150" y="232" fill="#F07A71" font-size="24" font-weight="900">−</text>
     <circle cx="320" cy="150" r="10" fill="#8DB8EA"/>
     <line x1="320" y1="138" x2="320" y2="92" stroke="#45C58C" stroke-width="5"/><polygon points="320,86 311,102 329,102" fill="#45C58C"/><text x="336" y="104" fill="#45C58C" font-size="18">electric force qE</text>
-    <line x1="320" y1="162" x2="320" y2="208" stroke="#d39a5c" stroke-width="5"/><polygon points="320,214 311,198 329,198" fill="#d39a5c"/><text x="336" y="206" fill="#d39a5c" font-size="18">magnetic force qvB</text></svg>`;
+    <line x1="320" y1="162" x2="320" y2="208" stroke="#F472B6" stroke-width="5"/><polygon points="320,214 311,198 329,198" fill="#F472B6"/><text x="336" y="206" fill="#F472B6" font-size="18">magnetic force qvB</text></svg>`;
   if (kind === 'straight') return `<svg class="anim" viewBox="0 0 640 300" preserveAspectRatio="xMidYMid slice"><rect width="640" height="300" fill="#0E1424"/>
     <rect x="170" y="70" width="300" height="10" fill="#c9d3e8"/><rect x="170" y="220" width="300" height="10" fill="#c9d3e8"/>
     <rect x="560" y="60" width="14" height="180" fill="#2c6b55"/><line x1="40" y1="150" x2="560" y2="150" stroke="#7CFFB2" stroke-width="4"><animate attributeName="stroke-dasharray" values="0 600;600 0" dur="1.8s" repeatCount="indefinite"/></line>
@@ -559,15 +559,15 @@ function simA(host) {
    <rect x="20" y="40" width="600" height="200" rx="100" fill="url(#tube)" stroke="#3a4a70" stroke-width="2"/>
    <rect x="${SCR}" y="78" width="10" height="124" rx="3" fill="#1f5a45"/><text x="${SCR - 4}" y="70" fill="#7CFFB2" font-size="11" text-anchor="end">fluorescent screen</text>
    <circle id="spot" cx="${SCR}" cy="${CY}" r="13" fill="url(#spotg)" opacity="0"/>
-   <path d="M${X0 - 7} 112 q-9 14 0 28 q9 14 0 28" stroke="#FF8A50" stroke-width="3" fill="none" id="fil" opacity=".65"/>
+   <path d="M${X0 - 7} 112 q-9 14 0 28 q9 14 0 28" stroke="#FDBA4D" stroke-width="3" fill="none" id="fil" opacity=".65"/>
    <rect x="${X0}" y="82" width="9" height="116" fill="#c9d3e8"/><text x="${X0 + 4}" y="74" fill="#F07A71" font-size="13" font-weight="800" text-anchor="middle">− cathode</text>
    <g id="anode"><rect x="0" y="82" width="9" height="46" fill="#c9d3e8"/><rect x="0" y="152" width="9" height="46" fill="#c9d3e8"/><text x="4" y="74" fill="#45C58C" font-size="13" font-weight="800" text-anchor="middle">+ anode</text>
-     <line x1="4.5" y1="198" x2="4.5" y2="236" stroke="#FFB894" stroke-width="1.5" stroke-dasharray="3 2"/></g>
+     <line x1="4.5" y1="198" x2="4.5" y2="236" stroke="#A5B4FC" stroke-width="1.5" stroke-dasharray="3 2"/></g>
    <g id="field"></g>
    <g id="ruler"></g>
    <g id="trail"></g>
    <g id="eA" opacity="0"><circle r="12" fill="url(#glw)"/><circle r="5" fill="#8DB8EA"/></g>
-   <text id="tnote" x="470" y="286" fill="#9AA4B8" font-size="12" text-anchor="middle"></text>
+   <text id="tnote" x="612" y="286" fill="#9AA4B8" font-size="12" text-anchor="end"></text>
   </svg>
   <div class="ctrl" id="cV"><label>Supply voltage V <output id="oV"></output></label><input type="range" id="sV" min="50" max="400" step="10" value="${V}"></div>
   <div class="ctrl" id="cD"><label>Move the anode (sets the gap d) <output>read the ruler</output></label><input type="range" id="sD" min="1" max="3.5" step="0.1" value="${d}"></div>
@@ -606,7 +606,7 @@ function simA(host) {
       while (t >= nextDot && nextDot <= T + 1e-15) { const xd = X0 + 9 + pos(nextDot) * 100 * PXC; tr.insertAdjacentHTML('beforeend', `<circle cx="${xd.toFixed(1)}" cy="${CY}" r="3.5" fill="${nextDot < tg ? '#F2BD45' : '#7CFFB2'}"/>`); nextDot += step; }
       if (t < T) requestAnimationFrame(frame);
       else { e.setAttribute('opacity', 0); q('#fil').setAttribute('opacity', .65); q('#spot').setAttribute('opacity', 1);
-        q('#tnote').textContent = 'dots = equal time steps: spacing grows in the gap, then stays the same'; busy = false; cb && cb(); } };
+        q('#tnote').textContent = 'dots = equal time steps: spreading in the gap, then evenly spaced'; busy = false; cb && cb(); } };
     requestAnimationFrame(frame);
   };
   q('#fire').onclick = () => { if (busy) return; animate(() => o.onRun && o.onRun({ V, d })); };
@@ -622,12 +622,12 @@ function simB(host, cfg = {}) {
    <defs><radialGradient id="bulb" cx=".45" cy=".4"><stop offset="0" stop-color="#2d2144"/><stop offset="1" stop-color="#120f22"/></radialGradient>
    <filter id="gl"><feGaussianBlur stdDeviation="4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>
    <circle cx="${cx}" cy="${cy}" r="${Rb + 30}" fill="none" stroke="#B5763B" stroke-width="12" opacity=".75"/>
-   <text x="${cx + Rb - 4}" y="22" fill="#d39a5c" font-size="11" text-anchor="end">Helmholtz coils</text>
+   <text x="${cx + Rb - 4}" y="22" fill="#F472B6" font-size="11" text-anchor="end">Helmholtz coils</text>
    <circle cx="${cx}" cy="${cy}" r="${Rb}" fill="url(#bulb)" stroke="#6a5a90" stroke-width="2"/>
    <g id="ruler"></g>
    <path id="beam" fill="none" stroke="#E07BFF" stroke-width="4" filter="url(#gl)" opacity=".85"/>
-   <rect x="${gx - 34}" y="${gy - 8}" width="34" height="16" rx="3" fill="#8a96b3"/><circle cx="${gx - 30}" cy="${gy}" r="4" fill="#FF8A50"/>
-   <g id="mk" style="cursor:ns-resize"><line x1="${gx - 26}" x2="${gx + 26}" stroke="#FF8A50" stroke-width="3"/><polygon points="${gx + 28},0 ${gx + 42},-9 ${gx + 42},9" fill="#FF8A50"/><rect x="${gx - 44}" y="-16" width="104" height="32" fill="transparent"/></g>
+   <rect x="${gx - 34}" y="${gy - 8}" width="34" height="16" rx="3" fill="#8a96b3"/><circle cx="${gx - 30}" cy="${gy}" r="4" fill="#22D3EE"/>
+   <g id="mk" style="cursor:ns-resize"><line x1="${gx - 26}" x2="${gx + 26}" stroke="#22D3EE" stroke-width="3"/><polygon points="${gx + 28},0 ${gx + 42},-9 ${gx + 42},9" fill="#22D3EE"/><rect x="${gx - 44}" y="-16" width="104" height="32" fill="transparent"/></g>
    <text x="18" y="404" fill="#9AA4B8" font-size="12">B out of the screen ⊙</text>
   </svg>
   ${cfg.fixedV ? '' : `<div class="ctrl"><label>Electron gun voltage <output id="oV2"></output></label><div class="seg" id="segV">${[150, 200, 250, 300].map(v => `<button data-v="${v}">${v} V</button>`).join('')}</div></div>
@@ -669,16 +669,16 @@ function simC(host) {
   host.innerHTML = `<svg class="sim" viewBox="0 0 640 300">
    <defs><filter id="gl2"><feGaussianBlur stdDeviation="2.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>
    <rect x="10" y="20" width="620" height="260" rx="40" fill="#141c30" stroke="#3a4a70"/>
-   <rect x="30" y="140" width="50" height="20" rx="4" fill="#8a96b3"/><circle cx="36" cy="150" r="4" fill="#FF8A50"/>
-   <circle cx="280" cy="150" r="92" fill="#B5763B" opacity=".14"/><text x="280" y="262" fill="#d39a5c" font-size="11" text-anchor="middle">coils: B into screen ⊗</text>
-   ${[0, 1, 2, 3].map(i => [0, 1, 2].map(j => `<text x="${222 + i * 38}" y="${126 + j * 24}" fill="#d39a5c" font-size="13" opacity=".55" text-anchor="middle">⊗</text>`).join('')).join('')}
+   <rect x="30" y="140" width="50" height="20" rx="4" fill="#8a96b3"/><circle cx="36" cy="150" r="4" fill="#22D3EE"/>
+   <circle cx="280" cy="150" r="92" fill="#B5763B" opacity=".14"/><text x="280" y="262" fill="#F472B6" font-size="11" text-anchor="middle">coils: B into screen ⊗</text>
+   ${[0, 1, 2, 3].map(i => [0, 1, 2].map(j => `<text x="${222 + i * 38}" y="${126 + j * 24}" fill="#F472B6" font-size="13" opacity=".55" text-anchor="middle">⊗</text>`).join('')).join('')}
    <rect x="200" y="100" width="160" height="7" fill="#c9d3e8"/><text x="190" y="108" fill="#45C58C" font-size="18" font-weight="800" text-anchor="end">+</text>
    <rect x="200" y="193" width="160" height="7" fill="#c9d3e8"/><text x="190" y="202" fill="#F07A71" font-size="18" font-weight="800" text-anchor="end">−</text>
    <text x="280" y="92" fill="#9AA4B8" font-size="11" text-anchor="middle">plates 4.0 cm apart</text>
    <rect x="556" y="60" width="10" height="180" fill="#2c6b55"/><line x1="548" y1="150" x2="574" y2="150" stroke="#cfd8ea" stroke-dasharray="3 3"/>
    ${[-4, -2, 0, 2, 4].map(c => `<text x="584" y="${150 - c * 20 + 4}" fill="#9AA4B8" font-size="10">${c > 0 ? '+' : ''}${c}</text>`).join('')}<text x="590" y="52" fill="#9AA4B8" font-size="10" text-anchor="middle">cm</text>
    <g id="arE" opacity="0"><line x1="280" y1="150" x2="280" y2="118" stroke="#45C58C" stroke-width="4"/><polygon points="280,112 273,124 287,124" fill="#45C58C"/></g>
-   <g id="arB" opacity="0"><line x1="280" y1="150" x2="280" y2="182" stroke="#d39a5c" stroke-width="4"/><polygon points="280,188 273,176 287,176" fill="#d39a5c"/></g>
+   <g id="arB" opacity="0"><line x1="280" y1="150" x2="280" y2="182" stroke="#F472B6" stroke-width="4"/><polygon points="280,188 273,176 287,176" fill="#F472B6"/></g>
    <path id="bp" fill="none" stroke="#7CFFB2" stroke-width="2.5" filter="url(#gl2)"/><circle id="spot" r="6" fill="#b6ffd6" filter="url(#gl2)"/>
    <text x="300" y="45" fill="#7CFFB2" font-size="15" text-anchor="middle" font-weight="700" id="stt"></text></svg>
   <div class="ctrl"><div class="seg" id="segB">${[1, 2, 3].map(b => `<button data-b="${b}">Beam ${b}</button>`).join('')}</div></div>
@@ -841,7 +841,7 @@ function rMillikan() {
       S.final.m = v; save();
       c.insertAdjacentHTML('beforeend', `<div class="card mission reveal" style="margin-top:12px"><div class="row" style="gap:18px;flex-wrap:nowrap">
         <svg viewBox="0 0 160 160" style="width:140px;flex:none"><circle cx="80" cy="80" r="60" fill="#E6A413" opacity=".9"><animate attributeName="opacity" values=".9;.25" dur="2.5s" fill="freeze"/></circle>
-        <circle cx="80" cy="80" r="60" fill="none" stroke="#FFB894" stroke-width="2" stroke-dasharray="6 6"/>${[[50, 60], [105, 70], [75, 110], [95, 45], [60, 95]].map(([x, y], i) => `<circle cx="${x}" cy="${y}" r="5" fill="#8DB8EA" opacity="0"><animate attributeName="opacity" values="0;1" begin="${1 + i * .2}s" dur=".4s" fill="freeze"/></circle>`).join('')}</svg>
+        <circle cx="80" cy="80" r="60" fill="none" stroke="#A5B4FC" stroke-width="2" stroke-dasharray="6 6"/>${[[50, 60], [105, 70], [75, 110], [95, 45], [60, 95]].map(([x, y], i) => `<circle cx="${x}" cy="${y}" r="5" fill="#8DB8EA" opacity="0"><animate attributeName="opacity" values="0;1" begin="${1 + i * .2}s" dur=".4s" fill="freeze"/></circle>`).join('')}</svg>
         <div><h2>You found the electron.</h2><div class="eqbig" style="color:#fff;text-align:left">m<sub>e</sub> = 9.11 × 10⁻³¹ kg</div>
         <p>About 1/1840 of a hydrogen atom, and found inside every atom. Atoms have parts: Dalton's solid spheres are gone.</p></div></div></div>`);
       nextBtn(c, () => go('reflect'), 'Reflect');
