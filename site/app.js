@@ -280,30 +280,39 @@ function graph(pts, o) {
 }
 
 /* ============ COACH: animated hand that waits for the real action ============ */
-let coachQ = [], coachDone = null, coachTimer = null;
+let coachQ = [], coachDone = null, coachTimer = null, coachEl = null, coachSt = null, coachFlip = false;
 function coach(steps, key, done) { if (S.seen[key]) { done && done(); return; } S.seen[key] = 1; save(false); coachQ = steps.slice(); coachDone = done; coachNext(); }
-function coachStop() { clearInterval(coachTimer); const c = $('#coach'); clearInterval(c._iv); c.hidden = true; coachQ = []; }
+function coachLock(on) { document.documentElement.style.overflow = on ? 'hidden' : ''; document.body.style.overflow = on ? 'hidden' : ''; }
+function coachStop() { clearInterval(coachTimer); const c = $('#coach'); clearInterval(c._iv); c.hidden = true; coachQ = []; coachEl = null; coachLock(false); }
+function coachPlace() {   // positions ring, hand and bubble from the target's CURRENT position
+  const c = $('#coach'); if (c.hidden || !coachEl || !document.body.contains(coachEl)) return;
+  const st = coachSt, r = coachEl.getBoundingClientRect(), ring = c.querySelector('.ring'), hand = c.querySelector('.hand'), bub = c.querySelector('.bubble');
+  Object.assign(ring.style, { left: (r.left - 6) + 'px', top: (r.top - 6) + 'px', width: (r.width + 12) + 'px', height: (r.height + 12) + 'px' });
+  const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+  if (st.drag) { hand.style.left = (coachFlip ? r.left + r.width * .8 : r.left + r.width * .2) + 'px'; hand.style.top = (cy - 4) + 'px'; }
+  else if (st.vdrag) { hand.style.left = (cx - 8) + 'px'; hand.style.top = (coachFlip ? r.top + r.height * .22 : r.top + r.height * .78) + 'px'; }
+  else { hand.style.left = (cx - 8) + 'px'; hand.style.top = (cy - 4) + 'px'; }
+  const bw = Math.min(300, innerWidth - 20), bh = bub.offsetHeight || 130;
+  let bx = Math.min(Math.max(10, r.left), innerWidth - bw - 10), by = r.bottom + 16;
+  if (by + bh > innerHeight - 8) by = r.top - bh - 16;
+  if (by < 8) by = Math.min(innerHeight - bh - 8, Math.max(8, cy + 30));
+  Object.assign(bub.style, { left: bx + 'px', top: by + 'px' });
+}
+addEventListener('scroll', coachPlace, { passive: true }); addEventListener('resize', coachPlace);
 function coachNext() {
   const c = $('#coach'); clearInterval(c._iv); clearInterval(coachTimer);
-  if (!coachQ.length) { c.hidden = true; const d = coachDone; coachDone = null; d && d(); return; }
+  if (!coachQ.length) { c.hidden = true; coachEl = null; coachLock(false); const d = coachDone; coachDone = null; d && d(); return; }
   const st = coachQ.shift(); const el = typeof st.el === 'string' ? document.querySelector(st.el) : st.el;
   if (!el) { coachNext(); return; }
-  el.scrollIntoView({ block: 'center', behavior: 'instant' });
-  c.hidden = false;
-  requestAnimationFrame(() => {
-    const r = el.getBoundingClientRect(), ring = c.querySelector('.ring'), hand = c.querySelector('.hand'), bub = c.querySelector('.bubble');
-    Object.assign(ring.style, { left: (r.left - 6) + 'px', top: (r.top - 6) + 'px', width: (r.width + 12) + 'px', height: (r.height + 12) + 'px' });
-    hand.classList.remove('tap');
-    const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
-    if (st.drag) { let f = true; const a = r.left + r.width * .2, b = r.left + r.width * .8; hand.style.left = a + 'px'; hand.style.top = (cy - 4) + 'px'; c._iv = setInterval(() => { hand.style.left = (f ? b : a) + 'px'; f = !f; }, 750); }
-    else if (st.vdrag) { let f = true; const a = r.top + r.height * .78, b = r.top + r.height * .22; hand.style.left = (cx - 8) + 'px'; hand.style.top = a + 'px'; c._iv = setInterval(() => { hand.style.top = (f ? b : a) + 'px'; f = !f; }, 850); }
-    else { hand.style.left = (cx - 8) + 'px'; hand.style.top = (cy - 4) + 'px'; hand.classList.add('tap'); }
-    bub.innerHTML = `<div>${st.t}</div><div class="row between"><span class="tiny muted">${st.n} of ${st.of}</span>${st.until ? '<span class="wait">waiting for you…</span>' : ''}<button class="btn ${st.until ? '' : 'primary'}" style="padding:5px 12px">${st.until ? 'Skip' : coachQ.length ? 'Next' : 'Got it'}</button></div>`;
-    let bx = Math.min(Math.max(10, r.left), innerWidth - 315), by = r.bottom + 16; if (by + 140 > innerHeight) by = Math.max(10, r.top - 150);
-    Object.assign(bub.style, { left: bx + 'px', top: by + 'px' });
-    bub.querySelector('button').onclick = () => coachNext();
-    if (st.until) { ring.style.pointerEvents = 'none'; coachTimer = setInterval(() => { if (st.until()) { clearInterval(coachTimer); setTimeout(coachNext, 350); } }, 300); }
-  });
+  coachLock(false); el.scrollIntoView({ block: 'center', behavior: 'instant' }); coachLock(true);
+  coachEl = el; coachSt = st; coachFlip = false; c.hidden = false;
+  const ring = c.querySelector('.ring'), hand = c.querySelector('.hand'), bub = c.querySelector('.bubble');
+  hand.classList.toggle('tap', !st.drag && !st.vdrag);
+  bub.innerHTML = `<div>${st.t}</div><div class="row between"><span class="tiny muted">${st.n} of ${st.of}</span>${st.until ? '<span class="wait">waiting for you…</span>' : ''}<button class="btn ${st.until ? '' : 'primary'}" style="padding:5px 12px">${st.until ? 'Skip' : coachQ.length ? 'Next' : 'Got it'}</button></div>`;
+  bub.querySelector('button').onclick = () => coachNext();
+  requestAnimationFrame(coachPlace);
+  if (st.drag || st.vdrag) c._iv = setInterval(() => { coachFlip = !coachFlip; coachPlace(); }, st.drag ? 750 : 850);
+  if (st.until) { ring.style.pointerEvents = 'none'; coachTimer = setInterval(() => { if (st.until()) { clearInterval(coachTimer); setTimeout(coachNext, 350); } }, 300); }
 }
 
 /* ============ ROUTER ============ */
