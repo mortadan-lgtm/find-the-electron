@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Find the Electron · Teacher</title>
+<link rel="stylesheet" href="app.css">
+<style>
+ table.dash{border-collapse:collapse;width:100%;font-size:.88rem;background:#fff}
+ table.dash th{background:var(--surface-2);padding:7px 6px;text-align:left;position:sticky;top:0;z-index:1}
+ table.dash td{padding:6px;border-bottom:1px solid var(--line);vertical-align:middle}
+ table.dash tr.behind td{background:#FFF6E6}
+ .chip{display:inline-block;width:14px;height:14px;border-radius:4px;margin-right:2px;vertical-align:middle;background:#ddd}
+ .c0{background:var(--bad)} .c1{background:var(--gold)} .c2{background:var(--good)}
+ .stg{font-weight:750}
+ .rooms{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+ @media(max-width:900px){.rooms{grid-template-columns:1fr}}
+ .big{font-size:1.8rem;font-weight:900}
+ .pace{font-weight:800} .pace.late{color:var(--bad)} .pace.ok{color:var(--good)}
+</style>
+</head>
+<body>
+<div class="top"><div class="in">
+  <div class="logo"><span class="dot"></span>Find the Electron · Teacher</div>
+  <div class="row" style="margin-left:auto">
+    <select id="cls"><option>Y13 Physics</option><option>Test group</option></select>
+    <input id="code" type="text" placeholder="code" style="width:90px">
+    <button class="btn primary" id="unlock">Unlock final</button>
+    <button class="btn" id="lock">Lock</button>
+    <button class="btn" id="csv">CSV</button>
+    <button class="btn" id="reset" style="color:var(--bad)">Reset class</button>
+  </div>
+</div></div>
+<main class="wrap">
+  <div class="row" style="gap:20px;margin-bottom:12px" id="kpi"></div>
+  <div class="rooms" id="rooms"></div>
+  <div class="card" style="padding:0;overflow:auto"><table class="dash" id="tbl"></table></div>
+  <p class="tiny muted">Rows turn amber when a student is behind the 30-minute plan: starting point by 4 min, experiment by 13, processing by 18, explain by 21, final by 28, reflection by 30. SC chips: start · progress check · end (red not yet, amber getting there, green confident).</p>
+</main>
+<script>
+const CODE_KEY='fte-teacher-code'; const $=s=>document.querySelector(s);
+$('#code').value=localStorage.getItem(CODE_KEY)||'';
+const RATE=['Not yet','Getting there','Confident'];
+const STAGE={welcome:'Welcome',start:'Starting point',route:'Starting point',lab:'Station',check:'Progress check',final:'Final tube',millikan:'Millikan',reflect:'Reflect',done:'Done ✓'};
+const STEP=['experiment','processing','explain'];
+function target(s){ if(['welcome','start','route'].includes(s.stage))return 4; if(s.stage==='lab')return [13,18,21][s.step||0]||21; if(s.stage==='check')return 22; if(['final','millikan'].includes(s.stage))return 28; return 30; }
+const chip=v=>{const i=RATE.indexOf(v);return `<span class="chip ${i<0?'':'c'+i}" title="${v||'not rated'}"></span>`};
+const SUP={'-':'⁻','0':'⁰','1':'¹','2':'²','3':'³','4':'⁴','5':'⁵','6':'⁶','7':'⁷','8':'⁸','9':'⁹'};
+const sci=x=>{if(!x)return '–';const e=Math.floor(Math.log10(Math.abs(x)));return (x/10**e).toFixed(2)+' × 10'+String(e).split('').map(c=>SUP[c]).join('')};
+let last=null;
+async function pull(){
+  const code=$('#code').value.trim(); if(!code){$('#tbl').innerHTML='<tr><td>Type the code.</td></tr>';return}
+  localStorage.setItem(CODE_KEY,code);
+  try{
+    const r=await fetch('/api?'+new URLSearchParams({op:'teacher',cls:$('#cls').value,code}),{cache:'no-store'});
+    if(r.status===403){$('#tbl').innerHTML='<tr><td>Wrong code.</td></tr>';return}
+    last=await r.json(); paint();
+  }catch(e){ $('#kpi').innerHTML='<span class="muted">reconnecting…</span>'; }
+}
+function paint(){
+  const st=Object.values(last.cls.students).sort((a,b)=>(a.station||'').localeCompare(b.station||'')||a.name.localeCompare(b.name));
+  const done=st.filter(s=>s.stage==='done').length, behind=st.filter(s=>(s.minutes||0)>target(s)&&s.stage!=='done').length;
+  const qms=st.filter(s=>s.qm).map(s=>s.qm), mean=qms.length?qms.reduce((a,b)=>a+b,0)/qms.length:0;
+  $('#kpi').innerHTML=`<div class="card" style="margin:0"><div class="tiny muted">Students</div><div class="big">${st.length}</div></div>
+   <div class="card" style="margin:0"><div class="tiny muted">Finished</div><div class="big">${done}</div></div>
+   <div class="card" style="margin:0"><div class="tiny muted">Behind plan</div><div class="big" style="color:${behind?'var(--bad)':'var(--good)'}">${behind}</div></div>
+   <div class="card" style="margin:0"><div class="tiny muted">Class q/m</div><div class="big">${mean?sci(mean):'–'}</div></div>
+   <div class="card" style="margin:0"><div class="tiny muted">Final</div><div class="big">${last.cls.unlock?'🔓':'🔒'}</div></div>`;
+  $('#rooms').innerHTML=['A','B','C'].map(k=>{const r=last.rooms[k]; const full=r.rows.filter(x=>Object.keys(x.rec||{}).length).length;
+    return `<div class="card"><b>Station ${k}</b> · ${r.members.length} in room · ${r.rows.length} trials (${full} with records)
+    <div class="tiny" style="margin-top:6px">${r.members.map(m=>`${m.name} <span class="muted">(${m.role}${m.trial||''}, L${m.level})</span> <button class="x" data-kick="${k}|${m.name}" title="remove from room">×</button>`).join('<br>')||'<span class="muted">empty</span>'}</div></div>`}).join('');
+  document.querySelectorAll('[data-kick]').forEach(b=>b.onclick=()=>{const [k,who]=b.dataset.kick.split('|'); if(confirm('Remove '+who+' from station '+k+'?'))act('kick',{station:k,who});});
+  $('#tbl').innerHTML=`<tr><th>Student</th><th>Station</th><th>Level</th><th>Role</th><th>Now</th><th>Min</th><th>Start Q</th><th>SC start</th><th>SC check</th><th>SC end</th><th>Data mark</th><th>Right 1st try</th><th>q/m</th><th>m / kg</th><th>Exit</th></tr>`+
+   st.map(s=>{const late=(s.minutes||0)>target(s)&&s.stage!=='done'; const f=Object.values(s.first||{}); return `<tr class="${late?'behind':''}"><td><b>${s.name}</b></td><td>${s.station||'–'}</td><td>${s.level||'–'}</td><td>${s.role||'–'}</td>
+   <td class="stg">${STAGE[s.stage]||s.stage}${s.stage==='lab'?' · '+STEP[s.step||0]:''}</td><td class="pace ${late?'late':'ok'}">${s.minutes??'–'}</td>
+   <td>${(s.diag||[]).join(' ')}</td><td>${(s.scStart||[]).map(chip).join('')}</td><td>${(s.scMid||[]).map(chip).join('')}</td><td>${(s.scEnd||[]).map(chip).join('')}</td>
+   <td>${s.mark||'–'}</td><td>${f.length?f.filter(Boolean).length+'/'+f.length:'–'}</td><td>${sci(s.qm)}</td><td>${sci(s.m)}</td><td>${s.exit||'–'}</td></tr>`}).join('');
+}
+async function act(op,extra={}){const code=$('#code').value.trim();
+  const r=await fetch('/api',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({op,cls:$('#cls').value,code,...extra})});
+  if(r.status===403)alert('Wrong code'); pull();}
+$('#unlock').onclick=()=>act('unlock'); $('#lock').onclick=()=>act('lock');
+$('#reset').onclick=()=>{ if(confirm('Clear every student, room and table for '+$('#cls').value+'? This cannot be undone.')) act('reset'); };
+$('#csv').onclick=()=>{ if(!last)return; const st=Object.values(last.cls.students);
+  const head=['name','station','level','role','stage','minutes','diag','scStart','scMid','scEnd','mark','rightFirst','qm','m','exit'];
+  const rows=st.map(s=>{const f=Object.values(s.first||{});return [s.name,s.station,s.level,s.role,s.stage,s.minutes,(s.diag||[]).join(' '),(s.scStart||[]).join('/'),(s.scMid||[]).join('/'),(s.scEnd||[]).join('/'),s.mark,f.filter(Boolean).length+'/'+f.length,s.qm,s.m,s.exit]});
+  const csv=[head,...rows].map(r=>r.map(x=>'"'+String(x??'').replace(/"/g,'""')+'"').join(',')).join('\n');
+  const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'})); a.download='find-the-electron-'+$('#cls').value.replace(/\s/g,'-')+'.csv'; a.click(); };
+$('#cls').onchange=pull; $('#code').onchange=pull;
+pull(); setInterval(pull,4000);
+</script>
+</body>
+</html>
