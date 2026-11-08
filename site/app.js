@@ -103,7 +103,7 @@ const STN = {
       { anim: 'gun', cap: 'The anode pulls them into a beam.', sub: 'A steady stream shoots through the hole in the anode.' },
       { img: 'img/hero.webp', cap: 'Your mission: make a beam, then test it.', sub: 'In a vacuum the beam is invisible. It only shows where it grazes the screen.' }],
     pred: { q: 'Swap to the NARROW gun: same voltage, half the gap, so twice the field. The trace bends…', o: ['the same', 'less (a stiffer beam)', 'more'] },
-    cols: [{ k: 'kV', label: 'V / kV', tol: v => 0.01 }, { k: 'd', label: 'gun gap d / cm', tol: v => 0.01 }, { k: 'y', label: 'y at 8 cm / cm', tol: v => 0.01 }],
+    cols: [{ k: 'kV', label: 'V / kV', tol: v => 0.01 }, { k: 'd', label: 'gun gap d / cm', tol: v => 0.01 }, { k: 'y', label: 'y / cm', tol: v => 0.01 }],
     steps: [
       { m: EQ.EVd, w: 'Cathode and anode make a uniform field. Half the gap, twice the field.' },
       { m: EQ.FqE, w: 'The field pushes each (negative) electron towards the positive anode.' },
@@ -248,16 +248,22 @@ function mcq(host, q, id, onDone) {
     else { b.classList.add('wrong'); b.disabled = true; fbx.innerHTML = `<div class="fb hint"><b>Not quite.</b> ${tries >= 2 && q.hint2 ? q.hint2 : q.hint || 'Look again.'}</div>`; }
   });
 }
+/* scientific-notation box: [mantissa] × 10^[power]; value string "m" or "m e p" */
+const sciHTML = (attr = '') => `<span class="sci" ${attr}><input class="m" inputmode="decimal" placeholder="?" aria-label="number"><span class="t">× 10</span><input class="x" inputmode="numeric" placeholder="0" aria-label="power of ten"></span>`;
+const sciGet = box => { const m = box.querySelector('.m').value.trim(), x = box.querySelector('.x').value.trim().replace(/[−–]/g, '-'); return m === '' ? '' : x === '' ? m : m + 'e' + x; };
+const sciSet = (box, str) => { str = String(str || ''); const i = str.toLowerCase().indexOf('e'); box.querySelector('.m').value = i < 0 ? str : str.slice(0, i); box.querySelector('.x').value = i < 0 ? '' : str.slice(i + 1); };
 function numTask(host, cfg, id, onDone) {
   const d = document.createElement('div');
   d.innerHTML = `<div class="q">${cfg.p}</div>${cfg.help ? `<div class="muted small" style="margin:2px 0 8px">${cfg.help}</div>` : ''}
-   <div class="row"><input type="text" inputmode="decimal" placeholder="${cfg.ph || 'e.g. 8.4e6'}" style="width:190px"><span>${cfg.unit || ''}</span><button class="btn primary">Check</button></div><div class="fbx"></div>`;
+   <div class="row">${sciHTML()}<span>${cfg.unit || ''}</span><button class="btn primary">Check</button></div><div class="fbx"></div>`;
   host.appendChild(d);
-  const inp = d.querySelector('input'), fbx = d.querySelector('.fbx'), btn = d.querySelector('button'); let tries = 0;
+  const box = d.querySelector('.sci'), fbx = d.querySelector('.fbx'), btn = d.querySelector('button'); let tries = 0;
+  const inp = { get value() { return sciGet(box); }, set disabled(v) { box.querySelectorAll('input').forEach(i => i.disabled = v); }, addEventListener: (ev, fn) => box.querySelectorAll('input').forEach(i => i.addEventListener(ev, fn)) };
   btn.onclick = () => {
-    const v = parseNum(inp.value); if (!isFinite(v)) { fbx.innerHTML = `<div class="fb hint">Type a number. Write 8.4e6 for 8.4 × 10⁶.</div>`; return; }
+    const v = parseNum(inp.value); if (!isFinite(v)) { fbx.innerHTML = `<div class="fb hint">Type a number. For 8.4 × 10⁶, type 8.4 in the first box and 6 in the small box.</div>`; return; }
     tries++; const ok = cfg.check(v);
     if (!(id in S.first)) { S.first[id] = ok; save(); }
+    box.classList.toggle('ok', ok); box.classList.toggle('chk', !ok);
     if (ok) { inp.disabled = true; btn.disabled = true; fbx.innerHTML = `<div class="fb good"><b>Correct.</b> ${cfg.why ? cfg.why(v) : ''}</div>`; onDone && onDone(v); }
     else fbx.innerHTML = `<div class="fb hint"><b>Check again.</b> ${tries >= 2 && cfg.hint2 ? cfg.hint2 : cfg.hint || ''}</div>`;
   };
@@ -513,19 +519,20 @@ function paintTable() {
   if (host.dataset.key !== key) {
     host.dataset.key = key;
     host.innerHTML = R.rows.length ? `<div style="overflow-x:auto"><table class="rec"><tr><th>#</th>${st.cols.map(c => `<th>${c.label}</th>`).join('')}${st.proc.map(p => `<th class="pc">${p.h}<small>${p.u}</small></th>`).join('')}<th></th></tr>
-      ${R.rows.map((r, i) => `<tr><td><b>${i + 1}</b><span class="by">${esc(r.by.split(' ')[0])}</span></td>${st.cols.map(c => `<td class="rv">${fmtRaw(r.raw[c.k])}</td>`).join('')}${st.proc.map(p => `<td><input data-cell="${r.id}|p_${p.k}" inputmode="decimal" placeholder="${p.ph}"></td>`).join('')}<td><button class="x" data-del="${r.id}" title="delete this reading">×</button></td></tr>`).join('')}</table></div>`
+      ${R.rows.map((r, i) => `<tr><td><b>${i + 1}</b><span class="by">${esc(r.by.split(' ')[0])}</span></td>${st.cols.map(c => `<td class="rv">${fmtRaw(r.raw[c.k])}</td>`).join('')}${st.proc.map(p => `<td>${sciHTML(`data-cell="${r.id}|p_${p.k}"`)}</td>`).join('')}<td><button class="x" data-del="${r.id}" title="delete this reading">×</button></td></tr>`).join('')}</table></div>`
       : `<div class="muted small">No readings yet. Trial leads: run the first trial.</div>`;
-    host.querySelectorAll('input').forEach(inp => {
-      const commit = () => { const [id, col] = inp.dataset.cell.split('|'); const v = inp.value.trim(); const row = R.rows.find(x => x.id === id); if (!row) return; if ((row.rec[col] && row.rec[col].v) === v) return; roomOp('cell', { id, col, value: v }); paintTable(); };
-      inp.addEventListener('change', commit); inp.addEventListener('keydown', e => { if (e.key === 'Enter') { commit(); inp.blur(); } });
+    host.querySelectorAll('.sci[data-cell]').forEach(box => {
+      const commit = () => { const [id, col] = box.dataset.cell.split('|'); const v = sciGet(box); const row = R.rows.find(x => x.id === id); if (!row) return; if ((row.rec[col] && row.rec[col].v) === v) return; roomOp('cell', { id, col, value: v }); paintTable(); };
+      box.querySelectorAll('input').forEach(i => { i.addEventListener('change', commit); i.addEventListener('keydown', e => { if (e.key === 'Enter') { commit(); i.blur(); } }); });
     });
     host.querySelectorAll('[data-del]').forEach(b => b.onclick = () => { if (confirm('Delete this reading for the whole team?')) { roomOp('delrow', { id: b.dataset.del }); paintTable(); } });
   }
-  host.querySelectorAll('input').forEach(inp => {
-    const [id, col] = inp.dataset.cell.split('|'); const row = R.rows.find(x => x.id === id); if (!row) return; const p = st.proc.find(x => 'p_' + x.k === col);
-    const cur = row.rec[col]; if (inp.dataset.cell !== focus && cur && inp.value !== cur.v) { inp.value = cur.v; inp.classList.add('flash'); setTimeout(() => inp.classList.remove('flash'), 1200); }
-    const ok = within(parseNum(inp.value), p.f(row.raw), 0.03); inp.classList.toggle('ok', inp.value !== '' && ok); inp.classList.toggle('chk', inp.value !== '' && !ok);
-    inp.title = cur ? `by ${cur.by}` : p.h;
+  const focusBox = document.activeElement && document.activeElement.closest && document.activeElement.closest('.sci[data-cell]');
+  host.querySelectorAll('.sci[data-cell]').forEach(box => {
+    const [id, col] = box.dataset.cell.split('|'); const row = R.rows.find(x => x.id === id); if (!row) return; const p = st.proc.find(x => 'p_' + x.k === col);
+    const cur = row.rec[col]; if (box !== focusBox && cur && sciGet(box) !== cur.v) { sciSet(box, cur.v); box.classList.add('flash'); setTimeout(() => box.classList.remove('flash'), 1200); }
+    const val = sciGet(box), ok = within(parseNum(val), p.f(row.raw), 0.03); box.classList.toggle('ok', val !== '' && ok); box.classList.toggle('chk', val !== '' && !ok);
+    box.title = cur ? `by ${cur.by}` : p.h;
   });
   const n = R.rows.filter(rowDone).length; $('#cnt').textContent = `${R.rows.length} reading${R.rows.length === 1 ? '' : 's'} · ${n} processed · need 3`;
   const nx = $('#recnext');

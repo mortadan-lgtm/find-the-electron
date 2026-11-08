@@ -192,3 +192,14 @@ table.rec td.rv{font-weight:750;font-variant-numeric:tabular-nums}
 table.rec th.pc{background:var(--accent-soft);color:var(--accent-ink);font-size:.82rem;line-height:1.2}
 table.rec th.pc small{display:block;font-weight:600;font-size:.7rem;opacity:.8}
 table.rec td input{min-width:92px;font-size:.88rem}
+
+.sci{display:inline-flex;align-items:center;gap:2px;border:2px solid var(--line);border-radius:9px;padding:2px 5px;background:#fff;white-space:nowrap}
+.sci input{border:none!important;background:transparent!important;font:inherit;padding:4px 2px!important;min-width:0!important;outline:none}
+.sci input.m{width:58px;text-align:right}
+.sci input.x{width:30px;font-size:.78em;align-self:flex-start;margin-top:-2px;border-bottom:1.5px dashed var(--line)!important}
+.sci .t{font-size:.85em;color:var(--muted)}
+.sci.ok{border-color:var(--good);background:var(--good-soft)} .sci.chk{border-color:var(--gold);background:var(--gold-soft)}
+.sci.flash{animation:flash 1.2s ease}
+.sci:focus-within{border-color:var(--accent)}
+table.rec th:not(.pc){white-space:nowrap}
+.sci input.x::placeholder{color:#c3c8d2}
