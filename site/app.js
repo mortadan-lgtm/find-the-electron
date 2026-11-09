@@ -143,7 +143,7 @@ const STN = {
       { anim: 'straight', cap: 'Balance the two forces.', sub: 'Spot on the centre line means the forces cancel.' }],
     pred: { q: 'A FASTER beam, same B. To keep it straight you need…', o: ['a bigger E', 'a smaller E', 'the same E'] },
     cols: [{ k: 'beam', label: 'beam', dp: 0, tol: v => 0.01 }, { k: 'Vp', label: 'plate V / V', dp: 0, tol: v => 1.5 }, { k: 'I', label: 'I / A', dp: 2, tol: v => 0.011 }],
-    proc: [{ k: 'E', h: 'E = V ÷ 0.040 m', u: 'V m⁻¹', plain: true, f: r => r.Vp / 0.04 }, { k: 'B', h: 'B = 0.78 × I', u: 'mT', plain: true, f: r => 0.78 * r.I }, { k: 'v', h: 'v = E ÷ B', u: 'm s⁻¹ · B in tesla!', f: r => r.Vp / 0.04 / (KCOIL * r.I) }],
+    proc: [{ k: 'E', h: 'E = V ÷ 0.040 m', u: 'V m⁻¹', plain: true, f: r => r.Vp / 0.04 }, { k: 'B', h: 'B = 0.78 × I', u: 'mT', plain: true, f: r => 0.78 * r.I }, { k: 'v', h: 'v = E ÷ B', u: '× 10⁶ m s⁻¹ · B in tesla!', plain: true, pow: 6, f: r => r.Vp / 0.04 / (KCOIL * r.I) }],
     steps: [
       { m: EQ.FqE, w: 'The electric field pushes the electron up, towards the positive plate.' },
       { m: EQ.FqvB, w: 'The magnetic field pushes it down.' },
@@ -256,18 +256,20 @@ const sciHTML = (attr = '', plain = false) => plain ? `<span class="sci plain" $
 const sciGet = box => { const m = box.querySelector('.m').value.trim(), xe = box.querySelector('.x'), x = xe ? xe.value.trim().replace(/[−–]/g, '-') : ''; return m === '' ? '' : x === '' ? m : m + 'e' + x; };
 const sciSet = (box, str) => { str = String(str || ''); const xe = box.querySelector('.x'); if (!xe) { box.querySelector('.m').value = str; return; } const i = str.toLowerCase().indexOf('e'); box.querySelector('.m').value = i < 0 ? str : str.slice(0, i); xe.value = i < 0 ? '' : str.slice(i + 1); };
 function numTask(host, cfg, id, onDone) {
+  let pow = 0; if (!cfg.plain && cfg.exp) { pow = cfg.pow != null ? cfg.pow : Math.floor(Math.log10(Math.abs(cfg.exp))); if (pow >= -2 && pow <= 3) pow = 0; }
+  const unitTxt = (pow ? '× 10' + supify(pow) + ' ' : '') + (cfg.unit || ''), chk0 = cfg.check; cfg = { ...cfg, plain: true, unit: unitTxt, check: v => chk0(v * 10 ** pow) };
   const d = document.createElement('div');
   d.innerHTML = `<div class="q">${cfg.p}</div>${cfg.help ? `<div class="muted small" style="margin:2px 0 8px">${cfg.help}</div>` : ''}
-   <div class="row">${sciHTML('', !!cfg.plain)}<span>${cfg.unit || ''}</span><button class="btn primary">Check</button></div><div class="fbx"></div>`;
+   <div class="row">${sciHTML(`data-pow="${pow}"`, true)}<span>${cfg.unit || ''}</span><button class="btn primary">Check</button></div><div class="fbx"></div>`;
   host.appendChild(d);
   const box = d.querySelector('.sci'), fbx = d.querySelector('.fbx'), btn = d.querySelector('button'); let tries = 0;
   const inp = { get value() { return sciGet(box); }, set disabled(v) { box.querySelectorAll('input').forEach(i => i.disabled = v); }, addEventListener: (ev, fn) => box.querySelectorAll('input').forEach(i => i.addEventListener(ev, fn)) };
   btn.onclick = () => {
-    const v = parseNum(inp.value); if (!isFinite(v)) { fbx.innerHTML = `<div class="fb hint">${cfg.plain ? 'Type a number.' : 'Type a number. For 8.4 × 10⁶, type 8.4 in the first box and 6 in the small box.'}</div>`; return; }
+    const v = parseNum(inp.value); if (!isFinite(v)) { fbx.innerHTML = `<div class="fb hint">Type a number. If the unit starts with × 10ⁿ, type only the number in front of it.</div>`; return; }
     tries++; const ok = cfg.check(v);
     if (!(id in S.first)) { S.first[id] = ok; save(); }
     box.classList.toggle('ok', ok); box.classList.toggle('chk', !ok);
-    if (ok) { inp.disabled = true; btn.disabled = true; fbx.innerHTML = `<div class="fb good"><b>Correct.</b> ${cfg.why ? cfg.why(v) : ''}</div>`; onDone && onDone(v); }
+    if (ok) { inp.disabled = true; btn.disabled = true; fbx.innerHTML = `<div class="fb good"><b>Correct.</b> ${cfg.why ? cfg.why(v * 10 ** pow) : ''}</div>`; onDone && onDone(v * 10 ** pow); }
     else fbx.innerHTML = `<div class="fb hint"><b>Check again.</b> ${tries >= 2 && cfg.hint2 ? cfg.hint2 : cfg.hint || ''}</div>`;
   };
   inp.addEventListener('keydown', e => { if (e.key === 'Enter') btn.click(); });
@@ -539,7 +541,7 @@ function paintPred() {
   $('#pred').querySelectorAll('button').forEach(b => b.onclick = () => { roomOp('pred', { value: +b.dataset.i }); paintPred(); });
 }
 function cellOK(col, row, v) { const raw = row.raw[col.k]; return isFinite(v) && Math.abs(v - raw) <= col.tol(raw); }
-function procOK(row, p) { const v = parseNum(row.rec['p_' + p.k] && row.rec['p_' + p.k].v); return within(v, p.f(row.raw), 0.03); }
+function procOK(row, p) { const v = parseNum(row.rec['p_' + p.k] && row.rec['p_' + p.k].v) * 10 ** (p.pow || 0); return within(v, p.f(row.raw), 0.03); }
 const rowDone = row => STN[S.station].proc.every(p => procOK(row, p));
 const fmtRaw = (v, dp) => typeof v !== 'number' ? v : dp != null ? v.toFixed(dp) : (Number.isInteger(v) ? v : +v.toFixed(2));
 function paintTable() {
@@ -549,7 +551,7 @@ function paintTable() {
   if (host.dataset.key !== key) {
     host.dataset.key = key;
     host.innerHTML = R.rows.length ? `<div style="overflow-x:auto"><table class="rec"><tr><th>#</th>${st.cols.map(c => `<th>${c.label}</th>`).join('')}${st.proc.map(p => `<th class="pc">${p.h}<small>${p.u}</small></th>`).join('')}<th></th></tr>
-      ${R.rows.map((r, i) => `<tr><td><b>${i + 1}</b><span class="by">${esc(r.by.split(' ')[0])}</span></td>${st.cols.map(c => `<td class="rv">${fmtRaw(r.raw[c.k], c.dp)}</td>`).join('')}${st.proc.map(p => `<td>${sciHTML(`data-cell="${r.id}|p_${p.k}"`, !!p.plain)}</td>`).join('')}<td><button class="x" data-del="${r.id}" title="delete this reading">×</button></td></tr>`).join('')}</table></div>`
+      ${R.rows.map((r, i) => `<tr><td><b>${i + 1}</b><span class="by">${esc(r.by.split(' ')[0])}</span></td>${st.cols.map(c => `<td class="rv">${fmtRaw(r.raw[c.k], c.dp)}</td>`).join('')}${st.proc.map(p => `<td>${sciHTML(`data-cell="${r.id}|p_${p.k}" data-pow="${p.pow || 0}"`, !!p.plain)}</td>`).join('')}<td><button class="x" data-del="${r.id}" title="delete this reading">×</button></td></tr>`).join('')}</table></div>`
       : `<div class="muted small">No readings yet. Trial leads: run the first trial.</div>`;
     host.querySelectorAll('.sci[data-cell]').forEach(box => {
       const commit = () => { const [id, col] = box.dataset.cell.split('|'); const v = sciGet(box); const row = R.rows.find(x => x.id === id); if (!row) return; if ((row.rec[col] && row.rec[col].v) === v) return; roomOp('cell', { id, col, value: v }); paintTable(); };
@@ -561,7 +563,7 @@ function paintTable() {
   host.querySelectorAll('.sci[data-cell]').forEach(box => {
     const [id, col] = box.dataset.cell.split('|'); const row = R.rows.find(x => x.id === id); if (!row) return; const p = st.proc.find(x => 'p_' + x.k === col);
     const cur = row.rec[col]; if (box !== focusBox && cur && sciGet(box) !== cur.v) { sciSet(box, cur.v); box.classList.add('flash'); setTimeout(() => box.classList.remove('flash'), 1200); }
-    const val = sciGet(box), ok = within(parseNum(val), p.f(row.raw), 0.03); box.classList.toggle('ok', val !== '' && ok); box.classList.toggle('chk', val !== '' && !ok);
+    const val = sciGet(box), ok = within(parseNum(val) * 10 ** (p.pow || 0), p.f(row.raw), 0.03); box.classList.toggle('ok', val !== '' && ok); box.classList.toggle('chk', val !== '' && !ok);
     box.title = cur ? `by ${cur.by}` : p.h;
   });
   const n = R.rows.filter(rowDone).length; $('#cnt').textContent = `${R.rows.length} reading${R.rows.length === 1 ? '' : 's'} · ${n} processed · need 3`;
@@ -940,7 +942,7 @@ function labProcessTasks(body) {
   const st = STN[k]; c.insertAdjacentHTML('afterbegin', '');
   const tb = document.createElement('div'); tb.style.cssText = 'overflow-x:auto;margin:8px 0 4px';
   tb.innerHTML = `<table class="rec"><tr><th>#</th>${st.cols.map(x => `<th>${x.label}</th>`).join('')}${st.proc.map(p => `<th class="pc">${p.h}<small>${p.u}</small></th>`).join('')}</tr>
-    ${R.rows.map((r, i) => `<tr><td><b>${i + 1}</b></td>${st.cols.map(x => `<td class="rv">${fmtRaw(r.raw[x.k], x.dp)}</td>`).join('')}${st.proc.map(p => { const v = r.rec['p_' + p.k] && r.rec['p_' + p.k].v; return `<td class="rv" style="color:${procOK(r, p) ? 'var(--good)' : 'var(--muted)'}">${v ? (v.includes('e') ? sci(parseNum(v), 3) : esc(v)) : '–'}</td>`; }).join('')}</tr>`).join('')}</table>`;
+    ${R.rows.map((r, i) => `<tr><td><b>${i + 1}</b></td>${st.cols.map(x => `<td class="rv">${fmtRaw(r.raw[x.k], x.dp)}</td>`).join('')}${st.proc.map(p => { const v = r.rec['p_' + p.k] && r.rec['p_' + p.k].v; return `<td class="rv" style="color:${procOK(r, p) ? 'var(--good)' : 'var(--muted)'}">${v ? esc(v) : '–'}</td>`; }).join('')}</tr>`).join('')}</table>`;
   c.querySelector('.grid2').before(tb);
   const g = A.graph(rows); c.querySelector('#gr').innerHTML = graph(g.pts, g).svg; c.querySelector('#gnote').textContent = g.note;
   const list = A.list(S.level, rows), host = c.querySelector('#tasks');
@@ -948,7 +950,7 @@ function labProcessTasks(body) {
     c.querySelector('#mk').innerHTML = `<span class="mark">${S.mark}</span> <span class="tiny muted">right first time</span>`;
     if (!c.querySelector('#gonext')) { const nb = nextBtn(c, () => { S.step = 3; save(); render(); }, 'Explain it'); nb.id = 'gonext'; } };
   const run = i => { if (i >= list.length) { fin(); return; } const t = list[i];
-    numTask(host, { p: t.p, unit: t.unit, ph: t.ph, plain: !!t.plain, check: v => within(v, t.exp, t.tol), hint: t.hint, why: () => `${sci(t.exp, 3)} ${t.unit}` }, k + '·p·' + t.id, () => run(i + 1)); };
+    numTask(host, { p: t.p, unit: t.unit, ph: t.ph, plain: !!t.plain, exp: t.exp, check: v => within(v, t.exp, t.tol), hint: t.hint, why: () => `${sci(t.exp, 3)} ${t.unit}` }, k + '·p·' + t.id, () => run(i + 1)); };
   run(0);
   const back = document.createElement('button'); back.className = 'btn ghost small'; back.textContent = '← back to the experiment'; back.style.marginTop = '8px';
   back.onclick = () => { S.step = 1; save(); render(); }; c.appendChild(back);
@@ -1037,10 +1039,10 @@ async function rFinal() {
     c.innerHTML = `<h3>Find q/m</h3><p>d = <b>${fx(F.dRead, 1)} cm</b> → r = <b>${fx(r, 4)} m</b> · B = ${sci(B, 3)} T · V = 250 V</p><div class="eqbig">${EQ.qm}</div>`;
     const finish = v => { F.qm = v; save(); nextBtn(c, () => go('millikan'), 'Who found the charge?'); };
     if (S.level === 1) {
-      numTask(c, { p: 'Step 1: B²', unit: 'T²', ph: '1.4e-6', check: v => within(v, B * B, 0.03), hint: `${sci(B, 3)} × ${sci(B, 3)}` }, 'F·B2', () =>
-        numTask(c, { p: 'Step 2: r²', unit: 'm²', ph: '2.1e-3', check: v => within(v, r * r, 0.03), hint: `${fx(r, 4)} × ${fx(r, 4)}` }, 'F·r2', () =>
-          numTask(c, { p: 'Step 3: 2V ÷ (B² × r²)', unit: 'C kg⁻¹', ph: '1.8e11', check: v => within(v, qmT, 0.04), hint: '2 × 250 = 500, then divide.', why: v => `q/m = ${sci(qmT, 3)} C kg⁻¹` }, 'F·qm', finish)));
-    } else numTask(c, { p: `Calculate ${EQ.qmFrac}.`, unit: 'C kg⁻¹', ph: '1.8e11', check: v => within(v, qmT, 0.04), hint: 'B in tesla, r in metres.', hint2: `500 ÷ (${sci(B * B, 3)} × ${sci(r * r, 3)})`, why: v => `q/m = ${sci(qmT, 3)} C kg⁻¹. Accepted value: 1.76 × 10¹¹ C kg⁻¹.` }, 'F·qm', finish);
+      numTask(c, { p: 'Step 1: B²', unit: 'T²', exp: B * B, check: v => within(v, B * B, 0.03), hint: `${sci(B, 3)} × ${sci(B, 3)}` }, 'F·B2', () =>
+        numTask(c, { p: 'Step 2: r²', unit: 'm²', exp: r * r, check: v => within(v, r * r, 0.03), hint: `${fx(r, 4)} × ${fx(r, 4)}` }, 'F·r2', () =>
+          numTask(c, { p: 'Step 3: 2V ÷ (B² × r²)', unit: 'C kg⁻¹', exp: qmT, check: v => within(v, qmT, 0.04), hint: '2 × 250 = 500, then divide.', why: v => `q/m = ${sci(qmT, 3)} C kg⁻¹` }, 'F·qm', finish)));
+    } else numTask(c, { p: `Calculate ${EQ.qmFrac}.`, unit: 'C kg⁻¹', exp: qmT, check: v => within(v, qmT, 0.04), hint: 'B in tesla, r in metres.', hint2: `500 ÷ (${sci(B * B, 3)} × ${sci(r * r, 3)})`, why: v => `q/m = ${sci(qmT, 3)} C kg⁻¹. Accepted value: 1.76 × 10¹¹ C kg⁻¹.` }, 'F·qm', finish);
   }
 }
 
@@ -1129,7 +1131,7 @@ function rMillikan() {
     const c1 = card($('#m1'), '');
     mcq(c1, { p: 'Millikan knew the mass of each oil drop. Did that give him the electron\'s mass?', o: ['No. That is the mass of the oil drop, which let him find the charge e.', 'Yes, the drop\'s mass is the electron\'s mass', 'Yes, he weighed a single electron'], a: 0, hint: 'Whose mass did he measure, the drop\'s or the electron\'s?', why: 'The weight of the drop balanced the electric force, which gave the charge. The electron\'s mass comes from combining e with q/m.' }, 'F·millikan', () => {
       const c = card($('#m2'), `<h3>Find the electron</h3><div class="eqbig">${EQ.me}</div><p class="muted small">Your q/m: <b>${sci(qm, 3)} C kg⁻¹</b></p>`);
-      numTask(c, { p: 'Mass of the electron:', unit: 'kg', check: v => within(v, QE / qm, 0.04), hint: '1.60 × 10⁻¹⁹ ÷ your q/m', why: v => `m ≈ ${sci(QE / qm, 3)} kg` }, 'F·me', v => {
+      numTask(c, { p: 'Mass of the electron:', unit: 'kg', exp: QE / qm, check: v => within(v, QE / qm, 0.04), hint: '1.60 × 10⁻¹⁹ ÷ your q/m', why: v => `m ≈ ${sci(QE / qm, 3)} kg` }, 'F·me', v => {
         S.final.m = v; save();
         c.insertAdjacentHTML('beforeend', `<div class="card mission reveal" style="margin-top:12px"><div class="row" style="gap:18px;flex-wrap:nowrap">
           <svg viewBox="0 0 160 160" style="width:140px;flex:none"><circle cx="80" cy="80" r="60" fill="#E6A413" opacity=".9"><animate attributeName="opacity" values=".9;.25" dur="2.5s" fill="freeze"/></circle>
