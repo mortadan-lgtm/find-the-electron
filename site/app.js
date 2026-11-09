@@ -101,16 +101,16 @@ const STN = {
     scene: [
       { img: 'img/filament.webp', cap: 'Hot metal boils off electrons.', sub: 'The electron gun turns them into a fast, steady beam.' },
       { anim: 'gun', cap: 'The gun voltage V sets how fast they go.', sub: 'Higher V, faster electrons.' },
-      { img: 'img/hero.webp', cap: 'Your mission: find out why the beam bends.', sub: 'The beam is invisible in vacuum. It glows only where it grazes the screen.' }],
+      { img: 'img/hero.webp', cap: 'Find out why the beam bends.', sub: 'The beam is invisible in vacuum. It glows only where it grazes the screen.' }],
     pred: { q: 'You turn the gun voltage UP, so the electrons are faster. Between the plates the beam bends…', o: ['less', 'more', 'the same'] },
     cols: [{ k: 'kV', label: 'V / kV', dp: 3, tol: v => 0.01 }, { k: 'y', label: 'y / cm', dp: 1, tol: v => 0.01 }],
     steps: [
       { m: EQ.EVd, w: 'In the gun, the voltage V across the gap makes a uniform field that speeds the electrons up.' },
       { m: EQ.KE, w: 'The field does work qV, which becomes kinetic energy. Higher V, faster electrons.', gap: true, opts: [EQ.KE, M(mi('q') + mi('V') + mo('=') + mi('m') + mi('v')), M(mi('q') + mi('V') + mo('=') + mi('m') + mi('g') + mi('h'))] },
       { m: EQ.FqE, w: 'Between the plates the field pushes each negative electron towards +, with the same force all the way.' },
-      { m: '<b>steady forward speed + constant sideways force → a curve</b>', w: 'Just like a ball thrown sideways while gravity pulls it down.' },
+      { m: '<b>a steady forward speed and a constant sideways force give a curved path</b>', w: 'It is like a ball thrown sideways while gravity pulls it down.' },
       { m: M(mi('y') + mo('∝') + frac(mn(1), mi('V'))), w: 'A faster electron is between the plates for less time, so the force has less time to push it sideways.' }],
-    concept: { p: 'Why does a faster beam bend less?', o: ['It spends less time between the plates, so the same force pushes it sideways for less time', 'The force on a fast electron is smaller', 'Fast electrons lose their charge'], a: 0, hint: 'Is the force different? Or the time it acts for?', why: 'Same force qE, less time, less sideways velocity: y ∝ 1/V.' },
+    concept: { p: 'Why does a faster beam bend less?', o: ['It spends less time between the plates, so the same force pushes it sideways for less time', 'The force on a fast electron is smaller', 'Fast electrons lose their charge'], a: 0, hint: 'Is the force different? Or the time it acts for?', why: 'The force qE is the same, but it acts for less time, so the beam gains less sideways velocity. That gives y ∝ 1/V.' },
     hist: { yr: '1897', t: 'Earlier experimenters could not bend cathode rays with charged plates, because leftover gas in their tubes carried a current. Thomson pumped his tube to a much better vacuum, and the rays bent towards the positive plate: they had to be negatively charged.', q: { p: 'The beam bends towards the + plate. So cathode rays…', o: ['carry negative charge', 'are a kind of light', 'have no mass'], a: 0, hint: 'Opposite charges attract.', why: 'Attracted to + means negative.' } },
     find: { eq: EQ.KE, t: 'The gun gives the beam its energy qV. A faster beam bends less.' }
   },
@@ -118,20 +118,21 @@ const STN = {
     title: 'The circle in a magnetic field', icon: '🧲', img: 'img/finebeam.webp',
     goal: 'What sets the size of the circle?',
     scene: [
-      { img: 'img/finebeam.webp', cap: 'This is a real fine-beam tube.', sub: 'The glowing ring is a beam of electrons.' },
-      { img: 'img/coil.webp', cap: 'Coils make the magnetic field.', sub: 'More current in the coils, stronger field B.' },
-      { anim: 'curl', cap: 'Your mission: measure the circle.', sub: 'Change B. Read the diameter on the ruler.' }],
+      { img: 'img/finebeam.webp', cap: 'This is a real fine-beam tube.', sub: 'A glass bulb with an electron gun inside, between two large coils.' },
+      { anim: 'fbStraight', cap: 'Switch on the electron gun.', sub: 'With the coils off, the beam shoots straight across the bulb.' },
+      { anim: 'fbCircle', cap: 'Now switch on the coils.', sub: 'Their magnetic force always points to the centre, so the beam curls into a circle.' },
+      { img: 'img/coil.webp', cap: 'Measure the circle.', sub: 'A bigger current makes a stronger field B. Read the diameter on the ruler.' }],
     pred: { q: 'You make the magnetic field STRONGER. The circle gets…', o: ['smaller', 'bigger', 'no change'] },
     cols: [{ k: 'V', label: 'V / V', dp: 0, tol: v => 0.6 }, { k: 'I', label: 'I / A', dp: 2, tol: v => 0.051 }, { k: 'd', label: 'd / cm', dp: 1, tol: v => 0.21 }],
     proc: [{ k: 'r', h: 'r = d ÷ 2', u: 'cm', plain: true, f: r => r.d / 2 }, { k: 'B', h: 'B = 0.78 × I', u: 'mT', plain: true, f: r => 0.78 * r.I }, { k: 'rB', h: 'r × B', u: 'cm mT', plain: true, f: r => r.d / 2 * 0.78 * r.I }],
     steps: [
       { m: EQ.FqvB, w: 'A moving charge feels a force at right angles to its velocity.' },
-      { m: '<b>sideways force → no work → constant speed</b>', w: 'It never speeds the electron up, it only turns it: a circle.' },
+      { m: '<b>a sideways force does no work, so the speed stays constant</b>', w: 'The force is always sideways, so it changes the electron\'s direction but not its speed. The path becomes a circle.' },
       { m: EQ.cent, w: 'The magnetic force is the centripetal force.', gap: true, opts: [EQ.cent, M(mi('q') + mi('v') + mi('B') + mo('=') + frac(mn(1), mn(2)) + mi('m') + sq(mi('v'))), M(mi('q') + mi('v') + mi('B') + mo('=') + mi('m') + mi('g'))] },
       { m: EQ.r, w: 'Cancel one v. Stronger B, tighter circle. Faster electron, wider circle.' }],
     concept: { p: 'B gets twice as strong (same beam). The radius becomes…', o: ['half as big', 'twice as big', 'the same'], a: 0, hint: 'r = mv/(qB): B is on the bottom.', why: 'r ∝ 1/B.' },
-    hist: { yr: '1897', t: 'Thomson got the same result whatever metal the cathode was made of, and whatever gas was left in the tube. So the same tiny particle must be inside every kind of atom.', q: { p: 'Why did the same result for every metal matter?', o: ['The particle must be part of every atom', 'All metals are the same element', 'The magnets were identical'], a: 0, hint: 'If it came from one special metal, the result would change.', why: 'Same particle from every atom: atoms have parts inside.' } },
-    find: { eq: EQ.r, t: 'The circle\'s size: r = mv/(qB).' }
+    hist: { yr: '1897', t: 'Thomson got the same result whatever metal the cathode was made of, and whatever gas was left in the tube. So the same tiny particle must be inside every kind of atom.', q: { p: 'Why did the same result for every metal matter?', o: ['The particle must be part of every atom', 'All metals are the same element', 'The magnets were identical'], a: 0, hint: 'If it came from one special metal, the result would change.', why: 'The same particle comes out of every metal, so it must be part of every atom.' } },
+    find: { eq: EQ.r, t: 'The size of the circle is given by r = mv/(qB).' }
   },
   C: {
     title: 'Balancing the fields', icon: '⚖️', img: 'img/scope.webp',
@@ -139,7 +140,7 @@ const STN = {
     scene: [
       { img: 'img/scope.webp', cap: 'Electron beams draw on screens.', sub: 'Where the beam lands, the screen glows.' },
       { anim: 'push', cap: 'E pushes up. B pushes down.', sub: 'Plates make the electric field, coils make the magnetic field.' },
-      { anim: 'straight', cap: 'Your mission: balance them.', sub: 'Spot on the centre line means the forces cancel.' }],
+      { anim: 'straight', cap: 'Balance the two forces.', sub: 'Spot on the centre line means the forces cancel.' }],
     pred: { q: 'A FASTER beam, same B. To keep it straight you need…', o: ['a bigger E', 'a smaller E', 'the same E'] },
     cols: [{ k: 'beam', label: 'beam', dp: 0, tol: v => 0.01 }, { k: 'Vp', label: 'plate V / V', dp: 0, tol: v => 1.5 }, { k: 'I', label: 'I / A', dp: 2, tol: v => 0.011 }],
     proc: [{ k: 'E', h: 'E = V ÷ 0.040 m', u: 'V m⁻¹', plain: true, f: r => r.Vp / 0.04 }, { k: 'B', h: 'B = 0.78 × I', u: 'mT', plain: true, f: r => 0.78 * r.I }, { k: 'v', h: 'v = E ÷ B', u: 'm s⁻¹ · B in tesla!', f: r => r.Vp / 0.04 / (KCOIL * r.I) }],
@@ -148,9 +149,9 @@ const STN = {
       { m: EQ.FqvB, w: 'The magnetic field pushes it down.' },
       { m: EQ.bal, w: 'Straight line: no overall force, so the two forces are equal.', gap: true, opts: [EQ.bal, M(mi('q') + mi('E') + mo('=') + frac(mi('m') + sq(mi('v')), mi('r'))), M(mi('E') + mo('=') + mi('v') + sq(mi('B')))] },
       { m: EQ.vEB, w: 'q cancels! The speed depends only on E and B.' }],
-    concept: { p: 'You double B for the same beam. To keep it straight you must…', o: ['double E', 'halve E', 'keep E the same'], a: 0, hint: 'v = E/B and v has not changed.', why: 'Keep E/B the same: double E.' },
-    hist: { yr: '1897', t: 'Balancing the two fields let Thomson measure the speed of cathode rays. They were far slower than light, so they could not be light waves. They had to be particles.', q: { p: 'Balancing the fields let Thomson find…', o: ['the speed, without knowing q or m', 'the charge e', 'the mass m'], a: 0, hint: 'What is left in v = E/B?', why: 'v = E/B has no q or m in it.' } },
-    find: { eq: EQ.vEB, t: 'Balanced fields give the speed: v = E/B.' }
+    concept: { p: 'You double B for the same beam. To keep it straight you must…', o: ['double E', 'halve E', 'keep E the same'], a: 0, hint: 'v = E/B and v has not changed.', why: 'v = E/B has not changed, so if B doubles, E must double too.' },
+    hist: { yr: '1897', t: 'Balancing the two fields let Thomson measure the speed of cathode rays. They were much slower than light, which ruled out light waves and pointed to particles.', q: { p: 'Balancing the fields let Thomson find…', o: ['the speed, without knowing q or m', 'the charge e', 'the mass m'], a: 0, hint: 'What is left in v = E/B?', why: 'The equation v = E/B contains neither q nor m, so the speed can be found without them.' } },
+    find: { eq: EQ.vEB, t: 'When the fields balance, the speed is v = E/B.' }
   }
 };
 
@@ -164,7 +165,7 @@ const AN = {
       if (lvl >= 2) out.push({ id: 'V', p: `What gun voltage would make the beam bend exactly 1.0 cm?`, unit: 'kV', plain: true, exp: r.y * r.kV / 1.0, tol: 0.06, hint: 'y × V stays the same, so V = (y × V) ÷ 1.0' });
       if (lvl >= 3) out.push({ id: 'W', p: `Each electron in trial 1 gains W = qV. Give W in electronvolts (1 eV = the energy one electron gains through 1 V).`, unit: 'eV', plain: true, exp: r.kV * 1000, tol: 0.01, hint: 'One electron through V volts gains V electronvolts. Watch the kilo.' });
       return out; },
-    graph: rows => ({ pts: rows.map(r => [1 / r.kV, r.y]), xl: '1/V / kV⁻¹', yl: 'y / cm', fit: 'origin', note: 'Straight line through the origin: y ∝ 1/V. Faster beam, less bend.' })
+    graph: rows => ({ pts: rows.map(r => [1 / r.kV, r.y]), xl: '1/V / kV⁻¹', yl: 'y / cm', fit: 'origin', note: 'The points lie on a straight line through the origin, so y ∝ 1/V. A faster beam bends less.' })
   },
   B: {
     tasks: true,
@@ -174,7 +175,7 @@ const AN = {
       if (lvl >= 2) out.push({ id: 'r2', p: `Same beam, but B made twice as strong. Predict the new radius from trial 1.`, unit: 'cm', plain: true, exp: r.d / 4, tol: 0.05, hint: `r ∝ 1/B. Trial 1 radius = ${fx(r.d / 2, 2)} cm.` });
       if (lvl >= 3) out.push({ id: 'I2', p: `Same beam. What coil current would make the diameter ${fx(r.d * 0.8, 1)} cm?`, unit: 'A', plain: true, exp: r.I / 0.8, tol: 0.04, hint: 'r × B stays the same, so I × d stays the same.' });
       return out; },
-    graph: rows => { const V0 = rows[0].V, same = rows.filter(r => r.V === V0); return { pts: same.map(r => [1 / (KCOIL * r.I * 1e3), r.d / 2]), xl: `1/B / mT⁻¹ (beam at ${V0} V)`, yl: 'r / cm', fit: 'origin', note: 'Same beam, straight line through the origin: r ∝ 1/B. That is why r × B stays the same.' }; }
+    graph: rows => { const V0 = rows[0].V, same = rows.filter(r => r.V === V0); return { pts: same.map(r => [1 / (KCOIL * r.I * 1e3), r.d / 2]), xl: `1/B / mT⁻¹ (beam at ${V0} V)`, yl: 'r / cm', fit: 'origin', note: 'For one beam the points lie on a straight line through the origin, so r ∝ 1/B and r × B stays the same.' }; }
   },
   C: {
     tasks: true,
@@ -184,7 +185,7 @@ const AN = {
       if (lvl >= 2 && rows[1]) { const r2 = rows[1]; out.push({ id: 'E2', p: `Beam ${r2.beam} has the speed in your table. If B were doubled, what E would balance it?`, unit: 'V m⁻¹', plain: true, exp: 2 * r2.Vp / 0.04, tol: 0.03, hint: 'v = E/B must stay the same, so E doubles too.' }); }
       if (lvl >= 3) out.push({ id: 'qm', p: `Beam ${r.beam} came from a ${GUN[r.beam]} V gun. Use qV = ½mv² to find q/m.`, unit: 'C kg⁻¹', ph: '1.8e11', exp: v * v / (2 * GUN[r.beam]), tol: 0.05, hint: 'q/m = v² ÷ (2V)' });
       return out; },
-    graph: rows => ({ pts: rows.map(r => [r.beam, (r.Vp / 0.04) / (KCOIL * r.I) / 1e6]), xl: 'beam', yl: 'v / 10⁶ m s⁻¹', fit: null, xint: true, note: 'Each beam has its own speed, v = E/B, found without knowing q or m.' })
+    graph: rows => ({ pts: rows.map(r => [r.beam, (r.Vp / 0.04) / (KCOIL * r.I) / 1e6]), xl: 'beam', yl: 'v / 10⁶ m s⁻¹', fit: null, xint: true, note: 'Each beam has a different speed, v = E/B, found without knowing q or m.' })
   }
 };
 function fitOrigin(pts) { let a = 0, b = 0; pts.forEach(p => { a += p[0] * p[1]; b += p[0] * p[0]; }); return a / b; }
@@ -445,9 +446,9 @@ const PREDFIG = {
   B: FIG.circle, C: FIG.crossed
 };
 const PREDTXT = {
-  A: 'The gun speeds electrons up: <b>a higher voltage V means faster electrons</b>. Between two charged plates, each negative electron is <b>pushed towards the + plate</b>, so the beam bends.',
+  A: 'The gun speeds electrons up, and <b>a higher voltage V means faster electrons</b>. Between two charged plates, each negative electron is <b>pushed towards the + plate</b>, so the beam bends.',
   B: 'A magnetic field pushes a moving electron <b>sideways, at right angles</b> to its motion. The push turns with it, so the beam curls into a <b>circle</b>.',
-  C: 'The plates push the beam <b>up</b>; the magnetic field pushes it <b>down</b>. When the two pushes are <b>equal</b>, the beam goes <b>straight</b>.'
+  C: 'The plates push the beam <b>up</b> and the magnetic field pushes it <b>down</b>. When the two pushes are <b>equal</b>, the beam goes <b>straight</b>.'
 };
 function labPredict(body) {
   const k = S.station, st = STN[k];
@@ -473,7 +474,7 @@ function labExperiment(body) {
       <div class="card small" id="predcard">Your prediction: <b>${R.pred[S.name] != null ? st.pred.o[R.pred[S.name]] : '–'}</b> <button class="linkbtn" id="chgp">change</button><div class="tiny muted">${st.pred.q}</div></div>
     </div></div>
     <div class="card" id="reccard"><div class="row between"><h3 style="margin:0">Table of record</h3><span class="tiny muted" id="cnt"></span></div>
-      <div class="tiny muted" style="margin:2px 0 8px">Processors fill the <b style="color:var(--accent-ink)">coloured columns</b>: the header says how. Green = right. 3 to 5 readings.</div>
+      <div class="tiny muted" style="margin:2px 0 8px">Processors fill in the <b style="color:var(--accent-ink)">coloured columns</b> using the formula in each header. A cell turns green when it is right. Take 3 to 5 readings.</div>
       <div id="rectbl"></div><div id="recnext"></div></div>`;
   sim = ({ A: simA, B: simB, C: simC })[k]($('#sim'));
   sim.onChange = s => { localEditT = Date.now(); clearTimeout(sim._t); sim._t = setTimeout(() => roomOp('sim', { sim: s }), 220); };
@@ -509,13 +510,13 @@ function paintQuest(obs) {
 const MISSION = {
   A: [['Bend the beam', 'The beam is a stream of electrons. Why does it curve when the plates are on?', 'Switch the deflecting plates on and off. Watch the yellow force arrow and the green velocity arrow.'],
       ['Test your prediction', 'A higher gun voltage gives faster electrons. Do they bend more or less? Switch the plates on and watch the yellow force arrow.', 'Trial leads: 3 to 5 readings at different voltages. Processors: fill the coloured columns.'],
-      ['Check your prediction', 'Look at y × V: the same every time? So y ∝ 1/V: double the voltage, half the bend. Why?', 'Agree on an answer as a team, then tap Process the data.']],
+      ['Check your prediction', 'Is y × V the same for every reading? If so, y ∝ 1/V, and doubling the voltage halves the bend. Can you explain why?', 'Agree on an answer as a team, then tap Process the data.']],
   B: [['Predict', 'A magnetic field bends a moving electron into a circle. What sets the size of the circle?', 'Make your prediction first. Your team\'s picks show live.'],
       ['Test your prediction', 'The force qvB always points to the centre, so the beam goes round. What does a stronger field B do to the circle?', 'Trial leads: change the current, marker on top of the ring, Record. Processors: fill the coloured columns.'],
-      ['Check your prediction', 'Look at r × B: the same for one beam? So r ∝ 1/B.', 'Agree on an answer as a team, then tap Process the data.']],
+      ['Check your prediction', 'Is r × B the same for every reading with one beam? If so, r ∝ 1/B.', 'Agree on an answer as a team, then tap Process the data.']],
   C: [['Predict', 'The electric field pushes the beam up, the magnetic field pushes it down. Balanced, the beam goes straight.', 'Make your prediction first. Your team\'s picks show live.'],
-      ['Test your prediction', 'Watch the electron between the plates: qE pushes up, qvB pushes down. Equal arrows, straight beam, and then v = E ÷ B.', 'Trial leads: balance each beam and Record. Processors: work out E, B and the speed v = E ÷ B.'],
-      ['Check your prediction', 'Look at the v column: each beam has its own speed, found without q or m.', 'Agree on an answer as a team, then tap Process the data.']]
+      ['Test your prediction', 'Watch the electron between the plates. The electric force qE pushes it up and the magnetic force qvB pushes it down. When the two arrows are equal the beam goes straight, and v = E ÷ B.', 'Trial leads: balance each beam and Record. Processors: work out E, B and the speed v = E ÷ B.'],
+      ['Check your prediction', 'Look at the v column. Each beam has a different speed, and you found it without knowing q or m.', 'Agree on an answer as a team, then tap Process the data.']]
 };
 function paintMission() {
   const host = $('#mbox'); if (!host || !R) return;
@@ -574,7 +575,7 @@ function roleCoachA2() {
     ...(S.role === 'trial' ? [{ el: sim.ctrlEl, drag: true, t: 'Change the <b>gun voltage</b> for your reading.' },
       { el: sim.runEl, t: STN.A.readHint, until: ranMine },
       { el: '#reccard', t: '<b>3 to 5</b> readings at different voltages. Is the bend getting bigger or smaller?' }]
-    : [{ el: '#reccard', t: '<b>You process the readings</b>: the coloured headers show the formula. Watch the <b>y × V</b> column: what do you notice?', until: () => R.rows.some(r => Object.entries(r.rec).some(([c, x]) => c.startsWith('p_') && x.by === S.name)) }])];
+    : [{ el: '#reccard', t: '<b>You process the readings</b>, using the formula in each coloured header. Watch the <b>y × V</b> column. What do you notice?', until: () => R.rows.some(r => Object.entries(r.rec).some(([c, x]) => c.startsWith('p_') && x.by === S.name)) }])];
   steps.forEach((x, i) => { x.n = i + 1; x.of = steps.length; }); coach(steps, 'roleA2');
 }
 function roleCoach() {
@@ -586,11 +587,12 @@ function roleCoach() {
   const typed = () => R.rows.some(r => Object.values(r.rec).some(c => c.by === S.name));
   const predicted = () => R.pred[S.name] != null;
   const steps = [{ el: '#mbox', t: 'This panel always tells you <b>why</b> and <b>what</b>.' }];
+  if (k === 'B') steps.push({ el: sim.swEl, t: 'Switch on the <b>electron gun</b>: the beam shoots straight. Then switch on the <b>coils</b> and watch it curl.', until: () => { const g = sim.getState(); return g.gun && g.coils; } });
   if (S.role === 'trial') {
-    steps.push({ el: sim.ctrlEl, drag: true, t: k === 'B' ? 'Change the <b>coil current</b>: a stronger field B. Watch the yellow force arrow, always pointing to the centre.' : 'Pick a beam, then adjust E and B until the <b>yellow and pink arrows are equal</b> and the spot sits on 0.', until: changed });
-    steps.push({ el: sim.runEl, t: k === 'B' ? 'Drag the cyan marker to the <b>top of the ring</b>, then tap <b>Record</b>.' : 'Balanced: equal forces, straight beam. Tap <b>Record</b>.', until: ranMine });
+    steps.push({ el: sim.ctrlEl, drag: true, t: k === 'B' ? 'Change the <b>coil current</b> to change the field B. Notice that the yellow force arrow always points to the centre.' : 'Pick a beam, then adjust E and B until the <b>yellow and pink arrows are equal</b> and the spot sits on 0.', until: changed });
+    steps.push({ el: sim.runEl, t: k === 'B' ? 'Drag the cyan marker to the <b>top of the ring</b>, then tap <b>Record</b>.' : 'When the two forces are equal the beam goes straight. Tap <b>Record</b>.', until: ranMine });
   } else {
-    steps.push({ el: '#reccard', t: `<b>You process the readings</b>: the coloured headers show the formula. ${k === 'C' ? 'The last column is the <b>speed</b>.' : 'Watch the <b>r × B</b> column: what do you notice?'}`, until: () => R.rows.some(r => Object.entries(r.rec).some(([c, x]) => c.startsWith('p_') && x.by === S.name)) });
+    steps.push({ el: '#reccard', t: `<b>You process the readings</b>, using the formula in each coloured header. ${k === 'C' ? 'The last column is the <b>speed</b>.' : 'Watch the <b>r × B</b> column. What do you notice?'}`, until: () => R.rows.some(r => Object.entries(r.rec).some(([c, x]) => c.startsWith('p_') && x.by === S.name)) });
     if (S.role === 'leader') steps.push({ el: '#predcard', t: 'Team leader: when 3 rows are processed, ask the team: <b>was our prediction right?</b>' });
   }
   steps.forEach((s, i) => { s.n = i + 1; s.of = steps.length; });
@@ -611,6 +613,25 @@ function sceneAnim(kind) {
     <rect x="640" y="60" width="0" height="0"/><text x="115" y="58" fill="#F07A71" font-size="24" font-weight="900" text-anchor="middle">−</text><text x="305" y="58" fill="#45C58C" font-size="24" font-weight="900" text-anchor="middle">+</text>
     <circle cx="127" cy="150" r="7" fill="#8DB8EA" opacity="0"><animate attributeName="opacity" values="0;1" begin="0.00s" dur=".2s" fill="freeze"/></circle><circle cx="149" cy="150" r="7" fill="#8DB8EA" opacity="0"><animate attributeName="opacity" values="0;1" begin="0.25s" dur=".2s" fill="freeze"/></circle><circle cx="185" cy="150" r="7" fill="#8DB8EA" opacity="0"><animate attributeName="opacity" values="0;1" begin="0.50s" dur=".2s" fill="freeze"/></circle><circle cx="235" cy="150" r="7" fill="#8DB8EA" opacity="0"><animate attributeName="opacity" values="0;1" begin="0.75s" dur=".2s" fill="freeze"/></circle><circle cx="300" cy="150" r="7" fill="#8DB8EA" opacity="0"><animate attributeName="opacity" values="0;1" begin="1.00s" dur=".2s" fill="freeze"/></circle><circle cx="372" cy="150" r="7" fill="#8DB8EA" opacity="0"><animate attributeName="opacity" values="0;1" begin="1.25s" dur=".2s" fill="freeze"/></circle><circle cx="444" cy="150" r="7" fill="#8DB8EA" opacity="0"><animate attributeName="opacity" values="0;1" begin="1.50s" dur=".2s" fill="freeze"/></circle><circle cx="516" cy="150" r="7" fill="#8DB8EA" opacity="0"><animate attributeName="opacity" values="0;1" begin="1.75s" dur=".2s" fill="freeze"/></circle><circle cx="588" cy="150" r="7" fill="#8DB8EA" opacity="0"><animate attributeName="opacity" values="0;1" begin="2.00s" dur=".2s" fill="freeze"/></circle><circle cx="660" cy="150" r="7" fill="#8DB8EA" opacity="0"><animate attributeName="opacity" values="0;1" begin="2.25s" dur=".2s" fill="freeze"/></circle>
     <text x="210" y="265" fill="#F2BD45" font-size="17" text-anchor="middle">speeds up in the gap</text><text x="480" y="265" fill="#7CFFB2" font-size="17" text-anchor="middle">equal steps: constant speed</text></svg>`;
+  if (kind === 'fbStraight' || kind === 'fbCircle') { const on = kind === 'fbCircle';
+    return `<svg class="anim" viewBox="0 0 640 300" preserveAspectRatio="xMidYMid slice"><rect width="640" height="300" fill="#0E1424"/>
+    <circle cx="320" cy="150" r="128" fill="none" stroke="#7a5230" stroke-width="16"/><circle cx="320" cy="150" r="128" fill="none" stroke="#c08a52" stroke-width="16" stroke-dasharray="1.5 3" opacity=".6"/>
+    ${on ? '<circle cx="320" cy="150" r="128" fill="none" stroke="#FDE68A" stroke-width="2" stroke-dasharray="8 12"><animate attributeName="stroke-dashoffset" values="0;-40" dur="1s" repeatCount="indefinite"/></circle>' : ''}
+    <circle cx="320" cy="150" r="104" fill="#1b1530" stroke="#6a5a90" stroke-width="2"/>
+    <rect x="280" y="232" width="34" height="14" rx="3" fill="#8a96b3"/><circle cx="284" cy="239" r="4" fill="#FDBA4D"/>
+    ${on ? `<path d="M314 239 A62 62 0 1 0 314 115 A62 62 0 1 0 314 239" fill="none" stroke="#C4A5FF" stroke-width="4" opacity=".9"><animate attributeName="stroke-dasharray" values="0 400;400 0" dur="2s" repeatCount="indefinite"/></path>
+      <line x1="376" y1="177" x2="350" y2="170" stroke="#F2BD45" stroke-width="3"/><polygon points="344,168 354,164 352,174" fill="#F2BD45"/><text x="382" y="182" fill="#F2BD45" font-size="15" font-weight="800">force to the centre</text>`
+      : `<line x1="314" y1="239" x2="418" y2="239" stroke="#C4A5FF" stroke-width="4"><animate attributeName="stroke-dasharray" values="0 120;120 0" dur="1.2s" repeatCount="indefinite"/></line>`}
+    <text x="320" y="28" fill="${on ? '#FDE68A' : '#9AA4B8'}" font-size="16" font-weight="800" text-anchor="middle">coils ${on ? 'ON' : 'OFF'} · gun ON</text></svg>`; }
+  if (kind === 'mFall' || kind === 'mHold') { const on = kind === 'mHold';
+    return `<svg class="anim" viewBox="0 0 640 300" preserveAspectRatio="xMidYMid slice"><rect width="640" height="300" fill="#0E1424"/>
+    <rect x="160" y="40" width="320" height="10" fill="${on ? '#9fe3c0' : '#c9d3e8'}"/><rect x="160" y="250" width="320" height="10" fill="${on ? '#f2b0aa' : '#c9d3e8'}"/>
+    <text x="150" y="50" fill="${on ? '#45C58C' : '#9AA4B8'}" font-size="18" font-weight="800" text-anchor="end">${on ? '+' : '0 V'}</text><text x="150" y="260" fill="${on ? '#F07A71' : '#9AA4B8'}" font-size="18" font-weight="800" text-anchor="end">${on ? '−' : '0 V'}</text>
+    ${on ? `<circle cx="320" cy="150" r="9" fill="#FDE68A"><animate attributeName="cy" values="148;152;148" dur="2s" repeatCount="indefinite"/></circle>
+      <line x1="320" y1="138" x2="320" y2="100" stroke="#45C58C" stroke-width="4"/><polygon points="320,94 312,108 328,108" fill="#45C58C"/><text x="332" y="112" fill="#45C58C" font-size="15" font-weight="800">electric force qE</text>
+      <line x1="320" y1="162" x2="320" y2="200" stroke="#F472B6" stroke-width="4"/><polygon points="320,206 312,192 328,192" fill="#F472B6"/><text x="332" y="198" fill="#F472B6" font-size="15" font-weight="800">weight mg</text>`
+      : [220, 300, 380, 440].map((x, i) => `<circle cx="${x}" r="7" fill="#FDE68A"><animate attributeName="cy" values="60;240" dur="${2.2 + i * .4}s" begin="${i * .3}s" repeatCount="indefinite"/></circle>`).join('')}
+    </svg>`; }
   if (kind === 'curl') return `<svg class="anim" viewBox="0 0 640 300" preserveAspectRatio="xMidYMid slice"><rect width="640" height="300" fill="#0E1424"/>
     ${Array.from({ length: 40 }, (_, i) => `<text x="${30 + (i % 10) * 62}" y="${40 + Math.floor(i / 10) * 70}" fill="#F472B6" font-size="16" opacity=".35">⊙</text>`).join('')}
     <path d="M320 260 A95 95 0 1 0 320 70 A95 95 0 1 0 320 260" fill="none" stroke="#7CFFB2" stroke-width="4" opacity=".9"><animate attributeName="stroke-dasharray" values="0 700;700 0" dur="2.2s" repeatCount="indefinite"/></path>
@@ -692,7 +713,7 @@ function simA(host) {
     q('#ptop').textContent = plates ? `+ ${VP} V` : '0 V'; q('#ptop').setAttribute('fill', plates ? '#45C58C' : '#9AA4B8'); q('#pt').setAttribute('fill', plates ? '#9fe3c0' : '#c9d3e8');
     q('#bD').textContent = 'Deflecting plates: ' + (plates ? 'ON' : 'OFF'); q('#bD').classList.toggle('primary', plates);
     q('#recA').disabled = !(unlocked && plates);
-    q('#msgA').textContent = !plates ? 'Plates off: no force, the beam goes straight.' : !unlocked ? 'Plates on: a constant push towards +.' : 'Line up the marker with the trace at 8 cm, then Record.';
+    q('#msgA').textContent = !plates ? 'With the plates off there is no force, so the beam goes straight.' : !unlocked ? 'The plates push the beam towards +, with the same force all the way.' : 'Line up the marker with the trace at 8 cm, then Record.';
     o.onObserve && o.onObserve({ plates });
   };
   // live electron riding the trace, with velocity (green) and force (yellow) arrows
@@ -732,24 +753,26 @@ function simA(host) {
 /* ===== SIM B: fine-beam tube (also the final Thomson tube) ===== */
 function simB(host, cfg = {}) {
   const PX = 21, cx = 240, cy = 210, Rb = 8.6 * PX, gx = cx, gy = cy + Rb - 12;
-  let V = cfg.fixedV || 200, Vr = cfg.fixedV || realV(200), I = cfg.fixedI || 1.5, mark = 6;
+  let V = cfg.fixedV || 200, Vr = cfg.fixedV || realV(200), I = cfg.fixedI || 1.5, mark = 6, gun = false, coils = false;
   host.innerHTML = `<svg class="sim" viewBox="0 0 480 420">
    <defs><radialGradient id="bulb" cx=".45" cy=".4"><stop offset="0" stop-color="#2d2144"/><stop offset="1" stop-color="#120f22"/></radialGradient>
    <filter id="gl"><feGaussianBlur stdDeviation="4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>
-   <circle cx="${cx}" cy="${cy}" r="${Rb + 30}" fill="none" stroke="#B5763B" stroke-width="12" opacity=".75"/>
+   <circle cx="${cx}" cy="${cy}" r="${Rb + 30}" fill="none" stroke="#7a5230" stroke-width="16"/><circle cx="${cx}" cy="${cy}" r="${Rb + 30}" fill="none" stroke="#c08a52" stroke-width="16" stroke-dasharray="1.5 3" opacity=".6"/>
+   <circle id="coilI" cx="${cx}" cy="${cy}" r="${Rb + 30}" fill="none" stroke="#FDE68A" stroke-width="2" stroke-dasharray="8 12" opacity="0"/>
    <text x="${cx + Rb - 4}" y="22" fill="#F472B6" font-size="11" text-anchor="end">Helmholtz coils</text>
    <circle cx="${cx}" cy="${cy}" r="${Rb}" fill="url(#bulb)" stroke="#6a5a90" stroke-width="2"/>
    <g id="ruler"></g>
    <path id="beam" fill="none" stroke="#E07BFF" stroke-width="4" filter="url(#gl)" opacity=".85"/>
-   <rect x="${gx - 34}" y="${gy - 8}" width="34" height="16" rx="3" fill="#8a96b3"/><circle cx="${gx - 30}" cy="${gy}" r="4" fill="#22D3EE"/>
+   <rect x="${gx - 34}" y="${gy - 8}" width="34" height="16" rx="3" fill="#8a96b3"/><circle id="cath" cx="${gx - 30}" cy="${gy}" r="4" fill="#5b6478"/>
    <g id="mk" style="cursor:ns-resize"><line x1="${gx - 26}" x2="${gx + 26}" stroke="#22D3EE" stroke-width="3"/><polygon points="${gx + 28},0 ${gx + 42},-9 ${gx + 42},9" fill="#22D3EE"/><rect x="${gx - 44}" y="-16" width="104" height="32" fill="transparent"/></g>
    <text x="18" y="404" fill="#9AA4B8" font-size="12">B out of the screen ⊙</text>
    <text x="18" y="22" fill="#6f7a92" font-size="10">The ring glows: the tube holds a trace of hydrogen gas.</text>
    <defs><marker id="mBv" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8z" fill="#45C58C"/></marker><marker id="mBf" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8z" fill="#F2BD45"/></marker></defs>
-   <g id="eB" ${cfg.fixedV ? 'style="display:none"' : ''}><line id="bV" stroke="#45C58C" stroke-width="3" marker-end="url(#mBv)"/><line id="bF" stroke="#F2BD45" stroke-width="3" marker-end="url(#mBf)"/><circle id="bDot" r="6" fill="#8DB8EA" stroke="#fff" stroke-width="1.5"/><text id="tbV" fill="#45C58C" font-size="13" font-weight="800">v</text><text id="tbF" fill="#F2BD45" font-size="13" font-weight="800">F = qvB</text></g>
+   <g id="eB"><line id="bV" stroke="#45C58C" stroke-width="3" marker-end="url(#mBv)"/><line id="bF" stroke="#F2BD45" stroke-width="3" marker-end="url(#mBf)"/><circle id="bDot" r="6" fill="#8DB8EA" stroke="#fff" stroke-width="1.5"/><text id="tbV" fill="#45C58C" font-size="13" font-weight="800">v</text><text id="tbF" fill="#F2BD45" font-size="13" font-weight="800">F = qvB</text></g>
   </svg>
   ${cfg.fixedV ? '' : `<div class="ctrl"><label>Electron gun voltage <output id="oV2"></output></label><div class="seg" id="segV">${[150, 200, 250, 300].map(v => `<button data-v="${v}">${v} V</button>`).join('')}</div></div>
   <div class="ctrl" id="cI"><label>Coil current I <output id="oI"></output></label><input type="range" id="sI" min="1" max="3" step="0.05" value="${I}"></div>`}
+  <div class="row" id="swB"><button class="btn" id="bGun">⚡ Electron gun: OFF</button><button class="btn" id="bCoil">🧲 Coils: OFF</button></div>
   <div class="row"><button class="btn primary big" id="rec">📏 Record</button><div class="inst" id="inst"><div>V = <b id="iV"></b> V</div><div>I = <b id="iI"></b> A</div><div>d = <b id="iD"></b> cm</div></div></div>
   <div class="tiny muted" id="rmsg" style="margin-top:4px">Drag the cyan marker to the top of the glowing ring.</div>`;
   const svg = host.querySelector('svg'), beam = host.querySelector('#beam'), mk = host.querySelector('#mk');
@@ -757,9 +780,16 @@ function simB(host, cfg = {}) {
     if (c < 16) for (let m = 1; m < 10; m++) { const yy = y - m * PX / 10; rul += `<line x1="${gx - 3}" y1="${yy}" x2="${gx}" y2="${yy}" stroke="#9a8fc0" stroke-width=".6"/>`; } }
   host.querySelector('#ruler').innerHTML = `<line x1="${gx}" y1="${gy}" x2="${gx}" y2="${gy - 16 * PX}" stroke="#e6dcff"/>` + rul + `<text x="${gx - 20}" y="${gy - 16 * PX - 8}" fill="#e6dcff" font-size="11">cm</text>`;
   const rOf = () => speed(Vr) / (QM * KCOIL * I);
-  const o = { ctrlEl: host.querySelector('#cI') || host.querySelector('#mk'), runEl: host.querySelector('#rec'), instEl: host.querySelector('#inst') };
+  const o = { ctrlEl: host.querySelector('#cI') || host.querySelector('#mk'), runEl: host.querySelector('#rec'), instEl: host.querySelector('#inst'), swEl: host.querySelector('#swB') };
+  const xEdge = cx + Math.sqrt(Rb * Rb - (gy - cy) ** 2) - 4;
   const draw = () => { const rp = rOf() * 100 * PX;
-    beam.setAttribute('d', `M ${gx} ${gy} A ${rp} ${rp} 0 1 0 ${gx} ${gy - 2 * rp} A ${rp} ${rp} 0 1 0 ${gx} ${gy}`);
+    beam.setAttribute('d', !gun ? '' : coils ? `M ${gx} ${gy} A ${rp} ${rp} 0 1 0 ${gx} ${gy - 2 * rp} A ${rp} ${rp} 0 1 0 ${gx} ${gy}` : `M ${gx} ${gy} L ${xEdge} ${gy}`);
+    host.querySelector('#cath').setAttribute('fill', gun ? '#FDBA4D' : '#5b6478');
+    const ci = host.querySelector('#coilI'); ci.setAttribute('opacity', coils ? .9 : 0);
+    host.querySelector('#bGun').textContent = '⚡ Electron gun: ' + (gun ? 'ON' : 'OFF'); host.querySelector('#bGun').classList.toggle('primary', gun);
+    host.querySelector('#bCoil').textContent = '🧲 Coils: ' + (coils ? 'ON' : 'OFF'); host.querySelector('#bCoil').classList.toggle('primary', coils);
+    host.querySelector('#rec').disabled = !(gun && coils);
+    host.querySelector('#rmsg').textContent = !gun ? 'Switch on the electron gun.' : !coils ? 'No magnetic field: the beam goes straight. Switch on the coils.' : 'Drag the cyan marker to the top of the glowing ring.';
     host.querySelector('#iV').textContent = Vr; host.querySelector('#iI').textContent = fx(I, 2); host.querySelector('#iD').textContent = fx(mark, 1);
     if (host.querySelector('#oI')) host.querySelector('#oI').textContent = fx(I, 2) + ' A';
     if (host.querySelector('#oV2')) { host.querySelector('#oV2').textContent = 'about ' + V + ' V'; host.querySelectorAll('#segV button').forEach(b => b.classList.toggle('on', +b.dataset.v === V)); }
@@ -772,14 +802,21 @@ function simB(host, cfg = {}) {
   mk.addEventListener('pointermove', e => { if (!drag) return; mark = Math.round(toCm(e) * 10) / 10; changed(); });
   mk.addEventListener('pointerup', () => drag = false);
   svg.addEventListener('click', e => { if (e.target.closest('#mk')) return; mark = Math.round(toCm(e) * 10) / 10; changed(); });
-  o.getState = () => ({ V, Vr, I, mark }); o.setState = s => { if (s.V) { V = [150, 200, 250, 300].reduce((a, b) => Math.abs(b - s.V) < Math.abs(a - s.V) ? b : a); Vr = s.Vr || s.V; } if (s.I) { I = s.I; if (sI) sI.value = I; } if (s.mark != null) mark = s.mark; draw(); };
+  host.querySelector('#bGun').onclick = () => { gun = !gun; changed(); }; host.querySelector('#bCoil').onclick = () => { coils = !coils; changed(); };
+  o.getState = () => ({ V, Vr, I, mark, gun, coils }); o.setState = s => { if (s.gun != null) gun = s.gun; if (s.coils != null) coils = s.coils; if (s.V) { V = [150, 200, 250, 300].reduce((a, b) => Math.abs(b - s.V) < Math.abs(a - s.V) ? b : a); Vr = s.Vr || s.V; } if (s.I) { I = s.I; if (sI) sI.value = I; } if (s.mark != null) mark = s.mark; draw(); };
   host.querySelector('#rec').onclick = () => { const d = 2 * rOf() * 100, msg = host.querySelector('#rmsg');
     if (Math.abs(mark - d) > 0.2) { msg.innerHTML = '<b style="color:var(--bad)">Not lined up.</b> Put the marker exactly on the top of the ring.'; return; }
     msg.textContent = cfg.fixedV ? 'Recorded.' : 'Recorded. Change the current for the next trial.';
     o.onRun && o.onRun({ V: Vr, I, d: mark }); };
-  o.playRow = row => { o.setState({ V: row.raw.V, Vr: row.raw.V, I: row.raw.I, mark: row.raw.d }); beam.animate([{ opacity: .3 }, { opacity: 1 }], { duration: 700 }); };
+  o.playRow = row => { o.setState({ V: row.raw.V, Vr: row.raw.V, I: row.raw.I, mark: row.raw.d, gun: true, coils: true }); beam.animate([{ opacity: .3 }, { opacity: 1 }], { duration: 700 }); };
   const t0B = performance.now();
-  const rideB = now => { if (!document.body.contains(svg)) return; if (!cfg.fixedV) {
+  const rideB = now => { if (!document.body.contains(svg)) return;
+    host.querySelector('#eB').style.display = gun ? '' : 'none';
+    host.querySelector('#coilI').setAttribute('stroke-dashoffset', -((now / 25) % 40));
+    if (gun && !coils) { const per = 1400 * Math.sqrt(200 / Vr), f = ((now - t0B) % per) / per, x = gx + (xEdge - gx) * f, y = gy;
+      const set = (id, a) => { const e = host.querySelector(id); for (const k in a) e.setAttribute(k, a[k]); };
+      set('#bDot', { cx: x, cy: y }); set('#bV', { x1: x, y1: y, x2: x + 34, y2: y }); set('#bF', { x1: x, y1: y, x2: x, y2: y }); set('#tbV', { x: x + 40, y: y + 4 }); set('#tbF', { x: -99, y: -99 }); }
+    if (gun && coils) {
       const rp = rOf() * 100 * PX, cyc = gy - rp, per = 3600 * (1.5 / I), phi = 2 * Math.PI * (((now - t0B) % per) / per);
       const x = gx + rp * Math.sin(phi), y = cyc + rp * Math.cos(phi), vx = Math.cos(phi), vy = -Math.sin(phi), fxu = -Math.sin(phi), fyu = -Math.cos(phi);
       const set = (id, a) => { const e = host.querySelector(id); for (const k in a) e.setAttribute(k, a[k]); };
@@ -832,7 +869,7 @@ function simC(host) {
     q('#iBm').textContent = beam; q('#iVp').textContent = Vp; q('#iI').textContent = fx(I, 2);
     host.querySelectorAll('#segB button').forEach(b => b.classList.toggle('on', +b.dataset.b === beam));
     const ok = ys != null && Math.abs(ys) < 0.2 && E > 0; q('#recC').disabled = !ok;
-    q('#stt').textContent = hit ? 'beam hits a plate' : ok ? 'balanced: straight through!' : (ys > 0 ? 'spot high: electric force wins' : 'spot low: magnetic force wins');
+    q('#stt').textContent = hit ? 'The beam hits a plate' : ok ? 'Balanced, so the beam goes straight through' : (ys > 0 ? 'The spot is high, so the electric force is bigger' : 'The spot is low, so the magnetic force is bigger');
   };
   const changed = () => { draw(); o.onChange && o.onChange(o.getState()); };
   q('#sE').oninput = () => { Vp = +q('#sE').value; changed(); }; q('#sB').oninput = () => { I = +q('#sB').value; changed(); };
@@ -920,7 +957,7 @@ function labExplain(body) {
   const preds = Object.values(R.pred || {}); const cnt = st.pred.o.map((_, i) => preds.filter(p => p === i).length);
   const top = cnt.indexOf(Math.max(...cnt)); const right = 0;
   const c = card(body, `<span class="tag teal">Explain</span>
-   <div class="fb ${top === right ? 'good' : 'hint'}" style="margin-top:8px">Your team predicted <b>${preds.length ? st.pred.o[top] : '–'}</b>. The data says: <b>${st.pred.o[right]}</b>.</div><div id="cq"></div>`);
+   <div class="fb ${top === right ? 'good' : 'hint'}" style="margin-top:8px">Your team predicted <b>${preds.length ? st.pred.o[top] : '–'}</b>, and the data shows <b>${st.pred.o[right]}</b>.</div><div id="cq"></div>`);
   mcq(c.querySelector('#cq'), st.concept, k + '·concept', () => {
     const t = card(body, `<span class="tag teal">Where does the equation come from?</span><ol class="steps" id="stp"></ol><div id="gapq"></div>`);
     const gapMode = S.level >= 2;
@@ -964,7 +1001,7 @@ async function rFinal() {
     return;
   }
   const F = S.final;
-  app().innerHTML = `<div class="stcard reveal"><div class="ph" style="background-image:url(img/finebeam.webp)"></div><div class="tx"><span class="pill">🔓 The Thomson tube</span><h2>Put the three pieces together.</h2><div class="muted">Everyone, the same task. Use all three discoveries.</div><div><button class="btn ghost" id="fback" style="color:#fff;border-color:rgba(255,255,255,.4)">← Back to my station</button></div></div></div>
+  app().innerHTML = `<div class="stcard reveal"><div class="ph" style="background-image:url(img/finebeam.webp)"></div><div class="tx"><span class="pill">🔓 The Thomson tube</span><h2>Put the three pieces together.</h2><div><button class="btn ondark" id="fback">← Back to my station</button></div></div></div>
    <div class="card" style="margin-top:14px"><div class="disc">${disc}</div></div>
    <div class="card"><h3>Combine A and B: make the speed disappear</h3><ol class="steps" id="cmb"></ol><button class="btn" id="more">Show the next line ↓</button></div>
    <div class="grid2"><div class="card"><h3>Measure it</h3><div class="tiny muted">V = 250 V · coil current 1.50 A, so B = ${fx(KCOIL * 1.5 * 1e3, 2)} mT</div><div id="tube" style="margin-top:6px"></div></div>
@@ -974,14 +1011,23 @@ async function rFinal() {
     { m: M(mi('q') + mi('V') + mo('=') + frac(mn(1), mn(2)) + mi('m') + sq(mi('v')) + mo('⇒') + sq(mi('v')) + mo('=') + frac(mn(2) + mi('q') + mi('V'), mi('m'))), w: '⚡ Station A: the speed the gun gives.' },
     { m: M(mi('r') + mo('=') + frac(mi('m') + mi('v'), mi('q') + mi('B')) + mo('⇒') + mi('v') + mo('=') + frac(mi('q') + mi('B') + mi('r'), mi('m'))), w: '🧲 Station B: rearrange for v.' },
     { m: M(sq(mi('v')) + mo('=') + frac(sq(mi('q')) + sq(mi('B')) + sq(mi('r')), sq(mi('m')))), w: 'Square it.' },
-    { m: M(frac(mn(2) + mi('q') + mi('V'), mi('m')) + mo('=') + frac(sq(mi('q')) + sq(mi('B')) + sq(mi('r')), sq(mi('m')))), w: 'Same electrons, same speed: set them equal.' },
-    { m: EQ.qm, w: 'Multiply by m²/q and rearrange. No speed needed!' },
-    { m: EQ.qmT, w: '⚖️ Station C gives Thomson\'s own route: put v = E/B into v = qBr/m.' }];
+    { m: M(frac(mn(2) + mi('q') + mi('V'), mi('m')) + mo('=') + frac(sq(mi('q')) + sq(mi('B')) + sq(mi('r')), sq(mi('m')))), w: 'Both equations describe the same electrons at the same speed, so set them equal.' },
+    { m: EQ.qm, w: 'Multiply by m²/q and rearrange. The speed has dropped out of the equation.' },
+    { m: EQ.qmT, w: '⚖️ Station C gives Thomson\'s own method: put v = E/B into v = qBr/m.' }];
   let shown = F.lines || 1; const paintL = () => { $('#cmb').innerHTML = lines.slice(0, shown).map(l => `<li class="reveal"><div class="eqbig">${l.m}</div><div class="why">${l.w}</div></li>`).join(''); $('#more').hidden = shown >= lines.length; };
   paintL(); $('#more').onclick = () => { shown++; F.lines = shown; save(false); paintL(); };
   const tube = simB($('#tube'), { fixedV: 250, fixedI: 1.5 });
   tube.onRun = raw => { F.dRead = raw.d; save(); calcStage(); };
-  coach([{ el: '#tube #mk', vdrag: true, t: 'Drag the marker to the top of the ring, then tap <b>Record</b>.', n: 1, of: 1, until: () => !!S.final.dRead }], 'final');
+  const FINTRO = [{ img: 'img/finebeam.webp', cap: 'Thomson\'s idea in one tube.', sub: 'An electron gun at 250 V inside a glass bulb, between two coils.' },
+    { anim: 'fbStraight', cap: 'Switch on the electron gun.', sub: 'With the coils off, the beam shoots straight across the bulb.' },
+    { anim: 'fbCircle', cap: 'Switch on the coils (1.50 A).', sub: 'The magnetic force always points to the centre, so the beam curls into a circle.' },
+    { img: 'img/coil.webp', cap: 'Measure the diameter of the circle.', sub: 'Then use your three discoveries to find q/m.' }];
+  const tcard = $('#tube').closest('.card'); tcard.insertAdjacentHTML('beforeend', '<button class="linkbtn" id="tintro" style="margin-top:8px">▶ Watch the intro again</button>');
+  const fintro = done => { tcard.style.position = 'relative'; tcard.style.minHeight = '440px'; tcard.style.overflow = 'hidden'; playScene(tcard, FINTRO, () => { S.seen.fscene = 1; save(false); done && done(); }); };
+  $('#tintro').onclick = () => fintro();
+  const fcoach = () => coach([{ el: '#tube #swB', t: 'Switch on the <b>electron gun</b>, then the <b>coils</b>. Watch the arrows.', n: 1, of: 2, until: () => { const g = tube.getState(); return g.gun && g.coils; } },
+    { el: '#tube #mk', vdrag: true, t: 'Drag the marker to the top of the ring, then tap <b>Record</b>.', n: 2, of: 2, until: () => !!S.final.dRead }], 'final');
+  if (!S.seen.fscene) fintro(fcoach); else fcoach();
   if (F.dRead) calcStage();
   function calcStage() {
     const r = F.dRead / 200, B = KCOIL * 1.5, V = 250, qmT = 2 * V / (B * B * r * r), c = $('#calc');
@@ -996,23 +1042,102 @@ async function rFinal() {
 }
 
 /* ---------- Millikan + the mass ---------- */
+/* ===== Millikan chamber: drops seen through a microscope; hold one still with the plate voltage ===== */
+const MDROPS = [{ n: 1, m: 4.89e-16 }, { n: 3, m: 1.96e-15 }, { n: 2, m: 1.47e-15 }];
+const MD = 0.010, MG = 9.81;
+function simM(host) {
+  let drop = 0, on = false, V = 0, y = 0, last = performance.now();   // y: cm-ish screen units, 0 = centre
+  host.innerHTML = `<svg class="sim" viewBox="0 0 640 330">
+   <defs><radialGradient id="eye" cx=".5" cy=".5"><stop offset=".85" stop-color="#0b1220"/><stop offset="1" stop-color="#000"/></radialGradient>
+   <radialGradient id="dg" cx=".35" cy=".35"><stop offset="0" stop-color="#fff7cc"/><stop offset="1" stop-color="#E6A413"/></radialGradient>
+   <clipPath id="eyec"><circle cx="420" cy="165" r="140"/></clipPath>
+   <marker id="mq" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8z" fill="#45C58C"/></marker><marker id="mw" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8z" fill="#F472B6"/></marker></defs>
+   <rect x="20" y="40" width="190" height="250" rx="16" fill="#141c30" stroke="#3a4a70"/>
+   <text x="115" y="30" fill="#9AA4B8" font-size="11" text-anchor="middle">the chamber</text>
+   <rect id="pTop" x="40" y="90" width="150" height="9" fill="#c9d3e8"/><rect id="pBot" x="40" y="231" width="150" height="9" fill="#c9d3e8"/>
+   <text id="lTop" x="196" y="99" font-size="14" font-weight="800"></text><text id="lBot" x="196" y="240" font-size="14" font-weight="800"></text>
+   <text x="115" y="262" fill="#9AA4B8" font-size="10" text-anchor="middle">plates 1.0 cm apart</text>
+   <path d="M60 60 q20 -14 40 0" stroke="#9AA4B8" fill="none"/><text x="104" y="62" fill="#9AA4B8" font-size="10">oil spray</text>
+   <circle id="mini" cx="115" cy="165" r="3" fill="#FDE68A"/>
+   <line x1="190" y1="165" x2="280" y2="165" stroke="#3a4a70" stroke-dasharray="3 3"/><text x="236" y="158" fill="#6f7a92" font-size="10" text-anchor="middle">microscope</text>
+   <circle cx="420" cy="165" r="140" fill="url(#eye)" stroke="#3a4a70" stroke-width="3"/>
+   <g clip-path="url(#eyec)">${Array.from({ length: 11 }, (_, k) => `<line x1="300" y1="${45 + k * 24}" x2="540" y2="${45 + k * 24}" stroke="#2a3a5a" stroke-width="${k === 5 ? 1.4 : .7}"/>`).join('')}
+     <line x1="420" y1="25" x2="420" y2="305" stroke="#2a3a5a"/>
+     <circle id="dr" cx="420" cy="165" r="10" fill="url(#dg)"/>
+     <line id="aq" stroke="#45C58C" stroke-width="3" marker-end="url(#mq)"/><line id="aw" stroke="#F472B6" stroke-width="3" marker-end="url(#mw)"/>
+     <text id="tq" fill="#45C58C" font-size="12" font-weight="800">qE</text><text id="tw" fill="#F472B6" font-size="12" font-weight="800">mg</text></g>
+   <text id="mmsg" x="420" y="322" fill="#9AA4B8" font-size="12" text-anchor="middle"></text>
+  </svg>
+  <div class="ctrl"><div class="seg" id="segD">${MDROPS.map((d, k) => `<button data-k="${k}">Drop ${k + 1}</button>`).join('')}</div><div class="tiny muted" id="mass" style="margin-top:4px"></div></div>
+  <div class="ctrl" id="cMV"><label>Plate voltage V <output id="oMV"></output></label><div class="row" style="flex-wrap:nowrap"><button class="btn" data-dv="-1" style="padding:4px 10px">−</button><input type="range" id="sMV" min="0" max="800" step="1" value="0"><button class="btn" data-dv="1" style="padding:4px 10px">+</button></div></div>
+  <div class="row" id="swM"><button class="btn" id="bPl">Plates: OFF</button><button class="btn primary big" id="recM" disabled>📏 Record this drop</button><div class="inst"><div>V = <b id="iMV">0</b> V</div></div></div>`;
+  const q = x => host.querySelector(x), o = { swEl: q('#swM'), ctrlEl: q('#cMV'), runEl: q('#recM') };
+  const Vb = () => MDROPS[drop].m * MG * MD / (MDROPS[drop].n * QE);
+  const net = () => { const d = MDROPS[drop], W = d.m * MG, F = on ? d.n * QE * V / MD : 0; return { W, F, r: (F - W) / W }; };
+  const draw = () => { const { W, F } = net(), held = on && Math.abs(V - Vb()) <= 2;
+    q('#lTop').textContent = on ? '+' : '0 V'; q('#lTop').setAttribute('fill', on ? '#45C58C' : '#9AA4B8'); q('#lBot').textContent = on ? '−' : '0 V'; q('#lBot').setAttribute('fill', on ? '#F07A71' : '#9AA4B8');
+    q('#pTop').setAttribute('fill', on ? '#9fe3c0' : '#c9d3e8'); q('#pBot').setAttribute('fill', on ? '#f2b0aa' : '#c9d3e8');
+    q('#bPl').textContent = 'Plates: ' + (on ? 'ON' : 'OFF'); q('#bPl').classList.toggle('primary', on);
+    q('#oMV').textContent = V + ' V'; q('#iMV').textContent = V; q('#recM').disabled = !held;
+    q('#mass').innerHTML = `Mass of drop ${drop + 1} (from how fast it falls): <b>${sci(MDROPS[drop].m, 3)} kg</b>`;
+    host.querySelectorAll('#segD button').forEach(b => b.classList.toggle('on', +b.dataset.k === drop));
+    q('#mmsg').textContent = !on ? 'Plates off: the drop falls.' : held ? 'Held still: the electric force balances the weight.' : (F > W ? 'Rising: qE is bigger than mg. Lower the voltage.' : 'Falling: mg is bigger than qE. Raise the voltage.'); };
+  const loop = now => { if (!document.body.contains(host)) return; const dt = Math.min(.05, (now - last) / 1000); last = now;
+    const { W, F, r } = net(), held = on && Math.abs(V - Vb()) <= 2;
+    y += (held ? 0 : Math.max(-1.5, Math.min(1.5, r))) * 60 * dt;            // px/s, up is positive
+    if (y > 125 || y < -125) { y = 0; }
+    const cy = 165 - y; q('#dr').setAttribute('cy', cy); q('#mini').setAttribute('cy', 165 - y * 0.5);
+    const Lw = 30, Lq = on ? Math.min(60, 30 * F / W) : 0;
+    q('#aw').setAttribute('x1', 420); q('#aw').setAttribute('y1', cy + 12); q('#aw').setAttribute('x2', 420); q('#aw').setAttribute('y2', cy + 12 + Lw); q('#tw').setAttribute('x', 428); q('#tw').setAttribute('y', cy + 34);
+    q('#aq').setAttribute('opacity', Lq ? 1 : 0); q('#tq').setAttribute('opacity', Lq ? 1 : 0);
+    q('#aq').setAttribute('x1', 420); q('#aq').setAttribute('y1', cy - 12); q('#aq').setAttribute('x2', 420); q('#aq').setAttribute('y2', cy - 12 - Lq); q('#tq').setAttribute('x', 428); q('#tq').setAttribute('y', cy - 20);
+    requestAnimationFrame(loop); };
+  requestAnimationFrame(loop);
+  q('#bPl').onclick = () => { on = !on; draw(); };
+  q('#sMV').oninput = () => { V = +q('#sMV').value; draw(); };
+  host.querySelectorAll('[data-dv]').forEach(b => b.onclick = () => { V = Math.max(0, Math.min(800, V + +b.dataset.dv)); q('#sMV').value = V; draw(); });
+  host.querySelectorAll('#segD button').forEach(b => b.onclick = () => { drop = +b.dataset.k; y = 0; draw(); });
+  q('#recM').onclick = () => o.onRecord && o.onRecord({ drop, m: MDROPS[drop].m, V });
+  draw(); return o;
+}
 function rMillikan() {
-  const qm = S.final.qm || QM;
-  app().innerHTML = `<div class="stcard reveal"><div class="ph" style="background-image:url(img/drop.webp)"></div><div class="tx"><span class="pill">📜 1909 · twelve years later</span><h2>Millikan's oil drops</h2>
-    <div>Thomson knew <b>q/m</b>, not q or m alone. Millikan balanced tiny charged oil drops between plates (D.2).</div>
-    <div class="muted">Every drop's charge was a whole number of one smallest charge: <b style="color:#fff">e = 1.60 × 10⁻¹⁹ C</b>.</div></div></div><div id="m1" class="card" style="margin-top:14px"></div><div id="m2"></div>`;
-  mcq($('#m1'), { p: 'Millikan weighed each oil drop. Did that give him the electron\'s mass?', o: ['No: that is the mass of the oil drop. He found the charge e.', 'Yes: the drop\'s mass is the electron\'s mass', 'Yes: he weighed one electron'], a: 0, hint: 'Whose mass is it: the drop, or the electron?', why: 'The weight balanced the electric force, giving the charge. The mass comes from combining e with q/m.' }, 'F·millikan', () => {
-    const c = card($('#m2'), `<h3>Find the electron</h3><div class="eqbig">${EQ.me}</div><p class="muted small">Your q/m: <b>${sci(qm, 3)} C kg⁻¹</b></p>`);
-    numTask(c, { p: 'Mass of the electron:', unit: 'kg', ph: '9.1e-31', check: v => within(v, QE / qm, 0.04), hint: '1.60 × 10⁻¹⁹ ÷ your q/m', why: v => `m ≈ ${sci(QE / qm, 3)} kg` }, 'F·me', v => {
-      S.final.m = v; save();
-      c.insertAdjacentHTML('beforeend', `<div class="card mission reveal" style="margin-top:12px"><div class="row" style="gap:18px;flex-wrap:nowrap">
-        <svg viewBox="0 0 160 160" style="width:140px;flex:none"><circle cx="80" cy="80" r="60" fill="#E6A413" opacity=".9"><animate attributeName="opacity" values=".9;.25" dur="2.5s" fill="freeze"/></circle>
-        <circle cx="80" cy="80" r="60" fill="none" stroke="#A5B4FC" stroke-width="2" stroke-dasharray="6 6"/>${[[50, 60], [105, 70], [75, 110], [95, 45], [60, 95]].map(([x, y], i) => `<circle cx="${x}" cy="${y}" r="5" fill="#8DB8EA" opacity="0"><animate attributeName="opacity" values="0;1" begin="${1 + i * .2}s" dur=".4s" fill="freeze"/></circle>`).join('')}</svg>
-        <div><h2>You found the electron.</h2><div class="eqbig" style="color:#fff;text-align:left">m<sub>e</sub> = 9.11 × 10⁻³¹ kg</div>
-        <p>About 1/1840 of a hydrogen atom, and found inside every atom. Atoms have parts: Dalton's solid spheres are gone.</p></div></div></div>`);
-      nextBtn(c, () => go('reflect'), 'Reflect');
+  const qm = S.final.qm || QM; S.final.drops = S.final.drops || {};
+  app().innerHTML = `<div class="card"><span class="tag gold">1909 · twelve years later</span><h2 style="margin:6px 0">Millikan's oil drops</h2>
+    <p>Thomson knew <b>q/m</b> but not q or m on their own. Millikan found the charge by holding tiny charged oil drops still between two plates.</p></div>
+    <div class="card" id="mcard"><div id="msim"></div><button class="linkbtn" id="mintro" style="margin-top:8px">▶ Watch the intro again</button></div>
+    <div class="card" id="mres"></div><div id="m1"></div><div id="m2"></div>`;
+  const MINTRO = [{ img: 'img/drop.webp', cap: 'Millikan sprayed a fine mist of oil.', sub: 'Some drops picked up a few extra electrons as they were sprayed.' },
+    { anim: 'mFall', cap: 'Plates off: the drops fall.', sub: 'Each drop is pulled down by its weight, mg.' },
+    { anim: 'mHold', cap: 'Plates on: a drop can hover.', sub: 'When the electric force qE equals the weight mg, the drop stays still.' },
+    { img: 'img/microscope.webp', cap: 'He watched the drops through a microscope.', sub: 'Your task: hold a drop still, and the voltage tells you its charge.' }];
+  const sim = simM($('#msim')), mc = $('#mcard');
+  const intro = done => { mc.style.position = 'relative'; mc.style.minHeight = '420px'; mc.style.overflow = 'hidden'; playScene(mc, MINTRO, () => { S.seen.mscene = 1; save(false); done && done(); }); };
+  $('#mintro').onclick = () => intro();
+  const paint = () => { const ks = Object.keys(S.final.drops);
+    $('#mres').innerHTML = `<h3>Your drops</h3><div class="tiny muted">q = mgd ÷ V, with d = 0.010 m and g = 9.81 N kg⁻¹</div>
+      ${ks.length ? `<div style="overflow-x:auto"><table class="rec"><tr><th>drop</th><th>m / kg</th><th>V / V</th><th class="pc">q / C</th><th class="pc">q ÷ e</th></tr>${ks.map(k => { const d = S.final.drops[k], qq = d.m * MG * MD / d.V; return `<tr><td class="rv">${+k + 1}</td><td class="rv">${sci(d.m, 3)}</td><td class="rv">${d.V}</td><td class="rv">${sci(qq, 3)}</td><td class="rv"><b>${fx(qq / QE, 2)}</b></td></tr>`; }).join('')}</table></div>` : '<p class="muted small">No drops recorded yet. Switch the plates on and find the voltage that holds a drop still.</p>'}
+      ${ks.length >= 2 ? '<div class="fb good">Look at q ÷ e: every charge is a whole number of e = 1.60 × 10⁻¹⁹ C.</div>' : ''}`;
+    if (ks.length >= 2 && !$('#m1').dataset.on) { $('#m1').dataset.on = 1; ask(); } };
+  sim.onRecord = d => { S.final.drops[d.drop] = { m: d.m, V: d.V }; save(); paint(); toast('Recorded drop ' + (d.drop + 1)); };
+  const mc2 = () => coach([{ el: sim.swEl, t: 'Switch the <b>plates</b> on, then change the voltage until the drop <b>stops moving</b>.', n: 1, of: 2, until: () => Object.keys(S.final.drops).length > 0 },
+    { el: '#mres', t: 'Hold <b>two different drops</b> still. What do you notice about q ÷ e?', n: 2, of: 2 }], 'mcoach');
+  if (!S.seen.mscene) intro(mc2); else mc2();
+  function ask() {
+    const c1 = card($('#m1'), '');
+    mcq(c1, { p: 'Millikan knew the mass of each oil drop. Did that give him the electron\'s mass?', o: ['No. That is the mass of the oil drop, which let him find the charge e.', 'Yes, the drop\'s mass is the electron\'s mass', 'Yes, he weighed a single electron'], a: 0, hint: 'Whose mass did he measure, the drop\'s or the electron\'s?', why: 'The weight of the drop balanced the electric force, which gave the charge. The electron\'s mass comes from combining e with q/m.' }, 'F·millikan', () => {
+      const c = card($('#m2'), `<h3>Find the electron</h3><div class="eqbig">${EQ.me}</div><p class="muted small">Your q/m: <b>${sci(qm, 3)} C kg⁻¹</b></p>`);
+      numTask(c, { p: 'Mass of the electron:', unit: 'kg', check: v => within(v, QE / qm, 0.04), hint: '1.60 × 10⁻¹⁹ ÷ your q/m', why: v => `m ≈ ${sci(QE / qm, 3)} kg` }, 'F·me', v => {
+        S.final.m = v; save();
+        c.insertAdjacentHTML('beforeend', `<div class="card mission reveal" style="margin-top:12px"><div class="row" style="gap:18px;flex-wrap:nowrap">
+          <svg viewBox="0 0 160 160" style="width:140px;flex:none"><circle cx="80" cy="80" r="60" fill="#E6A413" opacity=".9"><animate attributeName="opacity" values=".9;.25" dur="2.5s" fill="freeze"/></circle>
+          <circle cx="80" cy="80" r="60" fill="none" stroke="#A5B4FC" stroke-width="2" stroke-dasharray="6 6"/>${[[50, 60], [105, 70], [75, 110], [95, 45], [60, 95]].map(([x, y], i) => `<circle cx="${x}" cy="${y}" r="5" fill="#8DB8EA" opacity="0"><animate attributeName="opacity" values="0;1" begin="${1 + i * .2}s" dur=".4s" fill="freeze"/></circle>`).join('')}</svg>
+          <div><h2>You found the electron.</h2><div class="eqbig" style="color:#fff;text-align:left">m<sub>e</sub> = 9.11 × 10⁻³¹ kg</div>
+          <p>That is about 1/1840 of the mass of a hydrogen atom, and the electron is found in every atom. So atoms have smaller parts inside, and Dalton's idea of solid, indivisible atoms no longer works.</p></div></div></div>`);
+        nextBtn(c, () => go('reflect'), 'Reflect');
+      });
     });
-  });
+  }
+  paint();
 }
 
 /* ---------- reflect ---------- */
@@ -1045,7 +1170,9 @@ document.getElementById('logo').onclick = () => { taps++; clearTimeout(tapT); ta
   if (taps >= 5) { taps = 0; const c = prompt('Teacher code'); if (c !== TEACHER_CODE) return;
     const a = prompt('Type: unlock, A / B / C (move this student), dash (teacher page), or reset (clear this device)'); if (!a) return; const x = a.trim().toLowerCase();
     if (x === 'unlock') { S.unlocked = true; save(); render(); }
-    else if (['a', 'b', 'c'].includes(x)) { S.station = x.toUpperCase(); S.step = 0; R = null; if (!S.level) S.level = 2; go('lab'); }
+    else if (['a', 'b', 'c'].includes(x)) { const K = x.toUpperCase(); S.station = K; S.step = 0; S.visited = {}; S.doneStation = false; S.mark = null; S.maxIdx = 2; S.seenPlates = 0;
+      ['scene' + K, 'role' + K, 'roleA2', 'questA'].forEach(k => delete S.seen[k]); Object.keys(S.first).filter(k => k.startsWith(K)).forEach(k => delete S.first[k]);
+      R = null; seenRows = new Set(); if (!S.level) S.level = 2; go('lab'); }
     else if (x === 'dash') location.href = 'teacher.html';
     else if (x === 'reset') { localStorage.removeItem(KEY); S = blank(); R = null; render(); } } };
 

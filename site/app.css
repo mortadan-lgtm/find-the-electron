@@ -216,3 +216,6 @@ table.rec th:not(.pc){white-space:nowrap}
 .sci.plain input.m{width:80px;text-align:left}
 .rail span.click{cursor:pointer}
 .rail span.click:hover{filter:brightness(1.25);transform:scaleY(1.6)}
+.btn.ondark{background:rgba(255,255,255,.12);color:#fff;border:1.5px solid rgba(255,255,255,.55)}
+.btn.ondark:hover{background:rgba(255,255,255,.22)}
+.stcard .btn:not(.primary):not(.ondark),.hero .btn:not(.primary):not(.ondark){color:#15171C}
