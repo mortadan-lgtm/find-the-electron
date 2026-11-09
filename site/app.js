@@ -768,28 +768,41 @@ function simA(host) {
 
 /* ===== SIM B: fine-beam tube (also the final Thomson tube) ===== */
 function simB(host, cfg = {}) {
-  const PX = 21, cx = 240, cy = 210, Rb = 8.6 * PX, gx = cx, gy = cy + Rb - 12;
+  const PX = 21, cx = 260, cy = 222, Rb = 8.6 * PX, gx = cx, gy = cy + Rb - 14;
   let V = cfg.fixedV || 200, Vr = cfg.fixedV || realV(200), I = cfg.fixedI || 1.5, mark = 6, gun = false, coils = false;
-  host.innerHTML = `<svg class="sim" viewBox="0 0 480 420">
-   <defs><radialGradient id="bulb" cx=".45" cy=".4"><stop offset="0" stop-color="#2d2144"/><stop offset="1" stop-color="#120f22"/></radialGradient>
-   <filter id="gl"><feGaussianBlur stdDeviation="4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>
-   <circle cx="${cx}" cy="${cy}" r="${Rb + 30}" fill="none" stroke="#7a5230" stroke-width="16"/><circle cx="${cx}" cy="${cy}" r="${Rb + 30}" fill="none" stroke="#c08a52" stroke-width="16" stroke-dasharray="1.5 3" opacity=".6"/>
-   <circle id="coilI" cx="${cx}" cy="${cy}" r="${Rb + 30}" fill="none" stroke="#FDE68A" stroke-width="2" stroke-dasharray="8 12" opacity="0"/>
-   <text x="474" y="22" fill="#F472B6" font-size="11" text-anchor="end">Helmholtz coils</text>
-   <circle cx="${cx}" cy="${cy}" r="${Rb}" fill="url(#bulb)" stroke="#6a5a90" stroke-width="2"/>
+  host.innerHTML = `<svg class="sim" viewBox="0 0 520 470">
+   <defs><radialGradient id="bgB" cx=".5" cy=".42"><stop offset="0" stop-color="#161c2c"/><stop offset="1" stop-color="#06080e"/></radialGradient>
+   <radialGradient id="bulb" cx=".42" cy=".36" r=".72"><stop offset="0" stop-color="#2b2244"/><stop offset=".72" stop-color="#140f25"/><stop offset="1" stop-color="#0b0915"/></radialGradient>
+   <radialGradient id="glassB" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#fff" stop-opacity=".28"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient>
+   <linearGradient id="copB" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#d39a60"/><stop offset=".45" stop-color="#8c5a2c"/><stop offset=".75" stop-color="#c58a4f"/><stop offset="1" stop-color="#7a4d24"/></linearGradient>
+   <linearGradient id="metB" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#cfd6e4"/><stop offset=".5" stop-color="#8a93a8"/><stop offset="1" stop-color="#5d6578"/></linearGradient>
+   <filter id="gl" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+   <filter id="glS"><feGaussianBlur stdDeviation="2"/></filter></defs>
+   <rect width="520" height="470" fill="url(#bgB)"/>
+   <rect x="140" y="446" width="240" height="18" rx="6" fill="#1c202a" stroke="#2c3240"/><rect x="226" y="410" width="68" height="40" rx="8" fill="#262b37" stroke="#343b4b"/>
+   <circle cx="${cx + 9}" cy="${cy - 7}" r="${Rb + 34}" fill="none" stroke="#4a3018" stroke-width="20"/><circle cx="${cx + 9}" cy="${cy - 7}" r="${Rb + 34}" fill="none" stroke="#2a1a0b" stroke-width="20" stroke-dasharray="1 2.4" opacity=".5"/>
+   <path d="M${cx - 18} ${cy + Rb - 2} L${cx - 22} 414 L${cx + 22} 414 L${cx + 18} ${cy + Rb - 2}" fill="#2b2440" stroke="#8f86b8" stroke-opacity=".45"/>
+   <circle cx="${cx}" cy="${cy}" r="${Rb}" fill="url(#bulb)" stroke="#a49cd0" stroke-opacity=".45" stroke-width="2"/>
    <g id="ruler"></g>
-   <path id="beam" fill="none" stroke="#E07BFF" stroke-width="4" filter="url(#gl)" opacity=".85"/>
-   <rect x="${gx - 34}" y="${gy - 8}" width="34" height="16" rx="3" fill="#8a96b3"/><circle id="cath" cx="${gx - 30}" cy="${gy}" r="4" fill="#5b6478"/>
-   <g id="mk" style="cursor:ns-resize"><line x1="${gx - 26}" x2="${gx + 26}" stroke="#22D3EE" stroke-width="3"/><polygon points="${gx + 28},0 ${gx + 42},-9 ${gx + 42},9" fill="#22D3EE"/><rect x="${gx - 44}" y="-16" width="104" height="32" fill="transparent"/></g>
-   <text x="18" y="404" fill="#9AA4B8" font-size="12">B out of the screen ⊙</text>
-   
-   <defs><marker id="mBv" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8z" fill="#45C58C"/></marker><marker id="mBf" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8z" fill="#F2BD45"/></marker></defs>
-   <g id="eB"><line id="bV" stroke="#45C58C" stroke-width="3" marker-end="url(#mBv)"/><line id="bF" stroke="#F2BD45" stroke-width="3" marker-end="url(#mBf)"/><circle id="bDot" r="6" fill="#8DB8EA" stroke="#fff" stroke-width="1.5"/><text id="tbV" fill="#45C58C" font-size="13" font-weight="800">v</text><text id="tbF" fill="#F2BD45" font-size="13" font-weight="800">F = qvB</text></g>
+   <path id="beam" fill="none" stroke="#a78bfa" stroke-width="5" filter="url(#gl)" opacity=".75"/>
+   <path id="beamC" fill="none" stroke="#efe7ff" stroke-width="1.4" opacity=".9"/>
+   <rect x="${gx - 50}" y="${gy - 9}" width="38" height="18" rx="3" fill="url(#metB)" stroke="#3b4150"/><rect x="${gx - 12}" y="${gy - 11}" width="6" height="22" rx="1.5" fill="url(#metB)" stroke="#3b4150"/>
+   <circle id="cath" cx="${gx - 44}" cy="${gy}" r="4" fill="#5b6478"/>
+   <ellipse cx="${cx - 70}" cy="${cy - 82}" rx="72" ry="40" fill="url(#glassB)" transform="rotate(-28 ${cx - 70} ${cy - 82})"/>
+   <circle cx="${cx}" cy="${cy}" r="${Rb + 34}" fill="none" stroke="#1d130a" stroke-width="24"/>
+   <circle cx="${cx}" cy="${cy}" r="${Rb + 34}" fill="none" stroke="url(#copB)" stroke-width="18"/>
+   <circle cx="${cx}" cy="${cy}" r="${Rb + 34}" fill="none" stroke="#3a2410" stroke-width="18" stroke-dasharray="1 2.2" opacity=".45"/>
+   <circle id="coilI" cx="${cx}" cy="${cy}" r="${Rb + 34}" fill="none" stroke="#FDE68A" stroke-width="1.6" stroke-dasharray="6 14" opacity="0"/>
+   <text x="508" y="20" fill="#F472B6" font-size="12" text-anchor="end">Helmholtz coils</text>
+   <g id="mk" style="cursor:ns-resize"><line x1="${gx - 24}" x2="${gx + 24}" stroke="#22D3EE" stroke-width="3"/><polygon points="${gx + 26},0 ${gx + 38},-8 ${gx + 38},8" fill="#22D3EE"/><rect x="${gx - 44}" y="-16" width="100" height="32" fill="transparent"/></g>
+   <text x="14" y="20" fill="#9AA4B8" font-size="12">B out of the screen ⊙</text>
+   <defs><marker id="mBv" markerWidth="7" markerHeight="7" refX="5" refY="3.5" orient="auto"><path d="M0,0 L7,3.5 L0,7z" fill="#45C58C"/></marker><marker id="mBf" markerWidth="7" markerHeight="7" refX="5" refY="3.5" orient="auto"><path d="M0,0 L7,3.5 L0,7z" fill="#F2BD45"/></marker></defs>
+   <g id="eB"><line id="bV" stroke="#45C58C" stroke-width="2.5" marker-end="url(#mBv)"/><line id="bF" stroke="#F2BD45" stroke-width="2.5" marker-end="url(#mBf)"/><circle id="bDot" r="5" fill="#cfe0ff" stroke="#fff" stroke-width="1.2"/><text id="tbV" fill="#45C58C" font-size="12" font-weight="800">v</text><text id="tbF" fill="#F2BD45" font-size="12" font-weight="800">F = qvB</text></g>
   </svg>
   ${cfg.fixedV ? '' : `<div class="ctrl"><label>Electron gun voltage <output id="oV2"></output></label><div class="seg" id="segV">${[150, 200, 250, 300].map(v => `<button data-v="${v}">${v} V</button>`).join('')}</div></div>
   <div class="ctrl" id="cI"><label>Coil current I <output id="oI"></output></label><input type="range" id="sI" min="1" max="3" step="0.05" value="${I}"></div>`}
   <div class="row" id="swB"><button class="btn" id="bGun">⚡ Electron gun: OFF</button><button class="btn" id="bCoil">🧲 Coils: OFF</button><button class="btn primary" id="rec">📏 Record</button></div>
-  <div class="row"><div class="inst" id="inst"><div>V = <b id="iV"></b> V</div><div>I = <b id="iI"></b> A</div><div>d = <b id="iD"></b> cm</div></div></div>
+  <div class="row"><div class="inst" id="inst"><div>V = <b id="iV"></b> V</div><div>I = <b id="iI"></b> A</div></div></div>
   <div class="tiny muted" id="rmsg" style="margin-top:4px">Drag the cyan marker to the top of the glowing ring.</div><div class="tiny muted">The ring glows because the tube holds a little hydrogen gas.</div>`;
   const svg = host.querySelector('svg'), beam = host.querySelector('#beam'), mk = host.querySelector('#mk');
   let rul = ''; for (let c = 0; c <= 16; c++) { const y = gy - c * PX; rul += `<line x1="${gx - (c % 5 === 0 ? 12 : 7)}" y1="${y}" x2="${gx}" y2="${y}" stroke="#e6dcff" stroke-width="${c % 5 === 0 ? 1.6 : 1}"/>${c % 2 === 0 ? `<text x="${gx - 16}" y="${y + 4}" fill="#e6dcff" font-size="11" text-anchor="end">${c}</text>` : ''}`;
@@ -799,14 +812,15 @@ function simB(host, cfg = {}) {
   const o = { ctrlEl: host.querySelector('#cI') || host.querySelector('#mk'), runEl: host.querySelector('#rec'), instEl: host.querySelector('#inst'), swEl: host.querySelector('#swB') };
   const xEdge = cx + Math.sqrt(Rb * Rb - (gy - cy) ** 2) - 4;
   const draw = () => { const rp = rOf() * 100 * PX;
-    beam.setAttribute('d', !gun ? '' : coils ? `M ${gx} ${gy} A ${rp} ${rp} 0 1 0 ${gx} ${gy - 2 * rp} A ${rp} ${rp} 0 1 0 ${gx} ${gy}` : `M ${gx} ${gy} L ${xEdge} ${gy}`);
+    const bpath = !gun ? '' : coils ? `M ${gx} ${gy} A ${rp} ${rp} 0 1 0 ${gx} ${gy - 2 * rp} A ${rp} ${rp} 0 1 0 ${gx} ${gy}` : `M ${gx} ${gy} L ${xEdge} ${gy}`;
+    beam.setAttribute('d', bpath); host.querySelector('#beamC').setAttribute('d', bpath);
     host.querySelector('#cath').setAttribute('fill', gun ? '#FDBA4D' : '#5b6478');
     const ci = host.querySelector('#coilI'); ci.setAttribute('opacity', coils ? .9 : 0);
     host.querySelector('#bGun').textContent = '⚡ Electron gun: ' + (gun ? 'ON' : 'OFF'); host.querySelector('#bGun').classList.toggle('primary', gun);
     host.querySelector('#bCoil').textContent = '🧲 Coils: ' + (coils ? 'ON' : 'OFF'); host.querySelector('#bCoil').classList.toggle('primary', coils);
     host.querySelector('#rec').disabled = !(gun && coils);
-    host.querySelector('#rmsg').textContent = !gun ? 'Switch on the electron gun.' : !coils ? 'No magnetic field: the beam goes straight. Switch on the coils.' : 'Drag the cyan marker to the top of the glowing ring.';
-    host.querySelector('#iV').textContent = Vr; host.querySelector('#iI').textContent = fx(I, 2); host.querySelector('#iD').textContent = fx(mark, 1);
+    host.querySelector('#rmsg').textContent = !gun ? 'Switch on the electron gun.' : !coils ? 'No magnetic field: the beam goes straight. Switch on the coils.' : 'Drag the cyan marker to the top of the glowing ring, then read the diameter on the scale.';
+    host.querySelector('#iV').textContent = Vr; host.querySelector('#iI').textContent = fx(I, 2);
     if (host.querySelector('#oI')) host.querySelector('#oI').textContent = fx(I, 2) + ' A';
     if (host.querySelector('#oV2')) { host.querySelector('#oV2').textContent = 'about ' + V + ' V'; host.querySelectorAll('#segV button').forEach(b => b.classList.toggle('on', +b.dataset.v === V)); }
     mk.setAttribute('transform', `translate(0,${gy - mark * PX})`); };
@@ -822,7 +836,7 @@ function simB(host, cfg = {}) {
   o.getState = () => ({ V, Vr, I, mark, gun, coils }); o.setState = s => { if (s.gun != null) gun = s.gun; if (s.coils != null) coils = s.coils; if (s.V) { V = [150, 200, 250, 300].reduce((a, b) => Math.abs(b - s.V) < Math.abs(a - s.V) ? b : a); Vr = s.Vr || s.V; } if (s.I) { I = s.I; if (sI) sI.value = I; } if (s.mark != null) mark = s.mark; draw(); };
   host.querySelector('#rec').onclick = () => { const d = 2 * rOf() * 100, msg = host.querySelector('#rmsg');
     if (Math.abs(mark - d) > 0.2) { msg.innerHTML = '<b style="color:var(--bad)">Not lined up.</b> Put the marker exactly on the top of the ring.'; return; }
-    msg.textContent = cfg.fixedV ? 'Recorded.' : 'Recorded. Change the current for the next trial.';
+    msg.innerHTML = cfg.fixedV ? `You measured <b>d = ${fx(mark, 1)} cm</b>.` : `Recorded <b>d = ${fx(mark, 1)} cm</b>. Change the current for the next trial.`;
     o.onRun && o.onRun({ V: Vr, I, d: mark }); };
   o.playRow = row => { o.setState({ V: row.raw.V, Vr: row.raw.V, I: row.raw.I, mark: row.raw.d, gun: true, coils: true }); beam.animate([{ opacity: .3 }, { opacity: 1 }], { duration: 700 }); };
   const t0B = performance.now();
@@ -836,8 +850,8 @@ function simB(host, cfg = {}) {
       const rp = rOf() * 100 * PX, cyc = gy - rp, per = 3600 * (1.5 / I), phi = 2 * Math.PI * (((now - t0B) % per) / per);
       const x = gx + rp * Math.sin(phi), y = cyc + rp * Math.cos(phi), vx = Math.cos(phi), vy = -Math.sin(phi), fxu = -Math.sin(phi), fyu = -Math.cos(phi);
       const set = (id, a) => { const e = host.querySelector(id); for (const k in a) e.setAttribute(k, a[k]); };
-      set('#bDot', { cx: x, cy: y }); set('#bV', { x1: x, y1: y, x2: x + 34 * vx, y2: y + 34 * vy }); set('#bF', { x1: x, y1: y, x2: x + 30 * fxu, y2: y + 30 * fyu });
-      set('#tbV', { x: x + 40 * vx - 4, y: y + 40 * vy + 4 }); set('#tbF', { x: x + 44 * fxu - 24, y: y + 44 * fyu + 4 }); }
+      set('#bDot', { cx: x, cy: y }); set('#bV', { x1: x, y1: y, x2: x + 26 * vx, y2: y + 26 * vy }); set('#bF', { x1: x, y1: y, x2: x + 24 * fxu, y2: y + 24 * fyu });
+      set('#tbV', { x: x + 32 * vx - 4, y: y + 32 * vy + 4 }); set('#tbF', { x: x + 36 * fxu + (fxu < 0 ? -50 : 4), y: y + 36 * fyu + 4 }); }
     requestAnimationFrame(rideB); };
   requestAnimationFrame(rideB);
   draw(); return o;
