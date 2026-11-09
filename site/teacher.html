@@ -88,7 +88,7 @@ $('#csv').onclick=()=>{ if(!last)return; const st=Object.values(last.cls.student
   const csv=[head,...rows].map(r=>r.map(x=>'"'+String(x??'').replace(/"/g,'""')+'"').join(',')).join('\n');
   const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'})); a.download='find-the-electron-'+$('#cls').value.replace(/\s/g,'-')+'.csv'; a.click(); };
 $('#cls').onchange=pull; $('#code').onchange=pull;
-pull(); setInterval(pull,4000);
+pull(); setInterval(pull,6000);
 </script>
 </body>
 </html>

@@ -420,7 +420,7 @@ function startPoll(onUpdate) {
     try { const r = await apiGet({ op: 'room', cls: S.cls, st: S.station }); netGood();
       if (!R || r.ver !== R.ver) { R = r; onUpdate && onUpdate(); } }
     catch (e) { if (netOK) { netFail(); } }
-  }, 1500);
+  }, 2500);
 }
 function roomOp(op, payload) {   // optimistic local apply + server
   if (!R) return;
@@ -778,7 +778,7 @@ function simB(host, cfg = {}) {
   ${cfg.fixedV ? '' : `<div class="ctrl"><label>Electron gun voltage <output id="oV2"></output></label><div class="seg" id="segV">${[150, 200, 250, 300].map(v => `<button data-v="${v}">${v} V</button>`).join('')}</div></div>
   <div class="ctrl" id="cI"><label>Coil current I <output id="oI"></output></label><input type="range" id="sI" min="1" max="3" step="0.05" value="${I}"></div>`}
   <div class="row" id="swB"><button class="btn" id="bGun">⚡ Electron gun: OFF</button><button class="btn" id="bCoil">🧲 Coils: OFF</button></div>
-  <div class="row"><button class="btn primary big" id="rec">📏 Record</button><div class="inst" id="inst"><div>V = <b id="iV"></b> V</div><div>I = <b id="iI"></b> A</div><div>d = <b id="iD"></b> cm</div></div></div>
+  <div class="row" style="margin-top:10px"><button class="btn primary" id="rec">📏 Record</button><div class="inst" id="inst"><div>V = <b id="iV"></b> V</div><div>I = <b id="iI"></b> A</div><div>d = <b id="iD"></b> cm</div></div></div>
   <div class="tiny muted" id="rmsg" style="margin-top:4px">Drag the cyan marker to the top of the glowing ring.</div>`;
   const svg = host.querySelector('svg'), beam = host.querySelector('#beam'), mk = host.querySelector('#mk');
   let rul = ''; for (let c = 0; c <= 16; c++) { const y = gy - c * PX; rul += `<line x1="${gx - (c % 5 === 0 ? 12 : 7)}" y1="${y}" x2="${gx}" y2="${y}" stroke="#e6dcff" stroke-width="${c % 5 === 0 ? 1.6 : 1}"/>${c % 2 === 0 ? `<text x="${gx - 16}" y="${y + 4}" fill="#e6dcff" font-size="11" text-anchor="end">${c}</text>` : ''}`;
