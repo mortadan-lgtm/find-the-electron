@@ -9,7 +9,8 @@ const QE = 1.602e-19, ME = 9.109e-31, QM = QE / ME;
 const KCOIL = 0.78e-3;                         // T per A at the centre of the Helmholtz coils
 const speed = V => Math.sqrt(2 * QM * V);
 const jitter = (x, p) => x * (1 + (Math.random() * 2 - 1) * p);
-const GUN = { 1: 150, 2: 200, 3: 250 };          // Station C beams (hidden until the end)
+const GUN = { 1: 150, 2: 200, 3: 250 };
+const realV = nominal => Math.round(nominal * (1 + (Math.random() * 2 - 1) * 0.004));   // a real supply never sits exactly on the dial value; voltmeter reads to 1 V          // Station C beams (hidden until the end)
 
 /* ============ FORMAT ============ */
 const SUP = { '-': '⁻', '0': '⁰', '1': '¹', '2': '²', '3': '³', '4': '⁴', '5': '⁵', '6': '⁶', '7': '⁷', '8': '⁸', '9': '⁹' };
@@ -102,7 +103,7 @@ const STN = {
       { anim: 'gun', cap: 'The gun voltage V sets how fast they go.', sub: 'Higher V, faster electrons.' },
       { img: 'img/hero.webp', cap: 'Your mission: find out why the beam bends.', sub: 'The beam is invisible in vacuum. It glows only where it grazes the screen.' }],
     pred: { q: 'You turn the gun voltage UP, so the electrons are faster. Between the plates the beam bends…', o: ['less', 'more', 'the same'] },
-    cols: [{ k: 'kV', label: 'V / kV', tol: v => 0.01 }, { k: 'y', label: 'y / cm', tol: v => 0.01 }],
+    cols: [{ k: 'kV', label: 'V / kV', dp: 3, tol: v => 0.01 }, { k: 'y', label: 'y / cm', dp: 1, tol: v => 0.01 }],
     steps: [
       { m: EQ.EVd, w: 'In the gun, the voltage V across the gap makes a uniform field that speeds the electrons up.' },
       { m: EQ.KE, w: 'The field does work qV, which becomes kinetic energy. Higher V, faster electrons.', gap: true, opts: [EQ.KE, M(mi('q') + mi('V') + mo('=') + mi('m') + mi('v')), M(mi('q') + mi('V') + mo('=') + mi('m') + mi('g') + mi('h'))] },
@@ -121,7 +122,7 @@ const STN = {
       { img: 'img/coil.webp', cap: 'Coils make the magnetic field.', sub: 'More current in the coils, stronger field B.' },
       { anim: 'curl', cap: 'Your mission: measure the circle.', sub: 'Change B. Read the diameter on the ruler.' }],
     pred: { q: 'You make the magnetic field STRONGER. The circle gets…', o: ['smaller', 'bigger', 'no change'] },
-    cols: [{ k: 'V', label: 'V / V', tol: v => 0.6 }, { k: 'I', label: 'I / A', tol: v => 0.051 }, { k: 'd', label: 'd / cm', tol: v => 0.21 }],
+    cols: [{ k: 'V', label: 'V / V', dp: 0, tol: v => 0.6 }, { k: 'I', label: 'I / A', dp: 2, tol: v => 0.051 }, { k: 'd', label: 'd / cm', dp: 1, tol: v => 0.21 }],
     proc: [{ k: 'r', h: 'r = d ÷ 2', u: 'cm', plain: true, f: r => r.d / 2 }, { k: 'B', h: 'B = 0.78 × I', u: 'mT', plain: true, f: r => 0.78 * r.I }, { k: 'rB', h: 'r × B', u: 'cm mT', plain: true, f: r => r.d / 2 * 0.78 * r.I }],
     steps: [
       { m: EQ.FqvB, w: 'A moving charge feels a force at right angles to its velocity.' },
@@ -140,7 +141,7 @@ const STN = {
       { anim: 'push', cap: 'E pushes up. B pushes down.', sub: 'Plates make the electric field, coils make the magnetic field.' },
       { anim: 'straight', cap: 'Your mission: balance them.', sub: 'Spot on the centre line means the forces cancel.' }],
     pred: { q: 'A FASTER beam, same B. To keep it straight you need…', o: ['a bigger E', 'a smaller E', 'the same E'] },
-    cols: [{ k: 'beam', label: 'beam', tol: v => 0.01 }, { k: 'Vp', label: 'plate V / V', tol: v => 1.5 }, { k: 'I', label: 'I / A', tol: v => 0.011 }],
+    cols: [{ k: 'beam', label: 'beam', dp: 0, tol: v => 0.01 }, { k: 'Vp', label: 'plate V / V', dp: 0, tol: v => 1.5 }, { k: 'I', label: 'I / A', dp: 2, tol: v => 0.011 }],
     proc: [{ k: 'E', h: 'E = V ÷ 0.040 m', u: 'V m⁻¹', plain: true, f: r => r.Vp / 0.04 }, { k: 'B', h: 'B = 0.78 × I', u: 'mT', plain: true, f: r => 0.78 * r.I }, { k: 'v', h: 'v = E ÷ B', u: 'm s⁻¹ · B in tesla!', f: r => r.Vp / 0.04 / (KCOIL * r.I) }],
     steps: [
       { m: EQ.FqE, w: 'The electric field pushes the electron up, towards the positive plate.' },
@@ -159,7 +160,7 @@ const AN = {
     tasks: true,
     formula: `${M(mi('y') + mo('∝') + frac(mn(1), mi('V')))} &nbsp; so &nbsp; ${M(mi('y') + mo('×') + mi('V') + mo('=') + mtext('constant'))} &nbsp;&nbsp; ${EQ.KE}`,
     list: (lvl, rows) => { const r = rows[0], Vn = r.kV >= 4 ? 1.5 : 4.0, out = [
-      { id: 'y', p: `Trial 1 bent y = ${r.y} cm at ${r.kV} kV. Predict the bend at ${Vn} kV.`, unit: 'cm', plain: true, exp: r.y * r.kV / Vn, tol: 0.06, hint: `y × V stays the same: ${r.y} × ${r.kV} = ? × ${Vn}` }];
+      { id: 'y', p: `Trial 1 bent y = ${fx(r.y, 1)} cm at ${fx(r.kV, 3)} kV. Predict the bend at ${fx(Vn, 3)} kV.`, unit: 'cm', plain: true, exp: r.y * r.kV / Vn, tol: 0.06, hint: `y × V stays the same: ${fx(r.y, 1)} × ${fx(r.kV, 3)} = ? × ${fx(Vn, 3)}` }];
       if (lvl >= 2) out.push({ id: 'V', p: `What gun voltage would make the beam bend exactly 1.0 cm?`, unit: 'kV', plain: true, exp: r.y * r.kV / 1.0, tol: 0.06, hint: 'y × V stays the same, so V = (y × V) ÷ 1.0' });
       if (lvl >= 3) out.push({ id: 'W', p: `Each electron in trial 1 gains W = qV. Give W in electronvolts (1 eV = the energy one electron gains through 1 V).`, unit: 'eV', plain: true, exp: r.kV * 1000, tol: 0.01, hint: 'One electron through V volts gains V electronvolts. Watch the kilo.' });
       return out; },
@@ -169,7 +170,7 @@ const AN = {
     tasks: true,
     formula: `${M(mi('B') + mo('=') + mn('0.78 mT') + mo('×') + mi('I'))} &nbsp;&nbsp; ${EQ.r} &nbsp;&nbsp; ${M(mi('r') + mi('B') + mo('=') + frac(mi('m') + mi('v'), mi('q')))}`,
     list: (lvl, rows) => { const r = rows[0], out = [
-      { id: 'B', p: `Trial 1: the coil current is ${r.I} A. What is B? (0.78 mT for every amp)`, unit: 'mT', plain: true, exp: 0.78 * r.I, tol: 0.03, hint: `0.78 × ${r.I}` }];
+      { id: 'B', p: `Trial 1: the coil current is ${fx(r.I, 2)} A. What is B? (0.78 mT for every amp)`, unit: 'mT', plain: true, exp: 0.78 * r.I, tol: 0.03, hint: `0.78 × ${fx(r.I, 2)}` }];
       if (lvl >= 2) out.push({ id: 'r2', p: `Same beam, but B made twice as strong. Predict the new radius from trial 1.`, unit: 'cm', plain: true, exp: r.d / 4, tol: 0.05, hint: `r ∝ 1/B. Trial 1 radius = ${fx(r.d / 2, 2)} cm.` });
       if (lvl >= 3) out.push({ id: 'I2', p: `Same beam. What coil current would make the diameter ${fx(r.d * 0.8, 1)} cm?`, unit: 'A', plain: true, exp: r.I / 0.8, tol: 0.04, hint: 'r × B stays the same, so I × d stays the same.' });
       return out; },
@@ -468,10 +469,10 @@ function labExperiment(body) {
       <div class="card"><div class="role" id="rolecard"><span class="ic">${role.ic}</span><div><b>${role.name}${S.role === 'trial' ? ' ' + S.trial : ''}</b><div class="small muted">${role.job(S.trial)} Anyone can help with any job.</div></div></div>
         <div class="team" id="team" style="margin-top:10px"></div></div>
       <div class="card small" id="predcard">Your prediction: <b>${R.pred[S.name] != null ? st.pred.o[R.pred[S.name]] : '–'}</b> <button class="linkbtn" id="chgp">change</button><div class="tiny muted">${st.pred.q}</div></div>
-      <div class="card" id="reccard"><div class="row between"><h3 style="margin:0">Table of record</h3><span class="tiny muted" id="cnt"></span></div>
-        <div class="tiny muted" style="margin:2px 0 8px">Processors fill the <b style="color:var(--accent-ink)">coloured columns</b>: the header says how. Green = right. 3 to 5 readings.</div>
-        <div id="rectbl"></div><div id="recnext"></div></div>
-    </div></div>`;
+    </div></div>
+    <div class="card" id="reccard"><div class="row between"><h3 style="margin:0">Table of record</h3><span class="tiny muted" id="cnt"></span></div>
+      <div class="tiny muted" style="margin:2px 0 8px">Processors fill the <b style="color:var(--accent-ink)">coloured columns</b>: the header says how. Green = right. 3 to 5 readings.</div>
+      <div id="rectbl"></div><div id="recnext"></div></div>`;
   sim = ({ A: simA, B: simB, C: simC })[k]($('#sim'));
   sim.onChange = s => { localEditT = Date.now(); clearTimeout(sim._t); sim._t = setTimeout(() => roomOp('sim', { sim: s }), 220); };
   sim.onRun = (raw, rec) => {
@@ -537,7 +538,7 @@ function paintPred() {
 function cellOK(col, row, v) { const raw = row.raw[col.k]; return isFinite(v) && Math.abs(v - raw) <= col.tol(raw); }
 function procOK(row, p) { const v = parseNum(row.rec['p_' + p.k] && row.rec['p_' + p.k].v); return within(v, p.f(row.raw), 0.03); }
 const rowDone = row => STN[S.station].proc.every(p => procOK(row, p));
-const fmtRaw = v => typeof v === 'number' ? (Number.isInteger(v) ? v : +v.toFixed(2)) : v;
+const fmtRaw = (v, dp) => typeof v !== 'number' ? v : dp != null ? v.toFixed(dp) : (Number.isInteger(v) ? v : +v.toFixed(2));
 function paintTable() {
   const st = STN[S.station], host = $('#rectbl'); if (!host) return;
   const focus = document.activeElement && document.activeElement.dataset && document.activeElement.dataset.cell;
@@ -545,7 +546,7 @@ function paintTable() {
   if (host.dataset.key !== key) {
     host.dataset.key = key;
     host.innerHTML = R.rows.length ? `<div style="overflow-x:auto"><table class="rec"><tr><th>#</th>${st.cols.map(c => `<th>${c.label}</th>`).join('')}${st.proc.map(p => `<th class="pc">${p.h}<small>${p.u}</small></th>`).join('')}<th></th></tr>
-      ${R.rows.map((r, i) => `<tr><td><b>${i + 1}</b><span class="by">${esc(r.by.split(' ')[0])}</span></td>${st.cols.map(c => `<td class="rv">${fmtRaw(r.raw[c.k])}</td>`).join('')}${st.proc.map(p => `<td>${sciHTML(`data-cell="${r.id}|p_${p.k}"`, !!p.plain)}</td>`).join('')}<td><button class="x" data-del="${r.id}" title="delete this reading">×</button></td></tr>`).join('')}</table></div>`
+      ${R.rows.map((r, i) => `<tr><td><b>${i + 1}</b><span class="by">${esc(r.by.split(' ')[0])}</span></td>${st.cols.map(c => `<td class="rv">${fmtRaw(r.raw[c.k], c.dp)}</td>`).join('')}${st.proc.map(p => `<td>${sciHTML(`data-cell="${r.id}|p_${p.k}"`, !!p.plain)}</td>`).join('')}<td><button class="x" data-del="${r.id}" title="delete this reading">×</button></td></tr>`).join('')}</table></div>`
       : `<div class="muted small">No readings yet. Trial leads: run the first trial.</div>`;
     host.querySelectorAll('.sci[data-cell]').forEach(box => {
       const commit = () => { const [id, col] = box.dataset.cell.split('|'); const v = sciGet(box); const row = R.rows.find(x => x.id === id); if (!row) return; if ((row.rec[col] && row.rec[col].v) === v) return; roomOp('cell', { id, col, value: v }); paintTable(); };
@@ -644,7 +645,7 @@ function playScene(host, frames, done) {
 /* ===== SIM A: deflection tube. Steady beam (invisible in vacuum, glows on the screen) + live force and velocity arrows ===== */
 function simA(host) {
   const VP = 750, DP = 0.06, SX = 220, PXC = 34, CY = 160, XR = 8, CX = 64, AX = 144;
-  let kV = 2.0, plates = false, mark = 0, unlocked = true;
+  let kV = 2.0, Vr = realV(2000) / 1000, plates = false, mark = 0, unlocked = true;
   host.innerHTML = `<svg class="sim" viewBox="0 0 640 320">
    <defs><filter id="glA"><feGaussianBlur stdDeviation="2.4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
    <radialGradient id="bulbA" cx=".5" cy=".5"><stop offset="0" stop-color="#18223b"/><stop offset="1" stop-color="#0f1628"/></radialGradient>
@@ -679,13 +680,13 @@ function simA(host) {
     if (c < 3) for (let m = 1; m < 10; m++) { const yy = y - m * PXC / 10; gr += `<line x1="${SX + XR * PXC - 4}" y1="${yy}" x2="${SX + XR * PXC + 4}" y2="${yy}" stroke="#22D3EE" stroke-width=".6" opacity=".6"/>`; } }
   q('#grid').innerHTML = gr + `<text x="${SX + 5 * PXC}" y="${CY + 3 * PXC + 38}" fill="#9AA4B8" font-size="10" text-anchor="middle">distance into the plates / cm</text>`;
   const o = { ctrlEl: q('#cA'), runEl: q('#recA'), instEl: q('#inst'), platesEl: q('#bD') };
-  const K = () => plates ? (VP / DP) / (4 * kV * 1000) / 100 : 0;          // y(cm) = K x(cm)²
+  const K = () => plates ? (VP / DP) / (4 * Vr * 1000) / 100 : 0;          // y(cm) = K x(cm)²
   const xEnd = () => { const k = K(); return k ? Math.min(10, Math.sqrt(2.95 / k)) : 10; };
   const draw = () => {
     const k = K(), xe = xEnd(); let pts = []; for (let i = 0; i <= 60; i++) { const x = xe * i / 60; pts.push(`${(SX + x * PXC).toFixed(1)} ${(CY - k * x * x * PXC).toFixed(1)}`); }
     q('#trace').setAttribute('d', 'M' + pts.join(' L'));
     q('#mk').setAttribute('transform', `translate(0,${CY - mark * PXC})`);
-    q('#oV').textContent = fx(kV, 1) + ' kV'; q('#iV').textContent = fx(kV, 1); q('#iY').textContent = fx(mark, 1);
+    q('#oV').textContent = fx(Vr, 3) + ' kV'; q('#iV').textContent = fx(Vr, 3); q('#iY').textContent = fx(mark, 1);
     q('#ptop').textContent = plates ? `+ ${VP} V` : '0 V'; q('#ptop').setAttribute('fill', plates ? '#45C58C' : '#9AA4B8'); q('#pt').setAttribute('fill', plates ? '#9fe3c0' : '#c9d3e8');
     q('#bD').textContent = 'Deflecting plates: ' + (plates ? 'ON' : 'OFF'); q('#bD').classList.toggle('primary', plates);
     q('#recA').disabled = !(unlocked && plates);
@@ -709,7 +710,7 @@ function simA(host) {
   requestAnimationFrame(ride);
   const changed = () => { draw(); o.onChange && o.onChange(o.getState()); };
   q('#bD').onclick = () => { plates = !plates; changed(); };
-  q('#sV').oninput = () => { kV = +q('#sV').value; changed(); };
+  q('#sV').oninput = () => { kV = +q('#sV').value; Vr = realV(kV * 1000) / 1000; changed(); };
   const mk = q('#mk'); let drag = false;
   const toCm = ev => { const p = svg.createSVGPoint(); p.x = ev.clientX; p.y = ev.clientY; const z = p.matrixTransform(svg.getScreenCTM().inverse()); return Math.max(-3, Math.min(3, (CY - z.y) / PXC)); };
   mk.addEventListener('pointerdown', e => { drag = true; mk.setPointerCapture(e.pointerId); });
@@ -718,9 +719,9 @@ function simA(host) {
   svg.addEventListener('click', e => { const p = svg.createSVGPoint(); p.x = e.clientX; p.y = e.clientY; const z = p.matrixTransform(svg.getScreenCTM().inverse()); if (Math.abs(z.x - (SX + XR * PXC)) < 40 && !e.target.closest('#mk')) { mark = Math.round(toCm(e) * 10) / 10; changed(); } });
   q('#recA').onclick = () => { const yt = K() * XR * XR;
     if (Math.abs(mark - yt) > 0.15) { toast('Not lined up yet: put the marker exactly on the glowing trace at the 8 cm line.'); return; }
-    o.onRun && o.onRun({ kV, y: mark, yTrue: +yt.toFixed(3) }); };
-  o.getState = () => ({ kV, plates, mark });
-  o.setState = s => { if (s.kV != null) { kV = s.kV; q('#sV').value = kV; } if (s.plates != null) plates = s.plates; if (s.mark != null) mark = s.mark; draw(); };
+    o.onRun && o.onRun({ kV: Vr, y: mark, yTrue: +yt.toFixed(3) }); };
+  o.getState = () => ({ kV, Vr, plates, mark });
+  o.setState = s => { if (s.kV != null) { kV = Math.round(s.kV * 2) / 2; q('#sV').value = kV; Vr = s.Vr != null ? s.Vr : s.kV; } if (s.plates != null) plates = s.plates; if (s.mark != null) mark = s.mark; draw(); };
   o.unlock = () => { if (!unlocked) { unlocked = true; draw(); } };
   o.playRow = row => { o.setState({ kV: row.raw.kV, plates: true, mark: row.raw.y }); q('#trace').animate([{ opacity: .3 }, { opacity: 1 }], { duration: 600 }); };
   draw(); return o;
@@ -729,7 +730,7 @@ function simA(host) {
 /* ===== SIM B: fine-beam tube (also the final Thomson tube) ===== */
 function simB(host, cfg = {}) {
   const PX = 21, cx = 240, cy = 210, Rb = 8.6 * PX, gx = cx, gy = cy + Rb - 12;
-  let V = cfg.fixedV || 200, I = cfg.fixedI || 1.5, mark = 6;
+  let V = cfg.fixedV || 200, Vr = cfg.fixedV || realV(200), I = cfg.fixedI || 1.5, mark = 6;
   host.innerHTML = `<svg class="sim" viewBox="0 0 480 420">
    <defs><radialGradient id="bulb" cx=".45" cy=".4"><stop offset="0" stop-color="#2d2144"/><stop offset="1" stop-color="#120f22"/></radialGradient>
    <filter id="gl"><feGaussianBlur stdDeviation="4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>
@@ -743,35 +744,35 @@ function simB(host, cfg = {}) {
    <text x="18" y="404" fill="#9AA4B8" font-size="12">B out of the screen ⊙</text>
   </svg>
   ${cfg.fixedV ? '' : `<div class="ctrl"><label>Electron gun voltage <output id="oV2"></output></label><div class="seg" id="segV">${[150, 200, 250, 300].map(v => `<button data-v="${v}">${v} V</button>`).join('')}</div></div>
-  <div class="ctrl" id="cI"><label>Coil current I <output id="oI"></output></label><input type="range" id="sI" min="1" max="3" step="0.1" value="${I}"></div>`}
+  <div class="ctrl" id="cI"><label>Coil current I <output id="oI"></output></label><input type="range" id="sI" min="1" max="3" step="0.05" value="${I}"></div>`}
   <div class="row"><button class="btn primary big" id="rec">📏 Record</button><div class="inst" id="inst"><div>V = <b id="iV"></b> V</div><div>I = <b id="iI"></b> A</div><div>d = <b id="iD"></b> cm</div></div></div>
   <div class="tiny muted" id="rmsg" style="margin-top:4px">Drag the orange marker to the top of the glowing ring.</div>`;
   const svg = host.querySelector('svg'), beam = host.querySelector('#beam'), mk = host.querySelector('#mk');
   let rul = ''; for (let c = 0; c <= 16; c++) { const y = gy - c * PX; rul += `<line x1="${gx - (c % 5 === 0 ? 12 : 7)}" y1="${y}" x2="${gx}" y2="${y}" stroke="#e6dcff" stroke-width="${c % 5 === 0 ? 1.6 : 1}"/>${c % 2 === 0 ? `<text x="${gx - 16}" y="${y + 4}" fill="#e6dcff" font-size="11" text-anchor="end">${c}</text>` : ''}`;
     if (c < 16) for (let m = 1; m < 10; m++) { const yy = y - m * PX / 10; rul += `<line x1="${gx - 3}" y1="${yy}" x2="${gx}" y2="${yy}" stroke="#9a8fc0" stroke-width=".6"/>`; } }
   host.querySelector('#ruler').innerHTML = `<line x1="${gx}" y1="${gy}" x2="${gx}" y2="${gy - 16 * PX}" stroke="#e6dcff"/>` + rul + `<text x="${gx - 20}" y="${gy - 16 * PX - 8}" fill="#e6dcff" font-size="11">cm</text>`;
-  const rOf = () => speed(V) / (QM * KCOIL * I);
+  const rOf = () => speed(Vr) / (QM * KCOIL * I);
   const o = { ctrlEl: host.querySelector('#cI') || host.querySelector('#mk'), runEl: host.querySelector('#rec'), instEl: host.querySelector('#inst') };
   const draw = () => { const rp = rOf() * 100 * PX;
     beam.setAttribute('d', `M ${gx} ${gy} A ${rp} ${rp} 0 1 0 ${gx} ${gy - 2 * rp} A ${rp} ${rp} 0 1 0 ${gx} ${gy}`);
-    host.querySelector('#iV').textContent = V; host.querySelector('#iI').textContent = fx(I, 1); host.querySelector('#iD').textContent = fx(mark, 1);
-    if (host.querySelector('#oI')) host.querySelector('#oI').textContent = fx(I, 1) + ' A  →  B = ' + fx(KCOIL * I * 1e3, 2) + ' mT';
-    if (host.querySelector('#oV2')) { host.querySelector('#oV2').textContent = V + ' V'; host.querySelectorAll('#segV button').forEach(b => b.classList.toggle('on', +b.dataset.v === V)); }
+    host.querySelector('#iV').textContent = Vr; host.querySelector('#iI').textContent = fx(I, 2); host.querySelector('#iD').textContent = fx(mark, 1);
+    if (host.querySelector('#oI')) host.querySelector('#oI').textContent = fx(I, 2) + ' A';
+    if (host.querySelector('#oV2')) { host.querySelector('#oV2').textContent = 'about ' + V + ' V'; host.querySelectorAll('#segV button').forEach(b => b.classList.toggle('on', +b.dataset.v === V)); }
     mk.setAttribute('transform', `translate(0,${gy - mark * PX})`); };
   const changed = () => { draw(); o.onChange && o.onChange(o.getState()); };
-  host.querySelectorAll('#segV button').forEach(b => b.onclick = () => { V = +b.dataset.v; changed(); });
+  host.querySelectorAll('#segV button').forEach(b => b.onclick = () => { V = +b.dataset.v; Vr = realV(V); changed(); });
   const sI = host.querySelector('#sI'); if (sI) sI.oninput = () => { I = +sI.value; changed(); };
   let drag = false; const toCm = ev => { const p = svg.createSVGPoint(); p.x = ev.clientX; p.y = ev.clientY; const q = p.matrixTransform(svg.getScreenCTM().inverse()); return Math.max(0, Math.min(16, (gy - q.y) / PX)); };
   mk.addEventListener('pointerdown', e => { drag = true; mk.setPointerCapture(e.pointerId); });
   mk.addEventListener('pointermove', e => { if (!drag) return; mark = Math.round(toCm(e) * 10) / 10; changed(); });
   mk.addEventListener('pointerup', () => drag = false);
   svg.addEventListener('click', e => { if (e.target.closest('#mk')) return; mark = Math.round(toCm(e) * 10) / 10; changed(); });
-  o.getState = () => ({ V, I, mark }); o.setState = s => { if (s.V) V = s.V; if (s.I) { I = s.I; if (sI) sI.value = I; } if (s.mark != null) mark = s.mark; draw(); };
+  o.getState = () => ({ V, Vr, I, mark }); o.setState = s => { if (s.V) { V = [150, 200, 250, 300].reduce((a, b) => Math.abs(b - s.V) < Math.abs(a - s.V) ? b : a); Vr = s.Vr || s.V; } if (s.I) { I = s.I; if (sI) sI.value = I; } if (s.mark != null) mark = s.mark; draw(); };
   host.querySelector('#rec').onclick = () => { const d = 2 * rOf() * 100, msg = host.querySelector('#rmsg');
     if (Math.abs(mark - d) > 0.2) { msg.innerHTML = '<b style="color:var(--bad)">Not lined up.</b> Put the marker exactly on the top of the ring.'; return; }
     msg.textContent = cfg.fixedV ? 'Recorded.' : 'Recorded. Change the current for the next trial.';
-    o.onRun && o.onRun({ V, I, d: mark }); };
-  o.playRow = row => { o.setState({ V: row.raw.V, I: row.raw.I, mark: row.raw.d }); beam.animate([{ opacity: .3 }, { opacity: 1 }], { duration: 700 }); };
+    o.onRun && o.onRun({ V: Vr, I, d: mark }); };
+  o.playRow = row => { o.setState({ V: row.raw.V, Vr: row.raw.V, I: row.raw.I, mark: row.raw.d }); beam.animate([{ opacity: .3 }, { opacity: 1 }], { duration: 700 }); };
   draw(); return o;
 }
 
@@ -868,6 +869,11 @@ function labProcessTasks(body) {
   const c = card(body, `<div class="row between"><div><span class="tag acc">Make sense of your team's data</span> <span class="tiny muted">on your own</span></div><span id="mk"></span></div>
     <div class="grid2" style="margin-top:8px"><div id="gr"></div><div><h3>What does the graph show?</h3><p id="gnote" class="muted">Look at the pattern first.</p><div class="formula">${A.formula}</div></div></div><div id="tasks"></div>`);
   if (rows.length < 3 || R.rows.filter(rowDone).length < 3) { c.querySelector('#tasks').innerHTML = `<div class="fb hint">Your team needs 3 processed readings first (${R.rows.filter(rowDone).length} so far). Pop back to the Experiment tab to help.</div>`; return; }
+  const st = STN[k]; c.insertAdjacentHTML('afterbegin', '');
+  const tb = document.createElement('div'); tb.style.cssText = 'overflow-x:auto;margin:8px 0 4px';
+  tb.innerHTML = `<table class="rec"><tr><th>#</th>${st.cols.map(x => `<th>${x.label}</th>`).join('')}${st.proc.map(p => `<th class="pc">${p.h}<small>${p.u}</small></th>`).join('')}</tr>
+    ${R.rows.map((r, i) => `<tr><td><b>${i + 1}</b></td>${st.cols.map(x => `<td class="rv">${fmtRaw(r.raw[x.k], x.dp)}</td>`).join('')}${st.proc.map(p => { const v = r.rec['p_' + p.k] && r.rec['p_' + p.k].v; return `<td class="rv" style="color:${procOK(r, p) ? 'var(--good)' : 'var(--muted)'}">${v ? (v.includes('e') ? sci(parseNum(v), 3) : esc(v)) : '–'}</td>`; }).join('')}</tr>`).join('')}</table>`;
+  c.querySelector('.grid2').before(tb);
   const g = A.graph(rows); c.querySelector('#gr').innerHTML = graph(g.pts, g).svg; c.querySelector('#gnote').textContent = g.note;
   const list = A.list(S.level, rows), host = c.querySelector('#tasks');
   const fin = () => { const got = list.filter(t => S.first[k + '·p·' + t.id]).length; if (S.mark == null) { S.mark = `${got}/${list.length}`; save(); }
@@ -919,7 +925,7 @@ async function rFinal() {
   const open = S.unlocked || (board && (board.unlock || ['A', 'B', 'C'].every(k => (done[k] || 0) > 0)));
   if (open && !S.unlocked) { S.unlocked = true; save(); }
   const disc = ['A', 'B', 'C'].map(k => { const rows = board && board.rooms && board.rooms[k] ? board.rooms[k].rows : [];
-    const data = rows.length ? (k === 'A' ? 'Deflections: ' + rows.slice(0, 3).map(r => r.raw.y + ' cm at ' + r.raw.kV + ' kV').join(', ') : k === 'B' ? 'Diameters: ' + rows.slice(0, 3).map(r => r.raw.d + ' cm').join(', ') : 'Speeds: ' + rows.slice(0, 3).map(r => sci(r.raw.Vp / 0.04 / (KCOIL * r.raw.I), 2)).join(', ') + ' m/s') : '';
+    const data = rows.length ? (k === 'A' ? 'Deflections: ' + rows.slice(0, 3).map(r => fx(r.raw.y, 1) + ' cm at ' + fx(r.raw.kV, 3) + ' kV').join(', ') : k === 'B' ? 'Diameters: ' + rows.slice(0, 3).map(r => r.raw.d + ' cm').join(', ') : 'Speeds: ' + rows.slice(0, 3).map(r => sci(r.raw.Vp / 0.04 / (KCOIL * r.raw.I), 2)).join(', ') + ' m/s') : '';
     return `<div class="d ${k === S.station ? 'mine' : ''}"><div class="ph" style="background-image:url(${STN[k].img})"></div><b>${STN[k].icon} ${STN[k].title}</b><div class="eqbig">${STN[k].find.eq}</div><div class="small">${STN[k].find.t}</div>
       <div class="tiny muted" style="margin-top:4px">${(done[k] || 0) > 0 ? '✅ ' + (done[k] || 0) + ' finished' : '⏳ still working'}${data ? ' · ' + data : ''}</div></div>`; }).join('');
   if (!open) {
