@@ -352,7 +352,9 @@ function paintPreview() {
   let bar = document.getElementById('pvbar'); if (!S.preview) { if (bar) bar.remove(); return; }
   if (!bar) { bar = document.createElement('div'); bar.id = 'pvbar'; document.body.appendChild(bar); }
   const b = (lab, on, act) => `<button class="${on ? 'on' : ''}" data-a="${act}">${lab}</button>`, lab = S.stage === 'lab';
-  bar.innerHTML = `<span class="pt">Preview</span>${['A', 'B', 'C'].map(k => b(k, S.station === k, 'st:' + k)).join('')}<i></i>
+  bar.classList.toggle('min', !!S.pvMin);
+  if (S.pvMin) { bar.innerHTML = `<button data-a="max" title="open the preview controls">▴ Preview · ${S.station}${S.stage === 'lab' ? ' · ' + LABSTEPS[S.step] : ''}</button>`; }
+  else bar.innerHTML = `<button class="pvmin" data-a="min" title="hide the preview controls">▾ Hide</button><span class="pt">Preview</span>${['A', 'B', 'C'].map(k => b(k, S.station === k, 'st:' + k)).join('')}<i></i>
     ${LABSTEPS.map((x, i) => b(x, lab && S.step === i, 'step:' + i)).join('')}<i></i>
     ${[['check', 'Check'], ['share', 'Share'], ['final', 'Final tube'], ['millikan', 'Millikan'], ['reflect', 'Reflect']].map(([g, t]) => b(t, S.stage === g, 'go:' + g)).join('')}<i></i>
     ${[['trial', 'Trial lead'], ['processor', 'Processor'], ['leader', 'Leader']].map(([r, t]) => b(t, S.role === r, 'role:' + r)).join('')}<i></i>
@@ -362,6 +364,7 @@ function paintPreview() {
     if (a === 'st') { S.station = v; R = null; seenRows = new Set(); S.doneStation = true; S.stage = 'lab'; S.step = 0; }
     if (a === 'step') { S.stage = 'lab'; S.step = +v; S.doneStation = true; }
     if (a === 'go') { S.stage = v; S.doneStation = true; }
+    if (a === 'min' || a === 'max') { S.pvMin = a === 'min'; save(false); paintPreview(); return; }
     if (a === 'role') { S.role = v; R = null; seenRows = new Set(); }
     if (a === 'lv') S.level = +v;
     if (a === 'intro') S.seen = {};

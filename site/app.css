@@ -256,3 +256,8 @@ body:has(#pvbar){padding-bottom:70px}
 ol.teach{margin:8px 0 10px 20px;padding:0;display:grid;gap:8px}
 ol.teach li{line-height:1.45}
 ol.teach .eqbig{font-size:1.3rem;margin:4px 0}
+#pvbar .pvmin{background:#0B1020;color:#67E8F9;font-weight:700}
+#pvbar.min{left:10px;transform:none;padding:4px;border-radius:10px;opacity:.92}
+#pvbar.min button{background:#1E1B4B;color:#67E8F9;font-weight:700}
+body:has(#pvbar.min){padding-bottom:20px}
+@media(max-width:640px){#pvbar:not(.min){font-size:.72rem;gap:3px;padding:5px}#pvbar:not(.min) button{padding:4px 7px}}
