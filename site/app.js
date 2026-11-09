@@ -414,9 +414,8 @@ async function rRoute() {
     const ask = async () => {
       try {
         const r = sent ? await apiGet({ op: 'alloc', cls: S.cls, name: S.name }) : await apiPost({ op: 'submit', cls: S.cls, name: S.name, correct });
-        netGood(); sent = true;
+        netGood(); sent = r.known !== false;                 // not on the list (e.g. after a reset): send the answers again
         if (r.station) { stopPoll(); S.station = r.station; save(); render(); return; }
-        if (r.done && !r.station) sent = false;              // not on the list (e.g. after a reset): send the answers again
         if ($('#wn')) $('#wn').textContent = r.n + (r.n === 1 ? ' student has' : ' students have');
       } catch (e) { netFail(); }
     };

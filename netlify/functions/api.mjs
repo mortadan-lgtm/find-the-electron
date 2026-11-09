@@ -9,6 +9,11 @@ const roomKey = (cls, st) => `room/${safe(cls)}/${safe(st)}`;
 const classKey = cls => `class/${safe(cls)}`;
 const stuPrefix = cls => `stu/${safe(cls)}/`;
 const allocKey = cls => `alloc/${safe(cls)}`;
+const subPrefix = cls => `sub/${safe(cls)}/`, finPrefix = cls => `fin/${safe(cls)}/`;
+async function listIds(prefix) { const { blobs } = await store().list({ prefix }); return blobs.map(x => x.key.slice(prefix.length)); }
+async function loadAll(prefix) { const st = store(), out = {}; const ids = await listIds(prefix);
+  await Promise.all(ids.map(async id => { const v = await st.get(prefix + id, { type: "json", consistency: "strong" }); if (v) out[id] = v; })); return out; }
+const getAlloc = async cls => (await store().get(allocKey(cls), { type: "json", consistency: "strong" })) || emptyAlloc();
 const emptyAlloc = () => ({ ver: 0, subs: {}, st: {}, done: false, fin: {}, mix: {}, mixed: false });
 // a student's stations to choose from: the ones whose starting question they got wrong (all three if none or all wrong)
 const poolOf = c => { const p = STATIONS.filter((k, i) => !c[i]); return p.length ? p : STATIONS.slice(); };
@@ -23,7 +28,7 @@ function allocateAll(a) {
 }
 // jigsaw: deal each station's students round the three tables, so every new team has someone from A, B and C
 const stationOf = (a, k) => (a.fin && a.fin[k] && a.fin[k].station) || a.st[k];
-const nameOf = (a, k) => (a.fin && a.fin[k] && a.fin[k].name) || (a.subs[k] && a.subs[k].name) || k;
+const nameOf = (a, k) => (a.fin && a.fin[k] && a.fin[k].name) || (a.names && a.names[k]) || (a.subs && a.subs[k] && a.subs[k].name) || k;
 function mixAll(a) {
   a.fin = a.fin || {}; const keys = [...new Set([...Object.keys(a.st), ...Object.keys(a.fin)])], by = { A: [], B: [], C: [] };
   keys.forEach(k => { const s = stationOf(a, k); if (by[s]) by[s].push(k); });
@@ -37,15 +42,15 @@ function mixOne(a, k) {
   Object.entries(a.mix).forEach(([j, t]) => { cnt[t]++; if (stationOf(a, j) === mine) same[t]++; });
   a.mix[k] = STATIONS.slice().sort((x, y) => same[x] - same[y] || cnt[x] - cnt[y])[0]; return a;
 }
-function mixView(a, k) {
-  const keys = [...new Set([...Object.keys(a.st), ...Object.keys(a.fin || {})])], team = a.mixed ? a.mix[k] || null : null;
-  return { mixed: !!a.mixed, n: Object.keys(a.fin || {}).length, total: keys.length, known: !!(a.fin && a.fin[k]), team,
+function mixView(a, k, finIds) {
+  const keys = [...new Set([...Object.keys(a.st), ...finIds])], team = a.mixed ? a.mix[k] || null : null;
+  return { mixed: !!a.mixed, n: finIds.length, total: keys.length, known: finIds.includes(k), team,
     members: team ? Object.entries(a.mix).filter(([, t]) => t === team).map(([j]) => ({ name: nameOf(a, j), station: stationOf(a, j) })).sort((x, y) => (x.station || '').localeCompare(y.station || '')) : [] };
 }
 // a latecomer after the stations are shown: smallest team, preferring their gap
-function allocateOne(a, k) {
+function allocateOne(a, k, c, total) {
   const cnt = { A: 0, B: 0, C: 0 }; Object.values(a.st).forEach(s => cnt[s]++);
-  a.st[k] = pick(poolOf(a.subs[k].c), cnt, Math.max(1, Math.ceil(Object.keys(a.subs).length / 3))); return a;
+  a.st[k] = pick(poolOf(c), cnt, Math.max(1, Math.ceil(total / 3))); return a;
 }
 async function students(cls) {
   const st = store(); const { blobs } = await st.list({ prefix: stuPrefix(cls) });
@@ -58,7 +63,7 @@ const emptyClass = () => ({ ver: 0, students: {}, unlock: false });
 // optimistic update with conditional writes (low contention: one group of ~5)
 async function update(key, init, fn) {
   const st = store();
-  for (let i = 0; i < 10; i++) {
+  for (let i = 0; i < 40; i++) {
     const cur = await st.getWithMetadata(key, { type: "json", consistency: "strong" });
     const val = cur ? cur.data : init();
     const out = fn(val);
@@ -66,7 +71,7 @@ async function update(key, init, fn) {
     out.ver = (val.ver || 0) + 1;
     const res = cur ? await st.setJSON(key, out, { onlyIfMatch: cur.etag }) : await st.setJSON(key, out, { onlyIfNew: true });
     if (res.modified) return out;
-    await new Promise(r => setTimeout(r, 30 + Math.random() * 150));
+    await new Promise(r => setTimeout(r, 40 + Math.random() * Math.min(1500, 120 * (i + 1))));
   }
   throw new Error("busy");
 }
@@ -102,13 +107,12 @@ export default async (req) => {
         return json({ done, assigned, unlock: !!c.unlock, rooms });
       }
       if (op === "alloc") {
-        const a = (await store().get(allocKey(cls), { type: "json", consistency: "strong" })) || emptyAlloc();
-        const k = String(url.searchParams.get("name") || "").trim().toLowerCase();
-        return json({ done: a.done, n: Object.keys(a.subs).length, station: a.done ? (a.st[k] || null) : null });
+        const a = await getAlloc(cls), k = safe(url.searchParams.get("name")), ids = await listIds(subPrefix(cls));
+        return json({ done: a.done, n: ids.length, known: ids.includes(k), station: a.done ? (a.st[k] || null) : null });
       }
       if (op === "mix") {
-        const a = (await store().get(allocKey(cls), { type: "json", consistency: "strong" })) || emptyAlloc();
-        return json(mixView(a, String(url.searchParams.get("name") || "").trim().toLowerCase()));
+        const a = await getAlloc(cls);
+        return json(mixView(a, safe(url.searchParams.get("name")), await listIds(finPrefix(cls))));
       }
       if (op === "teacher") {
         if (url.searchParams.get("code") !== CODE) return json({ error: "code" }, 403);
@@ -116,7 +120,7 @@ export default async (req) => {
         c.students = await students(cls);
         const rooms = {};
         for (const k of STATIONS) rooms[k] = (await store().get(roomKey(cls, k), { type: "json", consistency: "strong" })) || emptyRoom();
-        const alloc = (await store().get(allocKey(cls), { type: "json", consistency: "strong" })) || emptyAlloc();
+        const alloc = await getAlloc(cls); alloc.subs = await loadAll(subPrefix(cls)); alloc.fin = await loadAll(finPrefix(cls));
         return json({ cls: c, rooms, alloc });
       }
       return new Response("Find the Electron is running.");
@@ -169,27 +173,21 @@ export default async (req) => {
       return json({ ver: r.ver });
     }
     if (op === "submit") {
-      const k = name.toLowerCase(); if (!k) return json({ error: "name" }, 400);
-      const a = await update(allocKey(cls), emptyAlloc, al => {
-        const c = (b.correct || []).slice(0, 3).map(Boolean);
-        const old = al.subs[k];
-        if (old && al.st[k]) return null;                       // already has a station
-        al.subs[k] = { name, c, t: old ? old.t : Date.now() };
-        if (al.done) allocateOne(al, k);
-        return al;
-      });
-      return json({ done: a.done, n: Object.keys(a.subs).length, station: a.done ? (a.st[k] || null) : null });
+      const k = safe(name); if (!name) return json({ error: "name" }, 400);
+      const st = store(), key = subPrefix(cls) + k, old = await st.get(key, { type: "json", consistency: "strong" });
+      const c = (b.correct || []).slice(0, 3).map(Boolean);
+      await st.setJSON(key, { name, c, t: old ? old.t : Date.now() });
+      let a = await getAlloc(cls); const ids = await listIds(subPrefix(cls));
+      if (a.done && !a.st[k]) a = await update(allocKey(cls), emptyAlloc, al => al.st[k] ? null : allocateOne(al, k, c, ids.length));
+      return json({ done: a.done, n: ids.length, known: true, station: a.done ? (a.st[k] || null) : null });
     }
     if (op === "finished") {
-      const k = name.toLowerCase(); if (!k) return json({ error: "name" }, 400);
-      const a = await update(allocKey(cls), emptyAlloc, al => {
-        al.fin = al.fin || {}; al.mix = al.mix || {};
-        if (al.fin[k] && al.fin[k].station === b.station && (!al.mixed || al.mix[k])) return null;
-        al.fin[k] = { name, station: STATIONS.includes(b.station) ? b.station : stationOf(al, k), t: Date.now() };
-        if (al.mixed && !al.mix[k]) mixOne(al, k);
-        return al;
-      });
-      return json(mixView(a, k));
+      const k = safe(name); if (!name) return json({ error: "name" }, 400);
+      let a = await getAlloc(cls);
+      const station = STATIONS.includes(b.station) ? b.station : a.st[k];
+      await store().setJSON(finPrefix(cls) + k, { name, station, t: Date.now() });
+      if (a.mixed && !a.mix[k]) a = await update(allocKey(cls), emptyAlloc, al => { if (al.mix[k]) return null; al.fin = al.fin || {}; al.fin[k] = { name, station }; return mixOne(al, k); });
+      return json(mixView(a, k, await listIds(finPrefix(cls))));
     }
     if (op === "progress") {
       await store().setJSON(stuPrefix(cls) + safe(name), { ...(b.data || {}), name, t: Date.now() });
@@ -204,10 +202,11 @@ export default async (req) => {
         for (const x of blobs) await s.delete(x.key);
         for (const k of STATIONS) await s.delete(roomKey(cls, k));
         await s.delete(allocKey(cls));
+        for (const pre of [subPrefix(cls), finPrefix(cls)]) for (const id of await listIds(pre)) await s.delete(pre + id);
         return json({ ok: true });
       }
-      if (op === "allocate") { const a = await update(allocKey(cls), emptyAlloc, al => allocateAll(al)); return json({ ok: true, st: a.st }); }
-      if (op === "mixteams") { await update(allocKey(cls), emptyAlloc, al => mixAll(al)); await update(classKey(cls), emptyClass, c => { c.unlock = true; return c; }); return json({ ok: true }); }
+      if (op === "allocate") { const subs = await loadAll(subPrefix(cls)); const a = await update(allocKey(cls), emptyAlloc, al => { al.subs = subs; allocateAll(al); delete al.subs; al.names = Object.fromEntries(Object.entries(subs).map(([k, v]) => [k, v.name])); return al; }); return json({ ok: true, st: a.st }); }
+      if (op === "mixteams") { const fin = await loadAll(finPrefix(cls)); await update(allocKey(cls), emptyAlloc, al => { al.fin = fin; return mixAll(al); }); await update(classKey(cls), emptyClass, c => { c.unlock = true; return c; }); return json({ ok: true }); }
       if (op === "unmix") { await update(allocKey(cls), emptyAlloc, al => { al.mixed = false; al.mix = {}; return al; }); return json({ ok: true }); }
       if (op === "unallocate") { await update(allocKey(cls), emptyAlloc, al => { al.done = false; al.st = {}; return al; }); return json({ ok: true }); }
       if (op === "kick") {
