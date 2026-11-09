@@ -465,6 +465,28 @@ async function rLab() {
     R.rows.forEach(r => seenRows.add(r.id)); save();
   }
   [labPredict, labExplore, labExperiment, labProcess, labExplain][S.step]($('#body'));
+  roleReveal();
+}
+/* ---------- role card: flips over the first time a student gets a role at a station ---------- */
+const ROLECARD = {
+  trial: { img: 'img/role-trial.webp', ic: '🎛️', name: 'Trial lead', jobs: n => [`You run <b>trial ${n}</b> on your team's shared apparatus.`, 'Change only the variable you are told to change, line up the marker and press Record.', 'Look at your reading before the next trial: does it fit the pattern?'] },
+  processor: { img: 'img/role-processor.webp', ic: '🧮', name: 'Data processor', jobs: () => ['You turn the readings into results.', 'Fill in the coloured columns using the formula in each header. A cell turns green when it is right.', 'If a reading does not fit, tell the trial leads so they can repeat it.'] },
+  leader: { img: 'img/role-leader.webp', ic: '⭐', name: 'Team leader', jobs: () => ['You lead the team prediction and keep everyone on time.', 'You also process the data with the processor.', 'When 3 rows are processed, ask the team: was our prediction right?'] }
+};
+function roleReveal() {
+  const key = S.station + ':' + S.role + (S.role === 'trial' ? S.trial : '');
+  if (!S.role || (S.roleShown || {})[key] || document.getElementById('rolereveal')) return;
+  const c = ROLECARD[S.role] || ROLECARD.trial, sub = S.role === 'trial' ? `Trial lead ${S.trial}` : S.role === 'leader' ? 'Team leader + processor' : 'Data processor';
+  const ov = document.createElement('div'); ov.id = 'rolereveal';
+  ov.innerHTML = `<div class="rcard"><div class="rflip">
+    <div class="rface rback"><div class="rq">?</div><div class="rbt">Your role at Station ${S.station}</div></div>
+    <div class="rface rfront"><div class="rimg" style="background-image:url(${c.img})"><span class="rbadge">${c.ic}</span></div>
+      <div class="rtx"><div class="rk">Your role · Station ${S.station}</div><h2>${sub}</h2><ul>${c.jobs(S.trial).map(j => `<li>${j}</li>`).join('')}</ul>
+      <div class="tiny muted">Anyone can help with any job if a teammate is stuck.</div><button class="btn primary" id="rgo">Got it</button></div></div></div></div>`;
+  document.body.appendChild(ov);
+  requestAnimationFrame(() => ov.classList.add('in'));
+  setTimeout(() => ov.querySelector('.rflip').classList.add('flipped'), 700);
+  ov.querySelector('#rgo').onclick = () => { S.roleShown = Object.assign(S.roleShown || {}, { [key]: 1 }); save(false); ov.classList.remove('in'); setTimeout(() => ov.remove(), 250); };
 }
 function startPoll(onUpdate) {
   stopPoll(); if (!ONLINE || S.preview) return;
