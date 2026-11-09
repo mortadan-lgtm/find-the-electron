@@ -31,7 +31,7 @@ const within = (a, b, p) => isFinite(a) && isFinite(b) && Math.abs(a - b) <= Mat
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
 
 /* ============ MATHML ============ */
-const mi = s => `<mi>${s}</mi>`, mn = s => `<mn>${s}</mn>`, mo = s => `<mo>${s}</mo>`;
+const mtext = s => `<mtext>${s}</mtext>`, mi = s => `<mi>${s}</mi>`, mn = s => `<mn>${s}</mn>`, mo = s => `<mo>${s}</mo>`;
 const frac = (a, b) => `<mfrac><mrow>${a}</mrow><mrow>${b}</mrow></mfrac>`, sq = (a, n = '2') => `<msup><mrow>${a}</mrow><mn>${n}</mn></msup>`;
 const M = s => `<math>${s}</math>`;
 const EQ = {
@@ -88,31 +88,30 @@ const DIAG = [
 const AV_COL = ['#2F6FB5', '#4F46E5', '#0C9C98', '#6D3FC0', '#C8463E', '#1D8F5F', '#E6A413'];
 const ROLES = {
   trial: { ic: '🎛️', name: 'Trial lead', job: n => `Run <b>trial ${n}</b> on the shared simulation.` },
-  processor: { ic: '🧮', name: 'Data processor', job: () => 'Readings arrive by themselves. You <b>process</b> them in the coloured columns.' },
+  processor: { ic: '🧮', name: 'Data processor', job: () => 'You <b>process</b> the readings in the coloured columns.' },
   leader: { ic: '⭐', name: 'Team leader + processor', job: () => 'Lead the team and the prediction, and <b>process</b> the data with the processor.' }
 };
 const STN = {
   A: {
-    title: 'The electron gun', icon: '⚡', img: 'img/filament.webp',
-    goal: 'What does the gun give the electrons? Does the gap matter?',
-    readHint: 'Drag the <b>cyan marker</b> onto the glowing trace at the 8 cm line, then tap <b>Record</b>. The reading goes straight into the table.',
-    quest: true,
-    proc: [{ k: 'E', h: 'E = V ÷ d', u: 'V m⁻¹', ph: '1e5', f: r => r.kV * 1000 / (r.d / 100) }, { k: 'yV', h: 'y × V', u: 'cm kV', ph: '2.0', f: r => r.y * r.kV }],
+    title: 'Why does the beam bend?', icon: '⚡', img: 'img/filament.webp',
+    goal: 'Why does a beam of electrons bend, and why does a faster beam bend less?',
+    readHint: 'Drag the <b>cyan marker</b> onto the glowing trace at the 8 cm line, then tap <b>Record</b>.',
+    proc: [{ k: 'iV', h: '1 ÷ V', u: 'kV⁻¹', ph: '', f: r => 1 / r.kV }, { k: 'yV', h: 'y × V', u: 'cm kV', ph: '', f: r => r.y * r.kV }],
     scene: [
-      { img: 'img/filament.webp', cap: 'Hot metal boils off electrons.', sub: 'The heated cathode is the source.' },
-      { anim: 'gun', cap: 'The anode pulls them into a beam.', sub: 'A steady stream shoots through the hole in the anode.' },
-      { img: 'img/hero.webp', cap: 'Your mission: make a beam, then test it.', sub: 'In a vacuum the beam is invisible. It only shows where it grazes the screen.' }],
-    pred: { q: 'Swap to the NARROW gun: same voltage, half the gap, so twice the field. The trace bends…', o: ['the same', 'less (a stiffer beam)', 'more'] },
-    cols: [{ k: 'kV', label: 'V / kV', tol: v => 0.01 }, { k: 'd', label: 'gun gap d / cm', tol: v => 0.01 }, { k: 'y', label: 'y / cm', tol: v => 0.01 }],
+      { img: 'img/filament.webp', cap: 'Hot metal boils off electrons.', sub: 'The electron gun turns them into a fast, steady beam.' },
+      { anim: 'gun', cap: 'The gun voltage V sets how fast they go.', sub: 'Higher V, faster electrons.' },
+      { img: 'img/hero.webp', cap: 'Your mission: find out why the beam bends.', sub: 'The beam is invisible in vacuum. It glows only where it grazes the screen.' }],
+    pred: { q: 'You turn the gun voltage UP, so the electrons are faster. Between the plates the beam bends…', o: ['less', 'more', 'the same'] },
+    cols: [{ k: 'kV', label: 'V / kV', tol: v => 0.01 }, { k: 'y', label: 'y / cm', tol: v => 0.01 }],
     steps: [
-      { m: EQ.EVd, w: 'Cathode and anode make a uniform field. Half the gap, twice the field.' },
-      { m: EQ.FqE, w: 'The field pushes each (negative) electron towards the positive anode.' },
-      { m: EQ.W, w: 'Work = force × distance. Twice the force over half the distance: the gap cancels and the work is qV.', gap: true, opts: [EQ.W, M(mi('W') + mo('=') + frac(mi('q') + mi('V'), mi('d'))), M(mi('W') + mo('=') + frac(mn(1), mn(2)) + mi('q') + mi('V'))] },
-      { m: EQ.KE, w: 'It starts from rest, so all that work becomes kinetic energy. Only V sets the energy.' },
-      { m: '<b>no field past the anode → no force → constant speed</b>', w: 'A faster beam spends less time between the deflecting plates, so it bends less: y ∝ 1/V.' }],
-    concept: { p: 'The narrow gun has twice the field, yet the trace did not change. Why?', o: ['Twice the force acts over half the distance, so the work qV is the same', 'The narrow gun makes fewer electrons', 'The field has no effect on electrons'], a: 0, hint: 'Work = force × distance. What happens to each one?', why: 'Twice the force × half the distance = the same work, qV.' },
-    hist: { yr: '1890s', t: 'Physicists argued: were cathode rays waves, or tiny charged particles? Rays that come from the hot cathode, are pulled by a positive anode and bent by charged plates must carry negative charge.', q: { p: 'The beam bends towards the positive plate. So cathode rays…', o: ['carry negative charge', 'are a kind of light', 'have no mass'], a: 0, hint: 'Opposite charges attract.', why: 'Attracted to + means negative.' } },
-    find: { eq: EQ.KE, t: 'The gun gives every electron the energy qV, whatever the gap.' }
+      { m: EQ.EVd, w: 'In the gun, the voltage V across the gap makes a uniform field that speeds the electrons up.' },
+      { m: EQ.KE, w: 'The field does work qV, which becomes kinetic energy. Higher V, faster electrons.', gap: true, opts: [EQ.KE, M(mi('q') + mi('V') + mo('=') + mi('m') + mi('v')), M(mi('q') + mi('V') + mo('=') + mi('m') + mi('g') + mi('h'))] },
+      { m: EQ.FqE, w: 'Between the plates the field pushes each negative electron towards +, with the same force all the way.' },
+      { m: '<b>steady forward speed + constant sideways force → a curve</b>', w: 'Just like a ball thrown sideways while gravity pulls it down.' },
+      { m: M(mi('y') + mo('∝') + frac(mn(1), mi('V'))), w: 'A faster electron is between the plates for less time, so the force has less time to push it sideways.' }],
+    concept: { p: 'Why does a faster beam bend less?', o: ['It spends less time between the plates, so the same force pushes it sideways for less time', 'The force on a fast electron is smaller', 'Fast electrons lose their charge'], a: 0, hint: 'Is the force different? Or the time it acts for?', why: 'Same force qE, less time, less sideways velocity: y ∝ 1/V.' },
+    hist: { yr: '1897', t: 'Earlier experimenters could not bend cathode rays with charged plates, because leftover gas in their tubes carried a current. Thomson pumped his tube to a much better vacuum, and the rays bent towards the positive plate: they had to be negatively charged.', q: { p: 'The beam bends towards the + plate. So cathode rays…', o: ['carry negative charge', 'are a kind of light', 'have no mass'], a: 0, hint: 'Opposite charges attract.', why: 'Attracted to + means negative.' } },
+    find: { eq: EQ.KE, t: 'The gun gives the beam its energy qV. A faster beam bends less.' }
   },
   B: {
     title: 'The circle in a magnetic field', icon: '🧲', img: 'img/finebeam.webp',
@@ -158,13 +157,13 @@ const STN = {
 const AN = {
   A: {
     tasks: true,
-    formula: `${M(mi('E') + mo('=') + frac(mi('V'), mi('d')))} (V in volts, d in metres) &nbsp;&nbsp; ${M(mi('y') + mo('∝') + frac(mn(1), mi('V')))} &nbsp;&nbsp; ${M(mi('W') + mo('=') + mi('q') + mi('V'))}`,
-    list: (lvl, rows) => { const r = rows[0], out = [
-      { id: 'E', p: `Trial 1: V = ${r.kV} kV across a gap of ${r.d} cm. What is the field E in the gun?`, unit: 'V m⁻¹', ph: '1.5e5', exp: r.kV * 1000 / (r.d / 100), tol: 0.03, hint: `Change to volts and metres: ${r.kV * 1000} V ÷ ${r.d / 100} m.` }];
-      if (lvl >= 2) { const Vn = r.kV >= 4 ? 1.5 : 4.0; out.push({ id: 'y', p: `Use y ∝ 1/V and trial 1 to predict the deflection at ${Vn} kV.`, unit: 'cm', ph: '0.8', exp: r.y * r.kV / Vn, tol: 0.06, hint: `V changes by × ${fx(Vn / r.kV, 2)}, so y changes by ÷ ${fx(Vn / r.kV, 2)}.` }); }
-      if (lvl >= 3) out.push({ id: 'W', p: `Each electron in trial 1 gains W = qV. Give W in electronvolts (1 eV = the energy one electron gains through 1 V).`, unit: 'eV', ph: '2000', exp: r.kV * 1000, tol: 0.01, hint: 'One electron through V volts gains V electronvolts.' });
+    formula: `${M(mi('y') + mo('∝') + frac(mn(1), mi('V')))} &nbsp; so &nbsp; ${M(mi('y') + mo('×') + mi('V') + mo('=') + mtext('constant'))} &nbsp;&nbsp; ${EQ.KE}`,
+    list: (lvl, rows) => { const r = rows[0], Vn = r.kV >= 4 ? 1.5 : 4.0, out = [
+      { id: 'y', p: `Trial 1 bent y = ${r.y} cm at ${r.kV} kV. Predict the bend at ${Vn} kV.`, unit: 'cm', exp: r.y * r.kV / Vn, tol: 0.06, hint: `y × V stays the same: ${r.y} × ${r.kV} = ? × ${Vn}` }];
+      if (lvl >= 2) out.push({ id: 'V', p: `What gun voltage would make the beam bend exactly 1.0 cm?`, unit: 'kV', exp: r.y * r.kV / 1.0, tol: 0.06, hint: 'y × V stays the same, so V = (y × V) ÷ 1.0' });
+      if (lvl >= 3) out.push({ id: 'W', p: `Each electron in trial 1 gains W = qV. Give W in electronvolts (1 eV = the energy one electron gains through 1 V).`, unit: 'eV', exp: r.kV * 1000, tol: 0.01, hint: 'One electron through V volts gains V electronvolts. Watch the kilo.' });
       return out; },
-    graph: rows => ({ pts: rows.map(r => [1 / r.kV, r.y]), xl: '1/V / kV⁻¹', yl: 'y / cm', fit: 'origin', note: 'Straight line through the origin: y ∝ 1/V. Readings from both guns sit on the same line, so the gap does not change the energy.' })
+    graph: rows => ({ pts: rows.map(r => [1 / r.kV, r.y]), xl: '1/V / kV⁻¹', yl: 'y / cm', fit: 'origin', note: 'Straight line through the origin: y ∝ 1/V. Faster beam, less bend.' })
   },
   B: {
     tasks: true,
@@ -289,7 +288,8 @@ function graph(pts, o) {
 
 /* ============ COACH: animated hand that waits for the real action ============ */
 let coachQ = [], coachDone = null, coachTimer = null, coachEl = null, coachSt = null, coachFlip = false;
-function coach(steps, key, done) { if (S.seen[key]) { done && done(); return; } S.seen[key] = 1; save(false); coachQ = steps.slice(); coachDone = done; coachNext(); }
+let coachReplay = false;
+function coach(steps, key, done) { if (S.seen[key] && !coachReplay) { done && done(); return; } S.seen[key] = 1; save(false); coachQ = coachReplay ? steps.map(x => ({ ...x, until: null })) : steps.slice(); coachReplay = false; coachDone = done; coachNext(); }
 function coachLock(on) { document.documentElement.style.overflow = on ? 'hidden' : ''; document.body.style.overflow = on ? 'hidden' : ''; }
 function coachStop() { clearInterval(coachTimer); const c = $('#coach'); clearInterval(c._iv); c.hidden = true; coachQ = []; coachEl = null; coachLock(false); }
 function coachPlace() {   // positions ring, hand and bubble from the target's CURRENT position
@@ -299,8 +299,8 @@ function coachPlace() {   // positions ring, hand and bubble from the target's C
   const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
   if (st.drag) { hand.style.left = (coachFlip ? r.left + r.width * .8 : r.left + r.width * .2) + 'px'; hand.style.top = (cy - 4) + 'px'; }
   else if (st.vdrag) { hand.style.left = (cx - 8) + 'px'; hand.style.top = (coachFlip ? r.top + r.height * .22 : r.top + r.height * .78) + 'px'; }
-  else if (!st.until) { hand.style.left = (r.right - 34) + 'px'; hand.style.top = (r.bottom - 22) + 'px'; }
   else { hand.style.left = (cx - 8) + 'px'; hand.style.top = (cy - 4) + 'px'; }
+  hand.style.display = (st.until || st.drag || st.vdrag) ? '' : 'none';
   const bw = Math.min(300, innerWidth - 20), bh = bub.offsetHeight || 130;
   let bx = Math.min(Math.max(10, r.left), innerWidth - bw - 10), by = r.bottom + 16;
   if (by + bh > innerHeight - 8) by = r.top - bh - 16;
@@ -391,20 +391,22 @@ function hash(s) { let h = 0; for (const c of s) h = (h * 31 + c.charCodeAt(0)) 
    ====================================================================== */
 let R = null, pollT = null, sim = null, lastSimT = 0, localEditT = 0, seenRows = new Set(), labStep = null;
 function stopPoll() { clearInterval(pollT); pollT = null; }
-const LABSTEPS = ['Experiment', 'Process', 'Explain'];
+const LABSTEPS = ['Predict', 'Experiment', 'Process', 'Explain'];
 
 async function rLab() {
   const k = S.station;
-  if (S.step >= LABSTEPS.length) { S.doneStation = true; save(); go('check'); return; }
+  if (S.step >= LABSTEPS.length) { S.doneStation = true; S.step = 3; save(); go('check'); return; }
   app().innerHTML = `<div class="card" style="padding:12px 16px"><div class="labhead"><div><span class="tag">${STN[k].icon} Station ${k}</span> <b>${STN[k].title}</b></div>
-    <div class="steps4">${LABSTEPS.map((x, i) => `<span class="${i < S.step ? 'done' : i === S.step ? 'now' : ''}">${i < S.step ? '✓ ' : ''}${x}</span>`).join('')}</div></div></div><div id="body"></div>`;
+    <div class="steps4">${LABSTEPS.map((x, i) => `<button data-st="${i}" class="${i === S.step ? 'now' : (S.visited || {})[i] ? 'done' : ''}">${x}</button>`).join('')}<button data-st="4" class="${S.doneStation ? 'done' : ''}">Progress check</button></div></div></div><div id="body"></div>`;
+  S.visited = S.visited || {}; S.visited[S.step] = 1;
+  app().querySelectorAll('.steps4 button').forEach(b => b.onclick = () => { const i = +b.dataset.st; if (i === 4) { if (!S.doneStation) { toast('Finish Explain first, then do the progress check.'); return; } go('check'); return; } S.step = i; save(); render(); });
   // join room (once)
   if (!R) {
     try { const res = await apiPost({ op: 'join', cls: S.cls, st: k, name: S.name, level: S.level }); R = res.room; S.role = res.me.role; S.trial = res.me.trial; }
     catch (e) { netFail(); R = R || { ver: 0, members: [{ name: S.name, role: 'trial', trial: 1 }], rows: [], sim: {}, pred: {} }; S.role = S.role || 'trial'; S.trial = S.trial || 1; }
     R.rows.forEach(r => seenRows.add(r.id)); save();
   }
-  [labExperiment, labProcess, labExplain][S.step]($('#body'));
+  [labPredict, labExperiment, labProcess, labExplain][S.step]($('#body'));
 }
 function startPoll(onUpdate) {
   stopPoll(); if (!ONLINE) return;
@@ -429,6 +431,32 @@ function recVals(row) {   // readings come straight from the instruments
 }
 const completeRows = () => R.rows.map(recVals).filter(Boolean);
 
+/* ----- Predict (its own slide, shared picks) ----- */
+const PREDFIG = {
+  A: `<svg viewBox="0 0 420 170"><rect x="110" y="22" width="220" height="8" fill="#9fe3c0"/><rect x="110" y="140" width="220" height="8" fill="#c9d3e8"/>
+    <text x="100" y="31" fill="#1D8F5F" font-size="18" font-weight="800" text-anchor="end">+</text><text x="100" y="149" fill="#C8463E" font-size="18" font-weight="800" text-anchor="end">−</text>
+    <path d="M20 85 L110 85 Q240 85 330 40 L400 8" fill="none" stroke="#1D8F5F" stroke-width="3"/>
+    <circle cx="220" cy="78" r="7" fill="#2F6FB5"/><line x1="220" y1="70" x2="220" y2="42" stroke="#E6A413" stroke-width="3" marker-end="url(#pf)"/><text x="230" y="52" fill="#B07A00" font-size="13" font-weight="800">push towards +</text>
+    <defs><marker id="pf" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8z" fill="#E6A413"/></marker></defs>
+    <text x="20" y="110" fill="#5E6470" font-size="12">beam from the gun</text></svg>`,
+  B: FIG.circle, C: FIG.crossed
+};
+const PREDTXT = {
+  A: 'The gun speeds electrons up: <b>a higher voltage V means faster electrons</b>. Between two charged plates, each negative electron is <b>pushed towards the + plate</b>, so the beam bends.',
+  B: 'A magnetic field pushes a moving electron <b>sideways, at right angles</b> to its motion. The push turns with it, so the beam curls into a <b>circle</b>.',
+  C: 'The plates push the beam <b>up</b>; the magnetic field pushes it <b>down</b>. When the two pushes are <b>equal</b>, the beam goes <b>straight</b>.'
+};
+function labPredict(body) {
+  const k = S.station, st = STN[k];
+  body.innerHTML = `<div class="card" style="max-width:820px;margin:auto"><span class="tag acc">Step 1 · Predict</span>
+    <div class="figbox" style="margin-top:10px">${PREDFIG[k]}</div><p style="font-size:1.08rem;margin:10px 0">${PREDTXT[k]}</p>
+    <div class="q">${st.pred.q}</div><div class="pred" id="pred"></div><div class="tiny muted" style="margin-top:6px">Your team's picks show live. You will test it in the experiment.</div><div id="pgo"></div></div>`;
+  const refresh = () => { paintPred(); if (R.pred[S.name] != null && !$('#pgo').dataset.on) { $('#pgo').dataset.on = 1; nextBtn($('#pgo'), () => { S.step = 1; save(); render(); }, 'Go to the experiment'); } };
+  refresh(); startPoll(refresh);
+  $('#pred').addEventListener('click', () => setTimeout(refresh, 50));
+  if (!S.seen['scene' + k]) { const cd = body.querySelector('.card'); cd.style.position = 'relative'; cd.style.minHeight = '380px'; cd.style.overflow = 'hidden'; playScene(cd, st.scene, () => { S.seen['scene' + k] = 1; save(false); }); }
+}
+
 /* ----- Experiment (shared) ----- */
 function labExperiment(body) {
   const k = S.station, st = STN[k], role = ROLES[S.role] || ROLES.trial;
@@ -437,9 +465,9 @@ function labExperiment(body) {
     <div>
       <div class="card"><div class="role" id="rolecard"><span class="ic">${role.ic}</span><div><b>${role.name}${S.role === 'trial' ? ' ' + S.trial : ''}</b><div class="small muted">${role.job(S.trial)} Anyone can help with any job.</div></div></div>
         <div class="team" id="team" style="margin-top:10px"></div></div>
-      <div class="card" id="predcard">${st.quest ? '<div id="quest"></div>' : ''}<div id="predwrap" ${st.quest && !S.questDone ? 'hidden' : ''}><h3>Predict first</h3><div class="q" style="font-size:1rem">${st.pred.q}</div><div class="pred" id="pred"></div></div></div>
+      <div class="card small" id="predcard">Your prediction: <b>${R.pred[S.name] != null ? st.pred.o[R.pred[S.name]] : '–'}</b> <button class="linkbtn" id="chgp">change</button><div class="tiny muted">${st.pred.q}</div></div>
       <div class="card" id="reccard"><div class="row between"><h3 style="margin:0">Table of record</h3><span class="tiny muted" id="cnt"></span></div>
-        <div class="tiny muted" style="margin:2px 0 8px">Readings arrive by themselves. Processors fill the <b style="color:var(--accent-ink)">coloured columns</b>: the header says how. Green = right. 3 to 5 readings.</div>
+        <div class="tiny muted" style="margin:2px 0 8px">Processors fill the <b style="color:var(--accent-ink)">coloured columns</b>: the header says how. Green = right. 3 to 5 readings.</div>
         <div id="rectbl"></div><div id="recnext"></div></div>
     </div></div>`;
   sim = ({ A: simA, B: simB, C: simC })[k]($('#sim'));
@@ -449,38 +477,34 @@ function labExperiment(body) {
     const same = R.rows.find(r => st.cols.every(c => c.k === 'y' || r.raw[c.k] === raw[c.k]));
     if (same) { toast('You already have a reading with these settings. Change something first.'); return false; }
     const id = Date.now().toString(36) + Math.random().toString(36).slice(2, 5); seenRows.add(id); roomOp('run', { row: { id, raw, rec: rec || {} } }); paintTable(); return true; };
-  if (st.quest) { sim.onObserve = paintQuest; sim.setState({}); }
+  $('#chgp').onclick = () => { S.step = 0; save(); render(); };
+  if (k === 'A') { sim.onObserve = o => { if (o.plates && !S.seenPlates) { S.seenPlates = 1; save(false); } }; sim.setState({}); }
   if (R.sim && R.sim.t) { sim.setState(R.sim); lastSimT = R.sim.t; }
   const refresh = () => {
-    paintTeam(); paintPred(); paintTable(); if (st.quest) paintQuest(); paintMission();
+    paintTeam(); paintTable(); paintMission();
     if (R.sim && R.sim.t > lastSimT && R.sim.by !== S.name && Date.now() - localEditT > 1200) { lastSimT = R.sim.t; sim.setState(R.sim); $('#remote').textContent = `${R.sim.by} changed the settings`; }
     for (const row of R.rows) if (!seenRows.has(row.id)) { seenRows.add(row.id); if (row.by !== S.name) { sim.playRow(row); $('#remote').textContent = `${row.by} ran a trial`; } }
   };
   refresh(); startPoll(refresh);
   // intro scene, then role coach
-  if (!S.seen['scene' + k]) playScene($('#simwrap'), st.scene, () => { S.seen['scene' + k] = 1; save(false); roleCoach(); });
-  else roleCoach();
+  roleCoach();
 }
-/* Station A discovery: make a beam (observations of the shared tube) */
+/* Station A discovery: why does the beam bend? */
 function paintQuest(obs) {
   const host = $('#quest'); if (!host) return;
-  S.quest = S.quest || {};
-  if (obs) { let ch = false; for (const k of ['off', 'on', 'rev']) if (obs[k] && !S.quest[k]) { S.quest[k] = 1; ch = true; } if (ch) save(false); }
-  if (S.questDone) { host.innerHTML = `<div class="fb good" style="margin:0 0 10px">✓ Beam made: negative particles from the hot cathode, pulled through the anode.</div>`; return; }
-  const items = [['off', 'Heater OFF, anode +: is there a beam?'], ['on', 'Heater ON, anode +: get a beam on the screen'], ['rev', 'Now switch the anode to −. What happens?']];
-  const all = items.every(x => S.quest[x[0]]);
-  if (host.dataset.all === String(all) && host.dataset.sig === JSON.stringify(S.quest)) return;
-  host.dataset.all = String(all); host.dataset.sig = JSON.stringify(S.quest);
-  host.innerHTML = `<h3>Make a beam</h3><div class="tiny muted" style="margin-bottom:6px">Use the heater, the voltage and the anode switch. Anyone in the team can do it.</div>
-    ${items.map(x => `<div class="row" style="gap:8px;margin:4px 0"><span style="font-size:1.1rem">${S.quest[x[0]] ? '✅' : '⬜'}</span><span class="${S.quest[x[0]] ? '' : 'muted'}">${x[1]}</span></div>`).join('')}<div id="qq"></div>`;
-  if (all) mcq(host.querySelector('#qq'), { p: 'So what are cathode rays?', o: ['Negative particles that leave the hot cathode and are pulled towards the + anode', 'Light given out by the hot filament', 'Positive particles pushed out by the anode'], a: 0, hint: 'No heat, no beam. Anode −, no beam. What does that say about where they come from and their charge?', why: 'They need the hot cathode, and they are attracted to +, so they are negative.' }, 'A·beam', () => {
-    setTimeout(() => { S.questDone = true; save(); paintQuest(); $('#predwrap').hidden = false; paintPred(); if (sim && sim.unlock) sim.unlock(); roleCoachA2(); }, 900); });
+  if (obs && obs.plates && !S.seenPlates) { S.seenPlates = 1; save(false); }
+  if (S.questDone) { host.innerHTML = `<div class="fb good" style="margin:0 0 10px">✓ Negative electrons feel a constant push towards +, while they keep moving forward: a curve.</div>`; return; }
+  if (!S.seenPlates) { if (host.dataset.m !== '0') { host.dataset.m = '0'; host.innerHTML = `<h3>Why does the beam bend?</h3><div class="muted small">Switch the <b>deflecting plates</b> on and off. Watch the beam, and the two arrows on the electron.</div>`; } return; }
+  if (host.dataset.m === '1') return; host.dataset.m = '1';
+  host.innerHTML = `<h3>Why does the beam bend?</h3><div id="qq"></div>`;
+  mcq(host.querySelector('#qq'), { p: 'The beam curves towards the + plate. Why?', o: ['Electrons are negative: the field pushes them towards + with the same force all the way, while they keep moving forward', 'The + plate is hotter', 'Gravity pulls the beam'], a: 0, hint: 'Watch the yellow force arrow. Which way does it point? Does it change size?', why: 'A constant sideways force on something moving forward gives a curve, like a ball thrown sideways under gravity.' }, 'A·bend', () => {
+    setTimeout(() => { S.questDone = true; save(); paintQuest(); $('#predwrap').hidden = false; paintPred(); if (sim && sim.unlock) sim.unlock(); paintMission(); roleCoachA2(); }, 1100); });
 }
 /* mission panel: why + what, 2–3 lines, changes with progress */
 const MISSION = {
-  A: [['Make a beam', 'In 1897 nobody knew what cathode rays were. What makes the beam appear, and what makes it vanish?', 'Try the heater, the voltage and the anode switch. Watch the screen each time.'],
-      ['Test the gun', 'Does a stronger field in the gun give the electrons more energy? More energy means a stiffer beam that bends less.', 'Predict first. Trial leads: 3 to 5 readings (change V, try both guns). Processors: fill the coloured columns.'],
-      ['Check your prediction', 'Look at y × V: is it the same every time? Did swapping guns change anything?', 'Agree on an answer as a team, then tap Process the data.']],
+  A: [['Bend the beam', 'The beam is a stream of electrons. Why does it curve when the plates are on?', 'Switch the deflecting plates on and off. Watch the yellow force arrow and the green velocity arrow.'],
+      ['Test your prediction', 'A higher gun voltage gives faster electrons. Do they bend more or less? Switch the plates on and watch the yellow force arrow.', 'Trial leads: 3 to 5 readings at different voltages. Processors: fill the coloured columns.'],
+      ['Check your prediction', 'Look at y × V: the same every time? So y ∝ 1/V: double the voltage, half the bend. Why?', 'Agree on an answer as a team, then tap Process the data.']],
   B: [['Predict', 'A magnetic field bends a moving electron into a circle. What sets the size of the circle?', 'Make your prediction first. Your team\'s picks show live.'],
       ['Measure the circle', 'If B controls the circle, changing the coil current should change the diameter.', 'Trial leads: change the current, marker on top of the ring, Record. Processors: fill the coloured columns.'],
       ['Check your prediction', 'Look at r × B: the same for one beam? So r ∝ 1/B.', 'Agree on an answer as a team, then tap Process the data.']],
@@ -491,13 +515,13 @@ const MISSION = {
 function paintMission() {
   const host = $('#mbox'); if (!host || !R) return;
   const k = S.station, n = completeRows().length;
-  const stage = STN[k].quest ? (!S.questDone ? 0 : n < 3 ? 1 : 2) : (R.pred[S.name] == null ? 0 : n < 3 ? 1 : 2);
+  const stage = n < 3 ? 1 : 2;
   if (host.dataset.stage === String(stage)) return; host.dataset.stage = stage;
   const m = MISSION[k][stage];
-  host.innerHTML = `<div class="row between"><span class="st">Step ${stage + 1} of 3 · ${m[0]}</span><button class="linkbtn" id="replay">↺ Show me again</button></div>
+  host.innerHTML = `<div class="row between"><span class="st">${m[0]}</span><button class="linkbtn" id="replay">↺ Show me again</button></div>
     <div><b>Why:</b> ${m[1]}</div><div><b>Do:</b> ${m[2]}</div>`;
   host.classList.remove('pulse'); void host.offsetWidth; host.classList.add('pulse');
-  host.querySelector('#replay').onclick = () => { ['questA', 'roleA2', 'role' + k].forEach(x => delete S.seen[x]); save(false); roleCoach(); };
+  host.querySelector('#replay').onclick = () => { coachReplay = true; roleCoach(true); };
 }
 function paintTeam() {
   $('#team').innerHTML = R.members.map((m, i) => `<span class="mem ${m.name === S.name ? 'me' : ''}">${avatar(m.name, i)}${esc(m.name.split(' ')[0])} <span class="tiny muted">${ROLES[m.role] ? ROLES[m.role].ic : ''}${m.trial || ''}</span></span>`).join('') || '<span class="muted small">Waiting for your team…</span>';
@@ -536,32 +560,32 @@ function paintTable() {
   });
   const n = R.rows.filter(rowDone).length; $('#cnt').textContent = `${R.rows.length} reading${R.rows.length === 1 ? '' : 's'} · ${n} processed · need 3`;
   const nx = $('#recnext');
-  if (n >= 3 && !nx.dataset.on) { nx.dataset.on = 1; nx.innerHTML = `<div class="fb good">Three readings processed. Everyone: make sense of the data on your own.</div>`; nextBtn(nx, () => { S.step = 1; save(); render(); }, 'Make sense of it'); }
+  if (n >= 3 && !nx.dataset.on) { nx.dataset.on = 1; nx.innerHTML = `<div class="fb good">Three readings processed. Everyone: make sense of the data on your own.</div>`; nextBtn(nx, () => { S.step = 2; save(); render(); }, 'Make sense of it'); }
   if (n < 3 && nx.dataset.on) { nx.dataset.on = ''; nx.innerHTML = ''; }
 }
 function roleCoachA2() {
   const predicted = () => R.pred[S.name] != null, ranMine = () => R.rows.some(r => r.by === S.name);
-  const steps = [{ el: '#predcard', t: 'Now <b>predict</b>: does twice the field in the gun make a stiffer beam? Your team\'s picks show live.', until: predicted },
-    ...(S.role === 'trial' ? [{ el: sim.platesEl, t: 'The plates bend the beam. <b>Less bend = more energy.</b> Set a voltage and pick a gun.' },
+  const steps = [{ el: '#mbox', t: 'This panel always tells you <b>why</b> and <b>what</b>.' }, { el: sim.platesEl, t: 'Switch the <b>deflecting plates</b> on. Watch the arrows ride along the beam.', until: () => !!S.seenPlates },
+    ...(S.role === 'trial' ? [{ el: sim.ctrlEl, drag: true, t: 'Change the <b>gun voltage</b> for your reading.' },
       { el: sim.runEl, t: STN.A.readHint, until: ranMine },
-      { el: '#reccard', t: '<b>3 to 5</b> readings: change the voltage AND swap guns. Watch whether the trace moves.' }]
-    : [{ el: '#reccard', t: 'Readings arrive by themselves. <b>You process them</b>: the coloured headers show the formula. Watch the <b>y × V</b> column: what do you notice?', until: () => R.rows.some(r => Object.entries(r.rec).some(([c, x]) => c.startsWith('p_') && x.by === S.name)) }])];
+      { el: '#reccard', t: '<b>3 to 5</b> readings at different voltages. Is the bend getting bigger or smaller?' }]
+    : [{ el: '#reccard', t: '<b>You process the readings</b>: the coloured headers show the formula. Watch the <b>y × V</b> column: what do you notice?', until: () => R.rows.some(r => Object.entries(r.rec).some(([c, x]) => c.startsWith('p_') && x.by === S.name)) }])];
   steps.forEach((x, i) => { x.n = i + 1; x.of = steps.length; }); coach(steps, 'roleA2');
 }
 function roleCoach() {
   const k = S.station, n = () => S.trial;
-  if (k === 'A') { if (S.questDone) { sim.unlock && sim.unlock(); roleCoachA2(); } else coach([{ el: '#mbox', t: 'This panel always tells you <b>why</b> and <b>what</b>. It changes as you go.', n: 1, of: 3 }, { el: '#predcard', t: 'Thomson started here: find out what the rays <b>need</b>. Each box ticks when your team sees it happen.', n: 2, of: 3 }, { el: sim.ctrlEl, t: 'Switch the <b>heater</b> on and off, and flip the <b>anode</b> between + and −. Watch the screen each time.', n: 3, of: 3, until: () => S.questDone }], 'questA'); return; }
+  if (k === 'A') { roleCoachA2(); return; }
   const startState = JSON.stringify(sim.getState());
   const changed = () => JSON.stringify(sim.getState()) !== startState;
   const ranMine = () => R.rows.some(r => r.by === S.name);
   const typed = () => R.rows.some(r => Object.values(r.rec).some(c => c.by === S.name));
   const predicted = () => R.pred[S.name] != null;
-  const steps = [{ el: '#predcard', t: 'First, <b>predict</b>. Your team\'s picks show up live.', until: predicted }];
+  const steps = [{ el: '#mbox', t: 'This panel always tells you <b>why</b> and <b>what</b>.' }];
   if (S.role === 'trial') {
     steps.push({ el: sim.ctrlEl, drag: true, t: k === 'A' ? 'Set the <b>voltage</b>, then move the <b>anode</b> to choose a gap. Try two gaps at the same voltage.' : k === 'B' ? 'Set the <b>coil current</b> for your trial.' : 'Pick a beam, then move the sliders to <b>balance</b> it.', until: changed });
     steps.push({ el: sim.runEl, t: k === 'B' ? 'Drag the cyan marker to the <b>top of the ring</b>, then tap <b>Record</b>.' : k === 'C' ? 'When the spot sits on 0, tap <b>Record</b>.' : 'Tap <b>Fire</b>. Watch the trail of equal time steps: where does the electron speed up?', until: ranMine });
   } else {
-    steps.push({ el: '#reccard', t: `Readings arrive by themselves. <b>You process them</b>: the coloured headers show the formula. ${k === 'C' ? 'The last column is the <b>speed</b>.' : 'Watch the <b>r × B</b> column: what do you notice?'}`, until: () => R.rows.some(r => Object.entries(r.rec).some(([c, x]) => c.startsWith('p_') && x.by === S.name)) });
+    steps.push({ el: '#reccard', t: `<b>You process the readings</b>: the coloured headers show the formula. ${k === 'C' ? 'The last column is the <b>speed</b>.' : 'Watch the <b>r × B</b> column: what do you notice?'}`, until: () => R.rows.some(r => Object.entries(r.rec).some(([c, x]) => c.startsWith('p_') && x.by === S.name)) });
     if (S.role === 'leader') steps.push({ el: '#predcard', t: 'Team leader: when 3 rows are processed, ask the team: <b>was our prediction right?</b>' });
   }
   steps.forEach((s, i) => { s.n = i + 1; s.of = steps.length; });
@@ -610,82 +634,68 @@ function playScene(host, frames, done) {
   show();
 }
 
-/* ===== SIM A: Teltron-style deflection tube. Steady beam, invisible except where it grazes the gridded screen ===== */
+/* ===== SIM A: deflection tube. Steady beam (invisible in vacuum, glows on the screen) + live force and velocity arrows ===== */
 function simA(host) {
-  const GUN = { 1: { d: 2.0, name: 'Gun 1 · wide gap' }, 2: { d: 1.0, name: 'Gun 2 · narrow gap' } };
-  const VP = 750, DP = 0.06;                                   // deflecting plates: 750 V across 6.0 cm
-  const SX = 220, PXC = 34, CY = 160, XR = 8;                  // screen left edge, px per cm, axis, reading line (cm)
-  const CX = 64, GPX = 40;                                     // cathode x, gun ruler px per cm
-  let kV = 2.0, gun = 1, heater = false, pol = 1, plates = false, mark = 0, unlocked = false;
-  host.innerHTML = `<svg class="sim" viewBox="0 0 640 330">
+  const VP = 750, DP = 0.06, SX = 220, PXC = 34, CY = 160, XR = 8, CX = 64, AX = 144;
+  let kV = 2.0, plates = false, mark = 0, unlocked = true;
+  host.innerHTML = `<svg class="sim" viewBox="0 0 640 320">
    <defs><filter id="glA"><feGaussianBlur stdDeviation="2.4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
    <radialGradient id="bulbA" cx=".5" cy=".5"><stop offset="0" stop-color="#18223b"/><stop offset="1" stop-color="#0f1628"/></radialGradient>
-   <marker id="arA" markerWidth="7" markerHeight="7" refX="5" refY="3.5" orient="auto"><path d="M0,0 L7,3.5 L0,7z" fill="#F2BD45"/></marker></defs>
-   <rect x="14" y="30" width="612" height="272" rx="120" fill="url(#bulbA)" stroke="#3a4a70" stroke-width="2"/>
-   <text x="30" y="24" fill="#9AA4B8" font-size="11">vacuum tube</text>
-   <g id="gun"></g>
+   <marker id="arY" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8z" fill="#F2BD45"/></marker>
+   <marker id="arG" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8z" fill="#45C58C"/></marker></defs>
+   <rect x="14" y="30" width="612" height="262" rx="120" fill="url(#bulbA)" stroke="#3a4a70" stroke-width="2"/>
+   <path d="M${CX - 9} 140 q-8 10 0 20 q8 10 0 20" stroke="#FDBA4D" stroke-width="3" fill="none" filter="url(#glA)"/>
+   <rect x="${CX}" y="118" width="9" height="84" fill="#c9d3e8"/><text x="${CX + 4}" y="110" fill="#F07A71" font-size="12" font-weight="800" text-anchor="middle">− cathode</text>
+   <rect x="${AX}" y="118" width="8" height="34" fill="#c9d3e8"/><rect x="${AX}" y="168" width="8" height="34" fill="#c9d3e8"/><text x="${AX + 4}" y="110" fill="#45C58C" font-size="12" font-weight="800" text-anchor="middle">+ anode</text>
+   <text x="${(CX + AX) / 2 + 4}" y="226" fill="#9AA4B8" font-size="11" text-anchor="middle">electron gun</text>
    <rect x="${SX}" y="${CY - 3 * PXC}" width="${10 * PXC}" height="${6 * PXC}" fill="#13324a" opacity=".55"/>
    <g id="grid"></g>
-   <rect x="${SX}" y="${CY - 3 * PXC - 12}" width="${10 * PXC}" height="7" fill="#c9d3e8"/><rect x="${SX}" y="${CY + 3 * PXC + 5}" width="${10 * PXC}" height="7" fill="#c9d3e8"/>
-   <text id="ptop" x="${SX + 10 * PXC + 6}" y="${CY - 3 * PXC - 4}" fill="#9AA4B8" font-size="11"></text><text x="${SX + 10 * PXC + 6}" y="${CY + 3 * PXC + 13}" fill="#9AA4B8" font-size="11">0 V</text>
+   <rect id="pt" x="${SX}" y="${CY - 3 * PXC - 12}" width="${10 * PXC}" height="7" fill="#c9d3e8"/><rect x="${SX}" y="${CY + 3 * PXC + 5}" width="${10 * PXC}" height="7" fill="#c9d3e8"/>
+   <text id="ptop" x="${SX + 10 * PXC + 6}" y="${CY - 3 * PXC - 4}" font-size="12" font-weight="800"></text><text id="pbot" x="${SX + 10 * PXC + 6}" y="${CY + 3 * PXC + 13}" fill="#9AA4B8" font-size="11">0 V</text>
    <text x="${SX + 5 * PXC}" y="${CY - 3 * PXC - 18}" fill="#9AA4B8" font-size="11" text-anchor="middle">deflecting plates · gridded fluorescent screen</text>
-   <path id="trace" fill="none" stroke="#7CFFB2" stroke-width="3" filter="url(#glA)" opacity="0"/>
+   <path id="trace" fill="none" stroke="#7CFFB2" stroke-width="3" filter="url(#glA)"/>
    <line x1="${SX + XR * PXC}" y1="${CY - 3 * PXC}" x2="${SX + XR * PXC}" y2="${CY + 3 * PXC}" stroke="#22D3EE" stroke-width="1.5" stroke-dasharray="4 3" opacity=".8"/>
    <text x="${SX + XR * PXC + 5}" y="${CY - 3 * PXC + 13}" fill="#22D3EE" font-size="11">read here</text>
+   <g id="eFV"><line id="aV" stroke="#45C58C" stroke-width="3" marker-end="url(#arG)"/><line id="aF" stroke="#F2BD45" stroke-width="3" marker-end="url(#arY)"/>
+     <circle id="eD" r="6" fill="#8DB8EA" stroke="#fff" stroke-width="1.5"/><text id="tV" fill="#45C58C" font-size="12" font-weight="800">v</text><text id="tF" fill="#F2BD45" font-size="12" font-weight="800">F = qE</text></g>
    <g id="mk" style="cursor:ns-resize"><line x1="${SX + XR * PXC - 16}" x2="${SX + XR * PXC + 16}" stroke="#22D3EE" stroke-width="3"/><polygon points="${SX + XR * PXC + 18},0 ${SX + XR * PXC + 30},-7 ${SX + XR * PXC + 30},7" fill="#22D3EE"/><rect x="${SX + XR * PXC - 30}" y="-14" width="70" height="28" fill="transparent"/></g>
-   <text id="msgA" x="320" y="322" fill="#9AA4B8" font-size="12" text-anchor="middle"></text>
+   <text id="msgA" x="320" y="312" fill="#9AA4B8" font-size="12" text-anchor="middle"></text>
   </svg>
-  <div class="ctrl" id="cA">
-   <div class="row" style="gap:8px"><button class="btn" id="bH">🔥 Heater: OFF</button><button class="btn" id="bP">Anode: +</button><span class="seg" id="segG">${[1, 2].map(g => `<button data-g="${g}">${GUN[g].name}</button>`).join('')}</span></div>
-   <label style="margin-top:8px">Anode voltage V <output id="oV"></output></label><input type="range" id="sV" min="0" max="5" step="0.5" value="${kV}">
-  </div>
-  <div class="row" id="platesRow"><button class="btn" id="bD" disabled>Deflecting plates: OFF 🔒</button><button class="btn primary big" id="recA" disabled>📏 Record</button><div class="inst" id="inst"><div>voltmeter: <b id="iV"></b> kV</div><div>y = <b id="iY">–</b> cm</div></div></div>`;
+  <div class="ctrl" id="cA"><label>Gun voltage V (sets the speed) <output id="oV"></output></label><input type="range" id="sV" min="1" max="5" step="0.5" value="${kV}"></div>
+  <div class="row" id="platesRow"><button class="btn" id="bD">Deflecting plates: OFF</button><button class="btn primary big" id="recA" disabled>📏 Record</button><div class="inst" id="inst"><div>voltmeter: <b id="iV"></b> kV</div><div>y = <b id="iY">–</b> cm</div></div></div>`;
   const q = x => host.querySelector(x), svg = q('svg');
-  // screen grid
   let gr = ''; for (let c = 0; c <= 10; c++) { const x = SX + c * PXC; gr += `<line x1="${x}" y1="${CY - 3 * PXC}" x2="${x}" y2="${CY + 3 * PXC}" stroke="#4d7f9c" stroke-width="${c % 5 ? .6 : 1.1}" opacity=".7"/><text x="${x}" y="${CY + 3 * PXC + 24}" fill="#9AA4B8" font-size="10" text-anchor="middle">${c}</text>`; }
   for (let c = -3; c <= 3; c++) { const y = CY - c * PXC; gr += `<line x1="${SX}" y1="${y}" x2="${SX + 10 * PXC}" y2="${y}" stroke="#4d7f9c" stroke-width="${c ? .6 : 1.1}" opacity=".7"/><text x="${SX - 5}" y="${y + 4}" fill="#9AA4B8" font-size="10" text-anchor="end">${c > 0 ? '+' : ''}${c}</text>`;
     if (c < 3) for (let m = 1; m < 10; m++) { const yy = y - m * PXC / 10; gr += `<line x1="${SX + XR * PXC - 4}" y1="${yy}" x2="${SX + XR * PXC + 4}" y2="${yy}" stroke="#22D3EE" stroke-width=".6" opacity=".6"/>`; } }
-  q('#grid').innerHTML = gr;
-  const o = { ctrlEl: q('#cA'), runEl: q('#recA'), instEl: q('#inst'), platesEl: q('#platesRow') };
-  const beamOn = () => heater && pol > 0 && kV > 0;
-  const yAt = xcm => plates ? (VP / DP) * (xcm / 100) ** 2 / (4 * kV * 1000) * 100 : 0;     // cm, towards the + plate
-  const drawGun = () => {
-    const d = GUN[gun].d, AX = CX + 9 + d * GPX, E = kV * 1000 / (d / 100), n = kV > 0 ? Math.max(1, Math.min(9, Math.round(E / 3e4))) : 0;
-    let g = `<path d="M${CX - 9} 140 q-8 10 0 20 q8 10 0 20" stroke="${heater ? '#FDBA4D' : '#5b6478'}" stroke-width="3" fill="none" ${heater ? 'filter="url(#glA)"' : ''}/>
-      <rect x="${CX}" y="118" width="9" height="84" fill="#c9d3e8"/><text x="${CX + 4}" y="110" fill="${pol > 0 ? '#F07A71' : '#45C58C'}" font-size="12" font-weight="800" text-anchor="middle">${pol > 0 ? '−' : '+'} cathode</text>
-      <rect x="${AX}" y="118" width="8" height="34" fill="#c9d3e8"/><rect x="${AX}" y="168" width="8" height="34" fill="#c9d3e8"/>
-      <text x="${AX + 4}" y="110" fill="${pol > 0 ? '#45C58C' : '#F07A71'}" font-size="12" font-weight="800" text-anchor="middle">${pol > 0 ? '+' : '−'} anode</text>
-      <line x1="${AX + 4}" y1="202" x2="${AX + 4}" y2="236" stroke="#A5B4FC" stroke-dasharray="3 2"/>`;
-    for (let i = 0; i < n; i++) { const y = 124 + (i + .5) * 72 / n; if (Math.abs(y - CY) < 5) continue;
-      g += pol > 0 ? `<line x1="${AX - 2}" y1="${y}" x2="${CX + 14}" y2="${y}" stroke="#F2BD45" stroke-width="1.3" marker-end="url(#arA)" opacity=".85"/>` : `<line x1="${CX + 12}" y1="${y}" x2="${AX - 4}" y2="${y}" stroke="#F2BD45" stroke-width="1.3" marker-end="url(#arA)" opacity=".85"/>`; }
-    let rl = `<line x1="${CX + 9}" y1="236" x2="${CX + 9 + 2.5 * GPX}" y2="236" stroke="#e6dcff"/>`;
-    for (let mm = 0; mm <= 25; mm++) { const x = CX + 9 + mm * GPX / 10, big = mm % 10 === 0, mid = mm % 5 === 0; rl += `<line x1="${x}" y1="236" x2="${x}" y2="${236 + (big ? 9 : mid ? 7 : 4)}" stroke="#e6dcff" stroke-width="${big ? 1.2 : .7}"/>` + (mid ? `<text x="${x}" y="256" fill="#e6dcff" font-size="9" text-anchor="middle">${mm / 10}</text>` : ''); }
-    g += rl + `<text x="${CX + 9 + 1.25 * GPX}" y="270" fill="#e6dcff" font-size="9" text-anchor="middle">gap / cm</text>`;
-    // the beam: invisible in vacuum, a faint hint only in the gun's anode hole
-    if (beamOn()) g += `<circle cx="${AX + 4}" cy="${CY}" r="3" fill="#7CFFB2" opacity=".6" filter="url(#glA)"/>`;
-    q('#gun').innerHTML = g;
-  };
+  q('#grid').innerHTML = gr + `<text x="${SX + 5 * PXC}" y="${CY + 3 * PXC + 38}" fill="#9AA4B8" font-size="10" text-anchor="middle">distance into the plates / cm</text>`;
+  const o = { ctrlEl: q('#cA'), runEl: q('#recA'), instEl: q('#inst'), platesEl: q('#bD') };
+  const K = () => plates ? (VP / DP) / (4 * kV * 1000) / 100 : 0;          // y(cm) = K x(cm)²
+  const xEnd = () => { const k = K(); return k ? Math.min(10, Math.sqrt(2.95 / k)) : 10; };
   const draw = () => {
-    drawGun();
-    const tr = q('#trace');
-    if (beamOn()) { let pts = []; for (let i = 0; i <= 50; i++) { const x = i / 5, y = yAt(x); if (y > 2.95) break; pts.push(`${(SX + x * PXC).toFixed(1)} ${(CY - y * PXC).toFixed(1)}`); }
-      tr.setAttribute('d', 'M' + pts.join(' L')); tr.setAttribute('opacity', .55 + Math.random() * .2 + Math.min(.25, kV / 20)); }
-    else tr.setAttribute('opacity', 0);
+    const k = K(), xe = xEnd(); let pts = []; for (let i = 0; i <= 60; i++) { const x = xe * i / 60; pts.push(`${(SX + x * PXC).toFixed(1)} ${(CY - k * x * x * PXC).toFixed(1)}`); }
+    q('#trace').setAttribute('d', 'M' + pts.join(' L'));
     q('#mk').setAttribute('transform', `translate(0,${CY - mark * PXC})`);
     q('#oV').textContent = fx(kV, 1) + ' kV'; q('#iV').textContent = fx(kV, 1); q('#iY').textContent = fx(mark, 1);
-    q('#bH').textContent = '🔥 Heater: ' + (heater ? 'ON' : 'OFF'); q('#bH').classList.toggle('primary', heater);
-    q('#bP').textContent = 'Anode: ' + (pol > 0 ? '+' : '−');
-    q('#ptop').textContent = plates ? `+${VP} V` : '0 V';
-    host.querySelectorAll('#segG button').forEach(b => b.classList.toggle('on', +b.dataset.g === gun));
-    q('#bD').disabled = !unlocked; q('#bD').textContent = 'Deflecting plates: ' + (plates ? 'ON' : 'OFF') + (unlocked ? '' : ' 🔒'); q('#bD').classList.toggle('primary', plates);
-    q('#recA').disabled = !(unlocked && plates && beamOn());
-    q('#msgA').textContent = !heater ? 'Heater off: the cathode is cold.' : kV === 0 ? 'No voltage on the anode.' : pol < 0 ? 'Anode is negative.' : plates ? 'Line up the marker with the trace at 8 cm.' : 'The beam grazes the screen and glows.';
-    o.onObserve && o.onObserve({ off: !heater && kV > 0 && pol > 0, on: beamOn(), rev: heater && kV > 0 && pol < 0 });
+    q('#ptop').textContent = plates ? `+ ${VP} V` : '0 V'; q('#ptop').setAttribute('fill', plates ? '#45C58C' : '#9AA4B8'); q('#pt').setAttribute('fill', plates ? '#9fe3c0' : '#c9d3e8');
+    q('#bD').textContent = 'Deflecting plates: ' + (plates ? 'ON' : 'OFF'); q('#bD').classList.toggle('primary', plates);
+    q('#recA').disabled = !(unlocked && plates);
+    q('#msgA').textContent = !plates ? 'Plates off: no force, the beam goes straight.' : !unlocked ? 'Plates on: a constant push towards +.' : 'Line up the marker with the trace at 8 cm, then Record.';
+    o.onObserve && o.onObserve({ plates });
   };
+  // live electron riding the trace, with velocity (green) and force (yellow) arrows
+  let t0 = performance.now();
+  const ride = now => { if (!document.body.contains(svg)) return;
+    const per = 2600 * Math.sqrt(2 / kV), f = ((now - t0) % per) / per, xe = xEnd(), x = f * xe, k = K(), y = k * x * x, sx = SX + x * PXC, sy = CY - y * PXC, slope = 2 * k * x;
+    q('#eD').setAttribute('cx', sx); q('#eD').setAttribute('cy', sy);
+    const L = 30 * Math.sqrt(kV / 2); q('#aV').setAttribute('x1', sx); q('#aV').setAttribute('y1', sy); q('#aV').setAttribute('x2', sx + L); q('#aV').setAttribute('y2', sy - L * slope);
+    q('#tV').setAttribute('x', sx + L + 4); q('#tV').setAttribute('y', sy - L * slope + 14);
+    q('#aF').setAttribute('opacity', plates ? 1 : 0); q('#tF').setAttribute('opacity', plates ? 1 : 0);
+    q('#aF').setAttribute('x1', sx); q('#aF').setAttribute('y1', sy - 7); q('#aF').setAttribute('x2', sx); q('#aF').setAttribute('y2', sy - 34);
+    q('#tF').setAttribute('x', sx - 52); q('#tF').setAttribute('y', sy - 24);
+    requestAnimationFrame(ride); };
+  requestAnimationFrame(ride);
   const changed = () => { draw(); o.onChange && o.onChange(o.getState()); };
-  q('#bH').onclick = () => { heater = !heater; changed(); }; q('#bP').onclick = () => { pol = -pol; changed(); };
-  q('#bD').onclick = () => { if (!unlocked) return; plates = !plates; changed(); };
-  host.querySelectorAll('#segG button').forEach(b => b.onclick = () => { gun = +b.dataset.g; changed(); });
+  q('#bD').onclick = () => { plates = !plates; changed(); };
   q('#sV').oninput = () => { kV = +q('#sV').value; changed(); };
   const mk = q('#mk'); let drag = false;
   const toCm = ev => { const p = svg.createSVGPoint(); p.x = ev.clientX; p.y = ev.clientY; const z = p.matrixTransform(svg.getScreenCTM().inverse()); return Math.max(-3, Math.min(3, (CY - z.y) / PXC)); };
@@ -693,14 +703,13 @@ function simA(host) {
   mk.addEventListener('pointermove', e => { if (!drag) return; mark = Math.round(toCm(e) * 10) / 10; changed(); });
   mk.addEventListener('pointerup', () => drag = false);
   svg.addEventListener('click', e => { const p = svg.createSVGPoint(); p.x = e.clientX; p.y = e.clientY; const z = p.matrixTransform(svg.getScreenCTM().inverse()); if (Math.abs(z.x - (SX + XR * PXC)) < 40 && !e.target.closest('#mk')) { mark = Math.round(toCm(e) * 10) / 10; changed(); } });
-  q('#recA').onclick = () => { const yt = yAt(XR);
+  q('#recA').onclick = () => { const yt = K() * XR * XR;
     if (Math.abs(mark - yt) > 0.15) { toast('Not lined up yet: put the marker exactly on the glowing trace at the 8 cm line.'); return; }
-    o.onRun && o.onRun({ kV, d: GUN[gun].d, y: mark, yTrue: +yt.toFixed(3) }, { kV: String(kV), d: String(GUN[gun].d), y: String(mark) }); };
-  o.getState = () => ({ kV, gun, heater, pol, plates, mark });
-  o.setState = s => { if (s.kV != null) { kV = s.kV; q('#sV').value = kV; } if (s.gun) gun = s.gun; if (s.heater != null) heater = s.heater; if (s.pol) pol = s.pol; if (s.plates != null && unlocked) plates = s.plates; if (s.mark != null) mark = s.mark; draw(); };
-  o.unlock = () => { if (!unlocked) { unlocked = true; plates = true; changed(); } };
-  o.playRow = row => { o.setState({ kV: row.raw.kV, gun: row.raw.d === 1 ? 2 : 1, mark: row.raw.y }); q('#trace').animate([{ opacity: .3 }, { opacity: 1 }], { duration: 600 }); };
-  setInterval(() => { if (beamOn() && document.body.contains(svg)) q('#trace').setAttribute('opacity', .6 + Math.random() * .25); }, 220);   // gentle flicker of a real trace
+    o.onRun && o.onRun({ kV, y: mark, yTrue: +yt.toFixed(3) }); };
+  o.getState = () => ({ kV, plates, mark });
+  o.setState = s => { if (s.kV != null) { kV = s.kV; q('#sV').value = kV; } if (s.plates != null) plates = s.plates; if (s.mark != null) mark = s.mark; draw(); };
+  o.unlock = () => { if (!unlocked) { unlocked = true; draw(); } };
+  o.playRow = row => { o.setState({ kV: row.raw.kV, plates: true, mark: row.raw.y }); q('#trace').animate([{ opacity: .3 }, { opacity: 1 }], { duration: 600 }); };
   draw(); return o;
 }
 
@@ -834,28 +843,28 @@ function labProcess(body) {
     const g = A.graph(rows); const gr = graph(g.pts, g);
     c.querySelector('#after').innerHTML = `<div class="fb ${got === tot ? 'good' : 'hint'}">${got === tot ? 'All correct.' : 'Grey numbers under each box are the auto-processed values. Fix any amber boxes and check again.'}</div>
       <div class="grid2" style="margin-top:10px"><div>${gr.svg}</div><div><h3>What does the graph show?</h3><p>${g.note}</p></div></div>`;
-    if (!c.querySelector('#gonext')) { const nb = nextBtn(c, () => { S.step = 2; save(); render(); }, 'Explain it'); nb.id = 'gonext'; }
+    if (!c.querySelector('#gonext')) { const nb = nextBtn(c, () => { S.step = 3; save(); render(); }, 'Explain it'); nb.id = 'gonext'; }
   }
   if (!rows.length) T.innerHTML = '<div class="fb hint">Your table of record has no complete rows. Go back and finish it with your team.</div>';
   const back = document.createElement('button'); back.className = 'btn ghost small'; back.textContent = '← back to the experiment'; back.style.marginTop = '8px';
-  back.onclick = () => { S.step = 0; save(); render(); }; c.appendChild(back);
+  back.onclick = () => { S.step = 1; save(); render(); }; c.appendChild(back);
 }
 
 function labProcessTasks(body) {
   const k = S.station, A = AN[k], rows = completeRows(); startPoll(null);
   const c = card(body, `<div class="row between"><div><span class="tag acc">Make sense of your team's data</span> <span class="tiny muted">on your own</span></div><span id="mk"></span></div>
     <div class="grid2" style="margin-top:8px"><div id="gr"></div><div><h3>What does the graph show?</h3><p id="gnote" class="muted">Look at the pattern first.</p><div class="formula">${A.formula}</div></div></div><div id="tasks"></div>`);
-  if (!rows.length) { c.querySelector('#tasks').innerHTML = '<div class="fb hint">No complete readings yet. Go back to the experiment.</div>'; return; }
+  if (rows.length < 3 || R.rows.filter(rowDone).length < 3) { c.querySelector('#tasks').innerHTML = `<div class="fb hint">Your team needs 3 processed readings first (${R.rows.filter(rowDone).length} so far). Pop back to the Experiment tab to help.</div>`; return; }
   const g = A.graph(rows); c.querySelector('#gr').innerHTML = graph(g.pts, g).svg; c.querySelector('#gnote').textContent = g.note;
   const list = A.list(S.level, rows), host = c.querySelector('#tasks');
   const fin = () => { const got = list.filter(t => S.first[k + '·p·' + t.id]).length; if (S.mark == null) { S.mark = `${got}/${list.length}`; save(); }
     c.querySelector('#mk').innerHTML = `<span class="mark">${S.mark}</span> <span class="tiny muted">right first time</span>`;
-    if (!c.querySelector('#gonext')) { const nb = nextBtn(c, () => { S.step = 2; save(); render(); }, 'Explain it'); nb.id = 'gonext'; } };
+    if (!c.querySelector('#gonext')) { const nb = nextBtn(c, () => { S.step = 3; save(); render(); }, 'Explain it'); nb.id = 'gonext'; } };
   const run = i => { if (i >= list.length) { fin(); return; } const t = list[i];
     numTask(host, { p: t.p, unit: t.unit, ph: t.ph, check: v => within(v, t.exp, t.tol), hint: t.hint, why: () => `${sci(t.exp, 3)} ${t.unit}` }, k + '·p·' + t.id, () => run(i + 1)); };
   run(0);
   const back = document.createElement('button'); back.className = 'btn ghost small'; back.textContent = '← back to the experiment'; back.style.marginTop = '8px';
-  back.onclick = () => { S.step = 0; save(); render(); }; c.appendChild(back);
+  back.onclick = () => { S.step = 1; save(); render(); }; c.appendChild(back);
 }
 
 /* ----- Explain (POE explain + theory) ----- */
@@ -870,8 +879,8 @@ function labExplain(body) {
     const gapMode = S.level >= 2;
     const draw = filled => { t.querySelector('#stp').innerHTML = st.steps.map(s => { const hide = s.gap && gapMode && !filled; return `<li class="${hide ? 'gap' : ''}"><div class="eqbig">${hide ? '<b>?</b>' : s.m}</div><div class="why">${hide ? 'Which line goes here?' : s.w}</div></li>`; }).join(''); };
     draw(!gapMode);
-    if (gapMode) { const g = st.steps.find(s => s.gap); mcq(t.querySelector('#gapq'), { p: 'Which line fills the gap?', o: g.opts, a: 0, hint: g.w, why: g.w }, k + '·theory', () => { draw(true); nextBtn(t, () => { S.step = 3; save(); render(); }, 'Finish the station'); }); }
-    else nextBtn(t, () => { S.step = 3; save(); render(); }, 'Finish the station');
+    if (gapMode) { const g = st.steps.find(s => s.gap); mcq(t.querySelector('#gapq'), { p: 'Which line fills the gap?', o: g.opts, a: 0, hint: g.w, why: g.w }, k + '·theory', () => { draw(true); nextBtn(t, () => { S.step = 4; save(); render(); }, 'Finish the station'); }); }
+    else nextBtn(t, () => { S.step = 4; save(); render(); }, 'Finish the station');
   });
 }
 /* ---------- progress check ---------- */
@@ -882,7 +891,8 @@ function rCheck() {
     <div class="hist" style="margin-top:14px"><div class="yr">${st.hist.yr} · why it mattered</div>${st.hist.t}</div>`;
   const c = card(app(), '');
   c.appendChild(scRater(S.scMid, () => { $('#nx').disabled = !S.scMid.every(x => x != null); }, 'Rate yourself again'));
-  c.insertAdjacentHTML('beforeend', `<p class="tiny muted">At the start you said: ${SC.map((x, i) => `SC${i + 1} <b>${S.scStart[i] == null ? '–' : RATE[S.scStart[i]]}</b>`).join(' · ')}</p><button class="btn primary" id="nx" ${S.scMid.every(x => x != null) ? '' : 'disabled'}>Share our discovery →</button>`);
+  c.insertAdjacentHTML('beforeend', `<p class="tiny muted">At the start you said: ${SC.map((x, i) => `SC${i + 1} <b>${S.scStart[i] == null ? '–' : RATE[S.scStart[i]]}</b>`).join(' · ')}</p><div class="row"><button class="btn ghost" id="back">← Back to my station</button><button class="btn primary" id="nx" ${S.scMid.every(x => x != null) ? '' : 'disabled'}>Share our discovery →</button></div>`);
+  $('#back').onclick = () => { S.step = 1; go('lab'); };
   $('#nx').onclick = () => { save(); go('final'); };
 }
 

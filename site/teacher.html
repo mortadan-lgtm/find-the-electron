@@ -43,8 +43,8 @@ const CODE_KEY='fte-teacher-code'; const $=s=>document.querySelector(s);
 $('#code').value=localStorage.getItem(CODE_KEY)||'';
 const RATE=['Not yet','Getting there','Confident'];
 const STAGE={welcome:'Welcome',start:'Starting point',route:'Starting point',lab:'Station',check:'Progress check',final:'Final tube',millikan:'Millikan',reflect:'Reflect',done:'Done ✓'};
-const STEP=['experiment','processing','explain'];
-function target(s){ if(['welcome','start','route'].includes(s.stage))return 4; if(s.stage==='lab')return [13,18,21][s.step||0]||21; if(s.stage==='check')return 22; if(['final','millikan'].includes(s.stage))return 28; return 30; }
+const STEP=['predict','experiment','processing','explain'];
+function target(s){ if(['welcome','start','route'].includes(s.stage))return 4; if(s.stage==='lab')return [6,13,18,21][s.step||0]||21; if(s.stage==='check')return 22; if(['final','millikan'].includes(s.stage))return 28; return 30; }
 const chip=v=>{const i=RATE.indexOf(v);return `<span class="chip ${i<0?'':'c'+i}" title="${v||'not rated'}"></span>`};
 const SUP={'-':'⁻','0':'⁰','1':'¹','2':'²','3':'³','4':'⁴','5':'⁵','6':'⁶','7':'⁷','8':'⁸','9':'⁹'};
 const sci=x=>{if(!x)return '–';const e=Math.floor(Math.log10(Math.abs(x)));return (x/10**e).toFixed(2)+' × 10'+String(e).split('').map(c=>SUP[c]).join('')};
