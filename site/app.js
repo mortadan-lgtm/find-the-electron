@@ -450,11 +450,13 @@ function labPredict(body) {
   const k = S.station, st = STN[k];
   body.innerHTML = `<div class="card" style="max-width:820px;margin:auto"><span class="tag acc">Step 1 · Predict</span>
     <div class="figbox" style="margin-top:10px">${PREDFIG[k]}</div><p style="font-size:1.08rem;margin:10px 0">${PREDTXT[k]}</p>
-    <div class="q">${st.pred.q}</div><div class="pred" id="pred"></div><div class="tiny muted" style="margin-top:6px">Your team's picks show live. You will test it in the experiment.</div><div id="pgo"></div></div>`;
+    <div class="q">${st.pred.q}</div><div class="pred" id="pred"></div><div class="tiny muted" style="margin-top:6px">Your team's picks show live. You will test it in the experiment.</div><div id="pgo"></div><button class="linkbtn" id="rintro" style="margin-top:10px">▶ Watch the intro again</button></div>`;
   const refresh = () => { paintPred(); if (R.pred[S.name] != null && !$('#pgo').dataset.on) { $('#pgo').dataset.on = 1; nextBtn($('#pgo'), () => { S.step = 1; save(); render(); }, 'Go to the experiment'); } };
   refresh(); startPoll(refresh);
   $('#pred').addEventListener('click', () => setTimeout(refresh, 50));
-  if (!S.seen['scene' + k]) { const cd = body.querySelector('.card'); cd.style.position = 'relative'; cd.style.minHeight = '380px'; cd.style.overflow = 'hidden'; playScene(cd, st.scene, () => { S.seen['scene' + k] = 1; save(false); }); }
+  const intro = () => { const cd = body.querySelector('.card'); cd.style.position = 'relative'; cd.style.minHeight = '400px'; cd.style.overflow = 'hidden'; playScene(cd, st.scene, () => { S.seen['scene' + k] = 1; save(false); }); };
+  $('#rintro').onclick = intro;
+  if (!S.seen['scene' + k]) intro();
 }
 
 /* ----- Experiment (shared) ----- */
@@ -623,14 +625,19 @@ function sceneAnim(kind) {
 }
 function playScene(host, frames, done) {
   const el = document.createElement('div'); el.className = 'scene';
-  el.innerHTML = `<div class="dots">${frames.map(() => '<i></i>').join('')}</div><button class="skip">Skip ›</button>` +
-    frames.map(f => `<div class="fr">${f.img ? `<div class="bg" style="background-image:url(${f.img})"></div>` : sceneAnim(f.anim)}<div class="cap">${f.cap}<small>${f.sub || ''}</small></div></div>`).join('');
+  el.innerHTML = `<div class="dots">${frames.map((_, j) => `<i data-j="${j}"></i>`).join('')}</div><button class="skip">Skip ›</button>` +
+    frames.map(f => `<div class="fr">${f.img ? `<div class="bg" style="background-image:url(${f.img})"></div>` : sceneAnim(f.anim)}<div class="cap">${f.cap}<small>${f.sub || ''}</small></div></div>`).join('') +
+    `<div class="nav"><button class="btn" id="sb">‹ Back</button><button class="btn primary" id="sn">Next ›</button></div>`;
   const sv = host.querySelector('svg.sim'); if (sv) { el.style.bottom = 'auto'; el.style.height = sv.getBoundingClientRect().height + 'px'; }
   host.appendChild(el);
-  let i = -1, t = null;
-  const show = () => { i++; if (i >= frames.length) { finish(); return; } el.querySelectorAll('.fr').forEach((f, j) => f.classList.toggle('on', j === i)); el.querySelectorAll('.dots i').forEach((d, j) => d.classList.toggle('on', j <= i)); t = setTimeout(show, 3600); };
-  const finish = () => { clearTimeout(t); el.style.transition = 'opacity .5s'; el.style.opacity = 0; setTimeout(() => { el.remove(); done && done(); }, 500); };
-  el.querySelector('.skip').onclick = finish; el.onclick = e => { if (e.target.classList.contains('skip')) return; clearTimeout(t); show(); };
+  let i = 0;
+  const show = () => { el.querySelectorAll('.fr').forEach((f, j) => f.classList.toggle('on', j === i)); el.querySelectorAll('.dots i').forEach((d, j) => d.classList.toggle('on', j <= i));
+    el.querySelector('#sb').style.visibility = i === 0 ? 'hidden' : 'visible'; el.querySelector('#sn').textContent = i === frames.length - 1 ? 'Start ›' : 'Next ›'; };
+  const finish = () => { el.style.transition = 'opacity .5s'; el.style.opacity = 0; setTimeout(() => { el.remove(); done && done(); }, 500); };
+  el.querySelector('.skip').onclick = finish;
+  el.querySelector('#sn').onclick = () => { if (i >= frames.length - 1) finish(); else { i++; show(); } };
+  el.querySelector('#sb').onclick = () => { if (i > 0) { i--; show(); } };
+  el.querySelectorAll('.dots i').forEach(d => d.onclick = () => { i = +d.dataset.j; show(); });
   show();
 }
 
@@ -648,6 +655,9 @@ function simA(host) {
    <rect x="${CX}" y="118" width="9" height="84" fill="#c9d3e8"/><text x="${CX + 4}" y="110" fill="#F07A71" font-size="12" font-weight="800" text-anchor="middle">− cathode</text>
    <rect x="${AX}" y="118" width="8" height="34" fill="#c9d3e8"/><rect x="${AX}" y="168" width="8" height="34" fill="#c9d3e8"/><text x="${AX + 4}" y="110" fill="#45C58C" font-size="12" font-weight="800" text-anchor="middle">+ anode</text>
    <text x="${(CX + AX) / 2 + 4}" y="226" fill="#9AA4B8" font-size="11" text-anchor="middle">electron gun</text>
+   <text x="${(CX + AX) / 2 + 4}" y="242" fill="#6f7a92" font-size="9" text-anchor="middle">dashed = beam path</text><text x="${(CX + AX) / 2 + 4}" y="253" fill="#6f7a92" font-size="9" text-anchor="middle">(invisible in a real tube)</text>
+   <line x1="${CX + 9}" y1="${CY}" x2="${SX}" y2="${CY}" stroke="#7CFFB2" stroke-width="2" stroke-dasharray="3 4" opacity=".45"/>
+   <g id="gunE">${[0, 1, 2, 3, 4].map(() => '<circle r="3.2" fill="#8DB8EA"/>').join('')}</g>
    <rect x="${SX}" y="${CY - 3 * PXC}" width="${10 * PXC}" height="${6 * PXC}" fill="#13324a" opacity=".55"/>
    <g id="grid"></g>
    <rect id="pt" x="${SX}" y="${CY - 3 * PXC - 12}" width="${10 * PXC}" height="7" fill="#c9d3e8"/><rect x="${SX}" y="${CY + 3 * PXC + 5}" width="${10 * PXC}" height="7" fill="#c9d3e8"/>
@@ -691,7 +701,10 @@ function simA(host) {
     q('#tV').setAttribute('x', sx + L + 4); q('#tV').setAttribute('y', sy - L * slope + 14);
     q('#aF').setAttribute('opacity', plates ? 1 : 0); q('#tF').setAttribute('opacity', plates ? 1 : 0);
     q('#aF').setAttribute('x1', sx); q('#aF').setAttribute('y1', sy - 7); q('#aF').setAttribute('x2', sx); q('#aF').setAttribute('y2', sy - 34);
-    q('#tF').setAttribute('x', sx - 52); q('#tF').setAttribute('y', sy - 24);
+    q('#tF').setAttribute('x', sx + 8); q('#tF').setAttribute('y', sy - 26);
+    // electrons accelerating across the gun gap (x ∝ t²), then coasting to the screen at constant speed
+    const gx0 = CX + 9, gw = AX - gx0, D = SX - AX - 8, a = 2 * gw / (2 * gw + D), per2 = 1500 * Math.sqrt(2 / kV);
+    q('#gunE').querySelectorAll('circle').forEach((c, i) => { const u = ((now / per2) + i / 5) % 1; const x = u < a ? gx0 + gw * (u / a) ** 2 : AX + 8 + D * (u - a) / (1 - a); c.setAttribute('cx', x.toFixed(1)); c.setAttribute('cy', CY); });
     requestAnimationFrame(ride); };
   requestAnimationFrame(ride);
   const changed = () => { draw(); o.onChange && o.onChange(o.getState()); };

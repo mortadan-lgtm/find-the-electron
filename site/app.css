@@ -207,3 +207,8 @@ table.rec th:not(.pc){white-space:nowrap}
 .steps4 button{border:none;background:var(--surface-2);color:var(--muted);font:inherit;font-size:.82rem;font-weight:700;padding:6px 12px;border-radius:999px;cursor:pointer}
 .steps4 button.now{background:var(--accent);color:#fff}
 .steps4 button.done{background:var(--good-soft);color:var(--good)}
+
+.scene .nav{position:absolute;right:14px;bottom:16px;display:flex;gap:8px;z-index:3}
+.scene .nav .btn:disabled{opacity:.4}
+.scene .dots i{cursor:pointer}
+.scene .cap{margin-bottom:64px}
