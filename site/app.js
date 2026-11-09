@@ -127,7 +127,7 @@ const STN = {
       { img: 'img/coil.webp', cap: 'Measure the circle.', sub: 'A bigger current makes a stronger field B. Read the diameter on the ruler.' }],
     pred: { q: 'You make the magnetic field STRONGER. The circle gets…', o: ['smaller', 'bigger', 'no change'] },
     cols: [{ k: 'V', label: 'V / V', dp: 0, tol: v => 0.6 }, { k: 'I', label: 'I / A', dp: 2, tol: v => 0.051 }, { k: 'd', label: 'd / cm', dp: 1, tol: v => 0.21 }],
-    proc: [{ k: 'r', h: 'r = d ÷ 2', u: 'cm', plain: true, f: r => r.d / 2 }, { k: 'B', h: 'B = (4/5)^(3/2) μ₀NI ÷ R', u: 'mT', plain: true, f: r => KCOIL * 1e3 * r.I }, { k: 'rB', h: 'r × B', u: 'cm mT', plain: true, f: r => r.d / 2 * KCOIL * 1e3 * r.I }],
+    proc: [{ k: 'r', h: 'r = d ÷ 2', u: 'cm', plain: true, f: r => r.d / 2 }, { k: 'B', h: 'B = 0.78 × I', u: 'mT', plain: true, f: r => KCOIL * 1e3 * r.I }, { k: 'rB', h: 'r × B', u: 'cm mT', plain: true, f: r => r.d / 2 * KCOIL * 1e3 * r.I }],
     steps: [
       { m: EQ.FqvB, w: 'A moving charge feels a force at right angles to its velocity.' },
       { m: '<b>a sideways force does no work, so the speed stays constant</b>', w: 'The force is always sideways, so it changes the electron\'s direction but not its speed. The path becomes a circle.' },
@@ -146,7 +146,7 @@ const STN = {
       { anim: 'straight', cap: 'Balance the two forces.', sub: 'Spot on the centre line means the forces cancel.' }],
     pred: { q: 'A FASTER beam, same B. To keep it straight you need…', o: ['a bigger E', 'a smaller E', 'the same E'] },
     cols: [{ k: 'Vg', label: 'gun V / V', dp: 0, tol: v => 0.6 }, { k: 'Vp', label: 'plate V / V', dp: 0, tol: v => 1.5 }, { k: 'I', label: 'I / A', dp: 2, tol: v => 0.011 }],
-    proc: [{ k: 'E', h: 'E = plate V ÷ d', u: 'V m⁻¹', plain: true, f: r => r.Vp / 0.04 }, { k: 'B', h: 'B = (4/5)^(3/2) μ₀NI ÷ R', u: 'mT', plain: true, f: r => KCOIL * 1e3 * r.I }, { k: 'v', h: 'v = E ÷ B', u: '× 10⁶ m s⁻¹ (B in tesla)', plain: true, pow: 6, f: r => r.Vp / 0.04 / (KCOIL * r.I) }, { k: 'qm', h: 'q/m = v² ÷ (2 × gun V)', u: '× 10¹¹ C kg⁻¹', plain: true, pow: 11, f: r => (r.Vp / 0.04 / (KCOIL * r.I)) ** 2 / (2 * r.Vg) }],
+    proc: [{ k: 'E', h: 'E = plate V ÷ d', u: 'V m⁻¹', plain: true, f: r => r.Vp / 0.04 }, { k: 'B', h: 'B = 0.78 × I', u: 'mT', plain: true, f: r => KCOIL * 1e3 * r.I }, { k: 'v', h: 'v = E ÷ B', u: '× 10⁶ m s⁻¹ (B in tesla)', plain: true, pow: 6, f: r => r.Vp / 0.04 / (KCOIL * r.I) }, { k: 'qm', h: 'q/m = v² ÷ (2 × gun V)', u: '× 10¹¹ C kg⁻¹', plain: true, pow: 11, f: r => (r.Vp / 0.04 / (KCOIL * r.I)) ** 2 / (2 * r.Vg) }],
     steps: [
       { m: EQ.FqE, w: 'The electric field pushes the electron up, towards the positive plate.' },
       { m: EQ.FqvB, w: 'The magnetic field pushes it down.' },
@@ -172,9 +172,9 @@ const AN = {
   },
   B: {
     tasks: true,
-    formula: `${M(mi('B') + mo('=') + `<msup><mrow><mo>(</mo>${frac(mn(4), mn(5))}<mo>)</mo></mrow><mrow>${frac(mn(3), mn(2))}</mrow></msup>` + frac('<msub><mi>μ</mi><mn>0</mn></msub>' + mi('N') + mi('I'), mi('R')))} &nbsp;&nbsp; ${EQ.r} &nbsp;&nbsp; ${M(mi('r') + mi('B') + mo('=') + frac(mi('m') + mi('v'), mi('q')))}`,
+    formula: `${M(mi('B') + mo('=') + mn('0.78 mT') + mo('×') + mi('I'))} &nbsp;&nbsp; ${EQ.r} &nbsp;&nbsp; ${M(mi('r') + mi('B') + mo('=') + frac(mi('m') + mi('v'), mi('q')))}`,
     list: (lvl, rows) => { const r = rows[0], out = [
-      { id: 'B', p: `Trial 1: the ammeter reads I = ${fx(r.I, 2)} A. The coils have N = 130 turns and radius R = 15.0 cm. Use B = (4/5)^(3/2) μ₀NI ÷ R. What is B?`, unit: 'mT', plain: true, exp: KCOIL * 1e3 * r.I, tol: 0.03, hint: `(4/5)^(3/2) × 4π × 10⁻⁷ × 130 × ${fx(r.I, 2)} ÷ 0.150 gives B in tesla. Change it to mT.` }];
+      { id: 'B', p: `Trial 1: the ammeter reads I = ${fx(r.I, 2)} A. For these coils B = 0.78 mT × I. What is B?`, unit: 'mT', plain: true, exp: KCOIL * 1e3 * r.I, tol: 0.03, hint: `0.78 × ${fx(r.I, 2)}` }];
       if (lvl >= 2) out.push({ id: 'r2', p: `Same beam, but B made twice as strong. Predict the new radius from trial 1.`, unit: 'cm', plain: true, exp: r.d / 4, tol: 0.05, hint: `r ∝ 1/B. Trial 1 radius = ${fx(r.d / 2, 2)} cm.` });
       if (lvl >= 3) out.push({ id: 'I2', p: `Same beam. What coil current would make the diameter ${fx(r.d * 0.8, 1)} cm?`, unit: 'A', plain: true, exp: r.I / 0.8, tol: 0.04, hint: 'r × B stays the same, so I × d stays the same.' });
       return out; },
@@ -182,7 +182,7 @@ const AN = {
   },
   C: {
     tasks: true,
-    formula: `${M(mi('E') + mo('=') + frac(mi('V'), mi('d')))} &nbsp;&nbsp; ${M(mi('B') + mo('=') + `<msup><mrow><mo>(</mo>${frac(mn(4), mn(5))}<mo>)</mo></mrow><mrow>${frac(mn(3), mn(2))}</mrow></msup>` + frac('<msub><mi>μ</mi><mn>0</mn></msub>' + mi('N') + mi('I'), mi('R')))} &nbsp;&nbsp; ${EQ.vEB}`,
+    formula: `${M(mi('E') + mo('=') + frac(mi('V'), mi('d')))} &nbsp;&nbsp; ${M(mi('B') + mo('=') + mn('0.78 mT') + mo('×') + mi('I'))} &nbsp;&nbsp; ${EQ.vEB}`,
     list: (lvl, rows) => { const r = rows[0], E = r.Vp / 0.04, B = KCOIL * r.I, v = E / B, out = [
       { id: 'v', p: `The ${r.Vg} V beam balanced at E = ${sci(E, 3)} V m⁻¹ and B = ${sci(B, 3)} T. How fast is it?`, unit: 'm s⁻¹', ph: '7e6', exp: v, tol: 0.03, hint: 'Balanced: qE = qvB, so v = E ÷ B. B must be in tesla.' }];
       if (lvl >= 2 && rows[1]) { const r2 = rows[1]; out.push({ id: 'E2', p: `The ${r2.Vg} V beam has the speed in your table. If B were doubled, what E would balance it?`, unit: 'V m⁻¹', plain: true, exp: 2 * r2.Vp / 0.04, tol: 0.03, hint: 'v = E/B must stay the same, so E doubles too.' }); }
@@ -516,10 +516,11 @@ const VARS = {
   C: { iv: 'the speed of the electrons, set by the gun voltage', dv: 'the plate voltage that makes the beam go straight', cv: 'the coil current (1.18 A), so B stays the same, and the plate separation',
        t: 'The coil current is set to 1.18 A as the control, so B does not change. Change the speed by choosing a different gun voltage. A faster beam feels a bigger magnetic force qvB, so it bends. Raise the plate voltage until qE balances qvB and the beam goes straight again. Do this for at least 3 gun voltages.' }
 };
+const HNOTE = `<div class="hnote">The field at the centre of a pair of Helmholtz coils is <b>B = (4/5)<sup>3/2</sup> μ₀NI ÷ R</b>. You are not expected to know this equation: it is not in the DP course. For these coils N = 130 turns and R = 0.150 m, so<div class="hcalc">(4/5)<sup>3/2</sup> × 4π × 10⁻⁷ × 130 ÷ 0.150 = 7.8 × 10⁻⁴ T for every amp = <b>0.78 mT per amp</b></div>That is where the 0.78 comes from, so for these coils <b>B = 0.78 mT × I</b>.</div>`;
 const PROCNOTE = {
   A: 'The voltmeter reads the gun voltage V in kV. Work out 1 ÷ V, then y × V. If y × V stays about the same, then y ∝ 1/V.',
-  B: 'The ammeter measures the coil current I. The field at the centre of a pair of Helmholtz coils is <b>B = (4/5)<sup>3/2</sup> μ₀NI ÷ R</b>, where N = 130 turns on each coil and R = 15.0 cm is their radius (μ₀ = 4π × 10⁻⁷ T m A⁻¹). Only I changes, so (4/5)<sup>3/2</sup> μ₀N ÷ R is the field per amp for these coils: work it out once, then multiply by each current. Then work out r = d ÷ 2, and r × B.',
-  C: 'The electric field is <b>E = plate V ÷ d</b>, where d is the plate separation on the apparatus. Change d to metres first. The magnetic field comes from the coil current: <b>B = (4/5)<sup>3/2</sup> μ₀NI ÷ R</b>, with N = 130 turns on each coil and R = 15.0 cm (μ₀ = 4π × 10⁻⁷ T m A⁻¹). Then v = E ÷ B, with B in tesla. Finally, the gun gave each electron energy qV = ½mv², so q/m = v² ÷ (2 × gun V).'
+  B: `The ammeter measures the coil current I. ${HNOTE}Work out r = d ÷ 2, then B, then r × B.`,
+  C: `The electric field is <b>E = plate V ÷ d</b>, where d is the plate separation on the apparatus. Change d to metres first. The ammeter measures the coil current I. ${HNOTE}Then v = E ÷ B, with B in tesla. Finally, the gun gave each electron energy qV = ½mv², so q/m = v² ÷ (2 × gun V).`
 };
 function fsHook() {
   const sc = $('#simcard'), fsb = $('#fsbtn');
