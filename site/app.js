@@ -509,10 +509,10 @@ const MISSION = {
       ['Test your prediction', 'A higher gun voltage gives faster electrons. Do they bend more or less? Switch the plates on and watch the yellow force arrow.', 'Trial leads: 3 to 5 readings at different voltages. Processors: fill the coloured columns.'],
       ['Check your prediction', 'Look at y × V: the same every time? So y ∝ 1/V: double the voltage, half the bend. Why?', 'Agree on an answer as a team, then tap Process the data.']],
   B: [['Predict', 'A magnetic field bends a moving electron into a circle. What sets the size of the circle?', 'Make your prediction first. Your team\'s picks show live.'],
-      ['Measure the circle', 'If B controls the circle, changing the coil current should change the diameter.', 'Trial leads: change the current, marker on top of the ring, Record. Processors: fill the coloured columns.'],
+      ['Test your prediction', 'The force qvB always points to the centre, so the beam goes round. What does a stronger field B do to the circle?', 'Trial leads: change the current, marker on top of the ring, Record. Processors: fill the coloured columns.'],
       ['Check your prediction', 'Look at r × B: the same for one beam? So r ∝ 1/B.', 'Agree on an answer as a team, then tap Process the data.']],
   C: [['Predict', 'The electric field pushes the beam up, the magnetic field pushes it down. Balanced, the beam goes straight.', 'Make your prediction first. Your team\'s picks show live.'],
-      ['Balance each beam', 'At balance qE = qvB, so you get the speed without knowing q or m.', 'Trial leads: balance each beam and Record. Processors: work out E, B and the speed v = E ÷ B.'],
+      ['Test your prediction', 'Watch the electron between the plates: qE pushes up, qvB pushes down. Equal arrows, straight beam, and then v = E ÷ B.', 'Trial leads: balance each beam and Record. Processors: work out E, B and the speed v = E ÷ B.'],
       ['Check your prediction', 'Look at the v column: each beam has its own speed, found without q or m.', 'Agree on an answer as a team, then tap Process the data.']]
 };
 function paintMission() {
@@ -585,8 +585,8 @@ function roleCoach() {
   const predicted = () => R.pred[S.name] != null;
   const steps = [{ el: '#mbox', t: 'This panel always tells you <b>why</b> and <b>what</b>.' }];
   if (S.role === 'trial') {
-    steps.push({ el: sim.ctrlEl, drag: true, t: k === 'A' ? 'Set the <b>voltage</b>, then move the <b>anode</b> to choose a gap. Try two gaps at the same voltage.' : k === 'B' ? 'Set the <b>coil current</b> for your trial.' : 'Pick a beam, then move the sliders to <b>balance</b> it.', until: changed });
-    steps.push({ el: sim.runEl, t: k === 'B' ? 'Drag the cyan marker to the <b>top of the ring</b>, then tap <b>Record</b>.' : k === 'C' ? 'When the spot sits on 0, tap <b>Record</b>.' : 'Tap <b>Fire</b>. Watch the trail of equal time steps: where does the electron speed up?', until: ranMine });
+    steps.push({ el: sim.ctrlEl, drag: true, t: k === 'B' ? 'Change the <b>coil current</b>: a stronger field B. Watch the yellow force arrow, always pointing to the centre.' : 'Pick a beam, then adjust E and B until the <b>yellow and pink arrows are equal</b> and the spot sits on 0.', until: changed });
+    steps.push({ el: sim.runEl, t: k === 'B' ? 'Drag the cyan marker to the <b>top of the ring</b>, then tap <b>Record</b>.' : 'Balanced: equal forces, straight beam. Tap <b>Record</b>.', until: ranMine });
   } else {
     steps.push({ el: '#reccard', t: `<b>You process the readings</b>: the coloured headers show the formula. ${k === 'C' ? 'The last column is the <b>speed</b>.' : 'Watch the <b>r × B</b> column: what do you notice?'}`, until: () => R.rows.some(r => Object.entries(r.rec).some(([c, x]) => c.startsWith('p_') && x.by === S.name)) });
     if (S.role === 'leader') steps.push({ el: '#predcard', t: 'Team leader: when 3 rows are processed, ask the team: <b>was our prediction right?</b>' });
@@ -742,11 +742,14 @@ function simB(host, cfg = {}) {
    <rect x="${gx - 34}" y="${gy - 8}" width="34" height="16" rx="3" fill="#8a96b3"/><circle cx="${gx - 30}" cy="${gy}" r="4" fill="#22D3EE"/>
    <g id="mk" style="cursor:ns-resize"><line x1="${gx - 26}" x2="${gx + 26}" stroke="#22D3EE" stroke-width="3"/><polygon points="${gx + 28},0 ${gx + 42},-9 ${gx + 42},9" fill="#22D3EE"/><rect x="${gx - 44}" y="-16" width="104" height="32" fill="transparent"/></g>
    <text x="18" y="404" fill="#9AA4B8" font-size="12">B out of the screen ⊙</text>
+   <text x="18" y="22" fill="#6f7a92" font-size="10">The ring glows: the tube holds a trace of hydrogen gas.</text>
+   <defs><marker id="mBv" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8z" fill="#45C58C"/></marker><marker id="mBf" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8z" fill="#F2BD45"/></marker></defs>
+   <g id="eB" ${cfg.fixedV ? 'style="display:none"' : ''}><line id="bV" stroke="#45C58C" stroke-width="3" marker-end="url(#mBv)"/><line id="bF" stroke="#F2BD45" stroke-width="3" marker-end="url(#mBf)"/><circle id="bDot" r="6" fill="#8DB8EA" stroke="#fff" stroke-width="1.5"/><text id="tbV" fill="#45C58C" font-size="13" font-weight="800">v</text><text id="tbF" fill="#F2BD45" font-size="13" font-weight="800">F = qvB</text></g>
   </svg>
   ${cfg.fixedV ? '' : `<div class="ctrl"><label>Electron gun voltage <output id="oV2"></output></label><div class="seg" id="segV">${[150, 200, 250, 300].map(v => `<button data-v="${v}">${v} V</button>`).join('')}</div></div>
   <div class="ctrl" id="cI"><label>Coil current I <output id="oI"></output></label><input type="range" id="sI" min="1" max="3" step="0.05" value="${I}"></div>`}
   <div class="row"><button class="btn primary big" id="rec">📏 Record</button><div class="inst" id="inst"><div>V = <b id="iV"></b> V</div><div>I = <b id="iI"></b> A</div><div>d = <b id="iD"></b> cm</div></div></div>
-  <div class="tiny muted" id="rmsg" style="margin-top:4px">Drag the orange marker to the top of the glowing ring.</div>`;
+  <div class="tiny muted" id="rmsg" style="margin-top:4px">Drag the cyan marker to the top of the glowing ring.</div>`;
   const svg = host.querySelector('svg'), beam = host.querySelector('#beam'), mk = host.querySelector('#mk');
   let rul = ''; for (let c = 0; c <= 16; c++) { const y = gy - c * PX; rul += `<line x1="${gx - (c % 5 === 0 ? 12 : 7)}" y1="${y}" x2="${gx}" y2="${y}" stroke="#e6dcff" stroke-width="${c % 5 === 0 ? 1.6 : 1}"/>${c % 2 === 0 ? `<text x="${gx - 16}" y="${y + 4}" fill="#e6dcff" font-size="11" text-anchor="end">${c}</text>` : ''}`;
     if (c < 16) for (let m = 1; m < 10; m++) { const yy = y - m * PX / 10; rul += `<line x1="${gx - 3}" y1="${yy}" x2="${gx}" y2="${yy}" stroke="#9a8fc0" stroke-width=".6"/>`; } }
@@ -773,12 +776,21 @@ function simB(host, cfg = {}) {
     msg.textContent = cfg.fixedV ? 'Recorded.' : 'Recorded. Change the current for the next trial.';
     o.onRun && o.onRun({ V: Vr, I, d: mark }); };
   o.playRow = row => { o.setState({ V: row.raw.V, Vr: row.raw.V, I: row.raw.I, mark: row.raw.d }); beam.animate([{ opacity: .3 }, { opacity: 1 }], { duration: 700 }); };
+  const t0B = performance.now();
+  const rideB = now => { if (!document.body.contains(svg)) return; if (!cfg.fixedV) {
+      const rp = rOf() * 100 * PX, cyc = gy - rp, per = 3600 * (1.5 / I), phi = 2 * Math.PI * (((now - t0B) % per) / per);
+      const x = gx + rp * Math.sin(phi), y = cyc + rp * Math.cos(phi), vx = Math.cos(phi), vy = -Math.sin(phi), fxu = -Math.sin(phi), fyu = -Math.cos(phi);
+      const set = (id, a) => { const e = host.querySelector(id); for (const k in a) e.setAttribute(k, a[k]); };
+      set('#bDot', { cx: x, cy: y }); set('#bV', { x1: x, y1: y, x2: x + 34 * vx, y2: y + 34 * vy }); set('#bF', { x1: x, y1: y, x2: x + 30 * fxu, y2: y + 30 * fyu });
+      set('#tbV', { x: x + 40 * vx - 4, y: y + 40 * vy + 4 }); set('#tbF', { x: x + 44 * fxu - 24, y: y + 44 * fyu + 4 }); }
+    requestAnimationFrame(rideB); };
+  requestAnimationFrame(rideB);
   draw(); return o;
 }
 
 /* ===== SIM C: crossed fields ===== */
 function simC(host) {
-  let beam = 1, Vp = 0, I = 1.0; const d = 0.040, Lp = 0.08, D = 0.10;
+  let beam = 1, Vp = 0, I = 1.0, PTS = [], FEl = 0, FBl = 0; const d = 0.040, Lp = 0.08, D = 0.10;
   host.innerHTML = `<svg class="sim" viewBox="0 0 640 300">
    <defs><filter id="gl2"><feGaussianBlur stdDeviation="2.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>
    <rect x="10" y="20" width="620" height="260" rx="40" fill="#141c30" stroke="#3a4a70"/>
@@ -792,7 +804,11 @@ function simC(host) {
    ${[-4, -2, 0, 2, 4].map(c => `<text x="584" y="${150 - c * 20 + 4}" fill="#9AA4B8" font-size="10">${c > 0 ? '+' : ''}${c}</text>`).join('')}<text x="590" y="52" fill="#9AA4B8" font-size="10" text-anchor="middle">cm</text>
    <g id="arE" opacity="0"><line x1="280" y1="150" x2="280" y2="118" stroke="#45C58C" stroke-width="4"/><polygon points="280,112 273,124 287,124" fill="#45C58C"/></g>
    <g id="arB" opacity="0"><line x1="280" y1="150" x2="280" y2="182" stroke="#F472B6" stroke-width="4"/><polygon points="280,188 273,176 287,176" fill="#F472B6"/></g>
-   <path id="bp" fill="none" stroke="#7CFFB2" stroke-width="2.5" filter="url(#gl2)"/><circle id="spot" r="6" fill="#b6ffd6" filter="url(#gl2)"/>
+   <path id="bp" fill="none" stroke="#7CFFB2" stroke-width="2" stroke-dasharray="4 4" opacity=".55"/><circle id="spot" r="7" fill="#b6ffd6" filter="url(#gl2)"/>
+   <text x="470" y="274" fill="#6f7a92" font-size="9" text-anchor="middle">dashed = beam path (invisible in a real tube)</text>
+   <defs><marker id="mCv" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8z" fill="#45C58C"/></marker><marker id="mCe" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8z" fill="#F2BD45"/></marker><marker id="mCb" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8z" fill="#F472B6"/></marker></defs>
+   <g id="eC"><line id="cV" stroke="#45C58C" stroke-width="3" marker-end="url(#mCv)"/><line id="cE" stroke="#F2BD45" stroke-width="3" marker-end="url(#mCe)"/><line id="cB" stroke="#F472B6" stroke-width="3" marker-end="url(#mCb)"/>
+     <circle id="cDot" r="6" fill="#8DB8EA" stroke="#fff" stroke-width="1.5"/><text id="tcE" fill="#F2BD45" font-size="12" font-weight="800">qE</text><text id="tcB" fill="#F472B6" font-size="12" font-weight="800">qvB</text></g>
    <text x="300" y="45" fill="#7CFFB2" font-size="15" text-anchor="middle" font-weight="700" id="stt"></text></svg>
   <div class="ctrl"><div class="seg" id="segB">${[1, 2, 3].map(b => `<button data-b="${b}">Beam ${b}</button>`).join('')}</div></div>
   <div class="ctrl" id="cE"><label>Plate voltage (sets E) <output id="oE"></output></label><div class="row" style="flex-wrap:nowrap"><button class="btn" data-d="-1" style="padding:4px 10px">−</button><input type="range" id="sE" min="0" max="1000" step="1" value="0"><button class="btn" data-d="1" style="padding:4px 10px">+</button></div></div>
@@ -809,8 +825,7 @@ function simC(host) {
       q('#spot').setAttribute('opacity', Math.abs(ys) <= 4.5 ? 1 : 0); q('#spot').setAttribute('cx', 561); q('#spot').setAttribute('cy', toY(ys)); }
     else { pts.push(hit); q('#spot').setAttribute('opacity', 0); }
     q('#bp').setAttribute('d', pts.map((p, i) => (i ? 'L' : 'M') + p[0].toFixed(1) + ' ' + p[1].toFixed(1)).join(' '));
-    q('#arE').setAttribute('opacity', E > 0 ? 1 : 0); q('#arE').querySelector('line').setAttribute('y2', 150 - Math.min(38, 6 + 32 * E / Math.max(E, v * B, 1)));
-    q('#arB').setAttribute('opacity', B > 0 ? 1 : 0); q('#arB').querySelector('line').setAttribute('y2', 150 + Math.min(38, 6 + 32 * v * B / Math.max(E, v * B, 1)));
+    PTS = pts; FEl = E > 0 ? 6 + 28 * E / Math.max(E, v * B) : 0; FBl = B > 0 ? 6 + 28 * v * B / Math.max(E, v * B, 1e-9) : 0;
     q('#oE').textContent = Vp + ' V  →  E = ' + sci(E, 3) + ' V/m'; q('#oB').textContent = fx(I, 2) + ' A  →  B = ' + fx(B * 1e3, 3) + ' mT';
     q('#iBm').textContent = beam; q('#iVp').textContent = Vp; q('#iI').textContent = fx(I, 2);
     host.querySelectorAll('#segB button').forEach(b => b.classList.toggle('on', +b.dataset.b === beam));
@@ -824,6 +839,17 @@ function simC(host) {
   o.getState = () => ({ beam, Vp, I }); o.setState = s => { if (s.beam) beam = s.beam; if (s.Vp != null) { Vp = s.Vp; q('#sE').value = Vp; } if (s.I != null) { I = s.I; q('#sB').value = I; } draw(); };
   q('#recC').onclick = () => { if (R && R.rows.some(r => r.raw.beam === beam)) { toast('Beam ' + beam + ' is already in the table. Try another beam.'); return; } o.onRun && o.onRun({ beam, Vp, I }); toast('Recorded beam ' + beam); };
   o.playRow = row => o.setState(row.raw);
+  const svgC = q('svg'), t0C = performance.now();
+  const rideC = now => { if (!document.body.contains(svgC)) return;
+    if (PTS.length > 1) { const segs = []; let tot = 0; for (let i = 1; i < PTS.length; i++) { const l = Math.hypot(PTS[i][0] - PTS[i - 1][0], PTS[i][1] - PTS[i - 1][1]); segs.push(l); tot += l; }
+      let s2 = (((now - t0C) % 2400) / 2400) * tot, i = 0; while (i < segs.length - 1 && s2 > segs[i]) { s2 -= segs[i]; i++; }
+      const A = PTS[i], Bp = PTS[i + 1], f = segs[i] ? s2 / segs[i] : 0, x = A[0] + (Bp[0] - A[0]) * f, y = A[1] + (Bp[1] - A[1]) * f, ux = (Bp[0] - A[0]) / (segs[i] || 1), uy = (Bp[1] - A[1]) / (segs[i] || 1);
+      const inF = x >= 200 && x <= 360, set = (id, a) => { const e = q(id); for (const k in a) e.setAttribute(k, a[k]); };
+      set('#cDot', { cx: x, cy: y }); set('#cV', { x1: x, y1: y, x2: x + 30 * ux, y2: y + 30 * uy });
+      set('#cE', { x1: x, y1: y - 7, x2: x, y2: y - 7 - FEl, opacity: inF && FEl ? 1 : 0 }); set('#tcE', { x: x + 6, y: y - 10 - FEl * .6, opacity: inF && FEl ? 1 : 0 });
+      set('#cB', { x1: x, y1: y + 7, x2: x, y2: y + 7 + FBl, opacity: inF && FBl ? 1 : 0 }); set('#tcB', { x: x + 6, y: y + 14 + FBl * .6, opacity: inF && FBl ? 1 : 0 }); }
+    requestAnimationFrame(rideC); };
+  requestAnimationFrame(rideC);
   draw(); return o;
 }
 
