@@ -101,7 +101,7 @@ const STN = {
     scene: [
       { img: 'img/filament.webp', cap: 'Hot metal boils off electrons.', sub: 'The electron gun turns them into a fast, steady beam.' },
       { anim: 'gun', cap: 'The gun voltage V sets how fast they go.', sub: 'Higher V, faster electrons.' },
-      { img: 'img/hero.webp', cap: 'Find out why the beam bends.', sub: 'The beam is invisible in vacuum. It glows only where it grazes the screen.' }],
+      { anim: 'bendA', cap: 'Find out why the beam bends.', sub: 'Charged plates push the beam towards +. It glows where it grazes the screen.' }],
     pred: { q: 'You turn the gun voltage UP, so the electrons are faster. Between the plates the beam bends…', o: ['less', 'more', 'the same'] },
     cols: [{ k: 'kV', label: 'V / kV', dp: 3, tol: v => 0.01 }, { k: 'y', label: 'y / cm', dp: 1, tol: v => 0.01 }],
     steps: [
@@ -129,7 +129,7 @@ const STN = {
       { m: EQ.FqvB, w: 'A moving charge feels a force at right angles to its velocity.' },
       { m: '<b>a sideways force does no work, so the speed stays constant</b>', w: 'The force is always sideways, so it changes the electron\'s direction but not its speed. The path becomes a circle.' },
       { m: EQ.cent, w: 'The magnetic force is the centripetal force.', gap: true, opts: [EQ.cent, M(mi('q') + mi('v') + mi('B') + mo('=') + frac(mn(1), mn(2)) + mi('m') + sq(mi('v'))), M(mi('q') + mi('v') + mi('B') + mo('=') + mi('m') + mi('g'))] },
-      { m: EQ.r, w: 'Cancel one v. Stronger B, tighter circle. Faster electron, wider circle.' }],
+      { m: EQ.r, w: 'Cancel one v to get r = mv/(qB). A stronger field gives a tighter circle, and a faster electron gives a wider one.' }],
     concept: { p: 'B gets twice as strong (same beam). The radius becomes…', o: ['half as big', 'twice as big', 'the same'], a: 0, hint: 'r = mv/(qB): B is on the bottom.', why: 'r ∝ 1/B.' },
     hist: { yr: '1897', t: 'Thomson got the same result whatever metal the cathode was made of, and whatever gas was left in the tube. So the same tiny particle must be inside every kind of atom.', q: { p: 'Why did the same result for every metal matter?', o: ['The particle must be part of every atom', 'All metals are the same element', 'The magnets were identical'], a: 0, hint: 'If it came from one special metal, the result would change.', why: 'The same particle comes out of every metal, so it must be part of every atom.' } },
     find: { eq: EQ.r, t: 'The size of the circle is given by r = mv/(qB).' }
@@ -147,8 +147,8 @@ const STN = {
     steps: [
       { m: EQ.FqE, w: 'The electric field pushes the electron up, towards the positive plate.' },
       { m: EQ.FqvB, w: 'The magnetic field pushes it down.' },
-      { m: EQ.bal, w: 'Straight line: no overall force, so the two forces are equal.', gap: true, opts: [EQ.bal, M(mi('q') + mi('E') + mo('=') + frac(mi('m') + sq(mi('v')), mi('r'))), M(mi('E') + mo('=') + mi('v') + sq(mi('B')))] },
-      { m: EQ.vEB, w: 'q cancels! The speed depends only on E and B.' }],
+      { m: EQ.bal, w: 'The beam goes straight, so there is no overall force and the two forces are equal.', gap: true, opts: [EQ.bal, M(mi('q') + mi('E') + mo('=') + frac(mi('m') + sq(mi('v')), mi('r'))), M(mi('E') + mo('=') + mi('v') + sq(mi('B')))] },
+      { m: EQ.vEB, w: 'The charge q cancels, so the speed depends only on E and B.' }],
     concept: { p: 'You double B for the same beam. To keep it straight you must…', o: ['double E', 'halve E', 'keep E the same'], a: 0, hint: 'v = E/B and v has not changed.', why: 'v = E/B has not changed, so if B doubles, E must double too.' },
     hist: { yr: '1897', t: 'Balancing the two fields let Thomson measure the speed of cathode rays. They were much slower than light, which ruled out light waves and pointed to particles.', q: { p: 'Balancing the fields let Thomson find…', o: ['the speed, without knowing q or m', 'the charge e', 'the mass m'], a: 0, hint: 'What is left in v = E/B?', why: 'The equation v = E/B contains neither q nor m, so the speed can be found without them.' } },
     find: { eq: EQ.vEB, t: 'When the fields balance, the speed is v = E/B.' }
@@ -226,7 +226,7 @@ function paintTop() {
 /* ============ HELPERS ============ */
 const $ = s => document.querySelector(s);
 const app = () => $('#app');
-function toast(t, ms = 2400) { const d = document.createElement('div'); d.className = 'toast'; d.innerHTML = t; document.body.appendChild(d); setTimeout(() => d.remove(), ms); }
+function toast(t, ms = 2600) { const d = document.createElement('div'); d.className = 'toast'; d.innerHTML = t; (document.fullscreenElement || document.body).appendChild(d); setTimeout(() => d.remove(), ms); }
 function go(stage) { stopPoll(); S.stage = stage; S.ts = S.ts || {}; if (!S.ts[stage]) S.ts[stage] = Date.now(); save(); render(); scrollTo({ top: 0, behavior: 'smooth' }); }
 function card(host, html, cls = '') { const c = document.createElement('div'); c.className = 'card ' + cls; c.innerHTML = html; host.appendChild(c); return c; }
 function nextBtn(c, fn, txt = 'Next') { const d = document.createElement('div'); d.style.marginTop = '10px'; d.innerHTML = `<button class="btn primary">${txt} →</button>`; d.querySelector('button').onclick = fn; c.appendChild(d); return d; }
@@ -265,7 +265,7 @@ function numTask(host, cfg, id, onDone) {
   const box = d.querySelector('.sci'), fbx = d.querySelector('.fbx'), btn = d.querySelector('button'); let tries = 0;
   const inp = { get value() { return sciGet(box); }, set disabled(v) { box.querySelectorAll('input').forEach(i => i.disabled = v); }, addEventListener: (ev, fn) => box.querySelectorAll('input').forEach(i => i.addEventListener(ev, fn)) };
   btn.onclick = () => {
-    const v = parseNum(inp.value); if (!isFinite(v)) { fbx.innerHTML = `<div class="fb hint">Type a number. If the unit starts with × 10ⁿ, type only the number in front of it.</div>`; return; }
+    const v = parseNum(inp.value); if (!isFinite(v)) { fbx.innerHTML = `<div class="fb hint">Type a number.</div>`; return; }
     tries++; const ok = cfg.check(v);
     if (!(id in S.first)) { S.first[id] = ok; save(); }
     box.classList.toggle('ok', ok); box.classList.toggle('chk', !ok);
@@ -319,12 +319,12 @@ function coachNext() {
   if (!coachQ.length) { c.hidden = true; coachEl = null; coachLock(false); const d = coachDone; coachDone = null; d && d(); return; }
   const st = coachQ.shift(); const el = typeof st.el === 'string' ? document.querySelector(st.el) : st.el;
   if (!el) { coachNext(); return; }
-  coachLock(false); el.scrollIntoView({ block: 'center', behavior: 'instant' }); coachLock(true);
+  el.scrollIntoView({ block: 'center', behavior: 'instant' });
   coachEl = el; coachSt = st; coachFlip = false; c.hidden = false;
   const ring = c.querySelector('.ring'), hand = c.querySelector('.hand'), bub = c.querySelector('.bubble');
   hand.classList.toggle('tap', !st.drag && !st.vdrag);
-  bub.innerHTML = `<div>${st.t}</div><div class="row between"><span class="tiny muted">${st.n} of ${st.of}</span>${st.until ? '<span class="wait">waiting for you…</span>' : ''}<button class="btn ${st.until ? '' : 'primary'}" style="padding:5px 12px">${st.until ? 'Skip' : coachQ.length ? 'Next' : 'Got it'}</button></div>`;
-  bub.querySelector('button').onclick = () => coachNext();
+  bub.innerHTML = `<button class="cx" title="close the tips">✕</button><div style="padding-right:18px">${st.t}</div><div class="row between"><span class="tiny muted">Tip ${st.n} of ${st.of}</span><button class="btn primary nx" style="padding:5px 14px">${coachQ.length ? 'Next' : 'Done'}</button></div>`;
+  bub.querySelector('.nx').onclick = () => coachNext(); bub.querySelector('.cx').onclick = () => { coachQ = []; coachNext(); };
   requestAnimationFrame(coachPlace);
   if (st.drag || st.vdrag) c._iv = setInterval(() => { coachFlip = !coachFlip; coachPlace(); }, st.drag ? 750 : 850);
   if (st.until) { ring.style.pointerEvents = 'none'; coachTimer = setInterval(() => { if (st.until()) { clearInterval(coachTimer); setTimeout(coachNext, 350); } }, 300); }
@@ -399,8 +399,9 @@ let R = null, pollT = null, sim = null, lastSimT = 0, localEditT = 0, seenRows =
 function stopPoll() { clearInterval(pollT); pollT = null; }
 const LABSTEPS = ['Predict', 'Experiment', 'Process', 'Explain'];
 
+let lastLabStep = null;
 async function rLab() {
-  const k = S.station;
+  const k = S.station; if (lastLabStep !== S.step) { lastLabStep = S.step; scrollTo(0, 0); }
   if (S.step >= LABSTEPS.length) { S.doneStation = true; S.step = 3; save(); go('check'); return; }
   app().innerHTML = `<div class="card" style="padding:12px 16px"><div class="labhead"><div><span class="tag">${STN[k].icon} Station ${k}</span> <b>${STN[k].title}</b></div>
     <div class="steps4">${LABSTEPS.map((x, i) => `<button data-st="${i}" class="${i === S.step ? 'now' : (S.visited || {})[i] ? 'done' : ''}">${x}</button>`).join('')}<button data-st="4" class="${S.doneStation ? 'done' : ''}">Progress check</button></div></div></div><div id="body"></div>`;
@@ -442,7 +443,7 @@ const PREDFIG = {
   A: `<svg viewBox="0 0 420 170"><rect x="110" y="22" width="220" height="8" fill="#9fe3c0"/><rect x="110" y="140" width="220" height="8" fill="#c9d3e8"/>
     <text x="100" y="31" fill="#1D8F5F" font-size="18" font-weight="800" text-anchor="end">+</text><text x="100" y="149" fill="#C8463E" font-size="18" font-weight="800" text-anchor="end">−</text>
     <path d="M20 85 L110 85 Q240 85 330 40 L400 8" fill="none" stroke="#1D8F5F" stroke-width="3"/>
-    <circle cx="220" cy="78" r="7" fill="#2F6FB5"/><line x1="220" y1="70" x2="220" y2="42" stroke="#E6A413" stroke-width="3" marker-end="url(#pf)"/><text x="230" y="52" fill="#B07A00" font-size="13" font-weight="800">push towards +</text>
+    <circle cx="220" cy="78" r="7" fill="#2F6FB5"/><line x1="220" y1="70" x2="220" y2="42" stroke="#E6A413" stroke-width="3" marker-end="url(#pf)"/><text x="212" y="52" fill="#B07A00" font-size="13" font-weight="800" text-anchor="end">push towards +</text>
     <defs><marker id="pf" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8z" fill="#E6A413"/></marker></defs>
     <text x="20" y="110" fill="#5E6470" font-size="12">beam from the gun</text></svg>`,
   B: FIG.circle, C: FIG.crossed
@@ -469,7 +470,7 @@ function labPredict(body) {
 function labExperiment(body) {
   const k = S.station, st = STN[k], role = ROLES[S.role] || ROLES.trial;
   body.innerHTML = `<div class="grid2">
-    <div class="card"><div class="mbox" id="mbox"></div><div class="simwrap" id="simwrap"><div id="sim"></div></div><div class="remote" id="remote"></div></div>
+    <div class="card simcard" id="simcard"><div class="mbox" id="mbox"></div><div class="row between fsrow"><span class="tiny muted">Taking readings? Go full screen.</span><button class="btn" id="fsbtn">⛶ Full screen</button></div><div class="simwrap" id="simwrap"><div id="sim"></div></div><div class="remote" id="remote"></div></div>
     <div>
       <div class="card"><div class="role" id="rolecard"><span class="ic">${role.ic}</span><div><b>${role.name}${S.role === 'trial' ? ' ' + S.trial : ''}</b><div class="small muted">${role.job(S.trial)} Anyone can help with any job.</div></div></div>
         <div class="team" id="team" style="margin-top:10px"></div></div>
@@ -479,6 +480,9 @@ function labExperiment(body) {
       <div class="tiny muted" style="margin:2px 0 8px">Processors fill in the <b style="color:var(--accent-ink)">coloured columns</b> using the formula in each header. A cell turns green when it is right. Take 3 to 5 readings.</div>
       <div id="rectbl"></div><div id="recnext"></div></div>`;
   sim = ({ A: simA, B: simB, C: simC })[k]($('#sim'));
+  const sc = $('#simcard'), fsb = $('#fsbtn');
+  fsb.onclick = () => { if (document.fullscreenElement) document.exitFullscreen(); else if (sc.requestFullscreen) sc.requestFullscreen().catch(() => toast('Full screen is not available on this device.')); else toast('Full screen is not available on this device.'); };
+  document.onfullscreenchange = () => { if ($('#fsbtn')) $('#fsbtn').textContent = document.fullscreenElement ? '✕ Exit full screen' : '⛶ Full screen'; };
   sim.onChange = s => { localEditT = Date.now(); clearTimeout(sim._t); sim._t = setTimeout(() => roomOp('sim', { sim: s }), 220); };
   sim.onRun = (raw, rec) => {
     if (R.rows.length >= 5) { toast('The table is full (5 readings). Delete one with × to add another.'); return false; }
@@ -573,10 +577,9 @@ function paintTable() {
 }
 function roleCoachA2() {
   const predicted = () => R.pred[S.name] != null, ranMine = () => R.rows.some(r => r.by === S.name);
-  const steps = [{ el: '#mbox', t: 'This panel always tells you <b>why</b> and <b>what</b>.' }, { el: sim.platesEl, t: 'Switch the <b>deflecting plates</b> on. Watch the arrows ride along the beam.', until: () => !!S.seenPlates },
+  const steps = [{ el: sim.platesEl, t: 'Switch the <b>deflecting plates</b> on. Watch the arrows ride along the beam.', until: () => !!S.seenPlates },
     ...(S.role === 'trial' ? [{ el: sim.ctrlEl, drag: true, t: 'Change the <b>gun voltage</b> for your reading.' },
-      { el: sim.runEl, t: STN.A.readHint, until: ranMine },
-      { el: '#reccard', t: '<b>3 to 5</b> readings at different voltages. Is the bend getting bigger or smaller?' }]
+      { el: sim.runEl, t: STN.A.readHint + ' Take 3 to 5 readings at different voltages.', until: ranMine }]
     : [{ el: '#reccard', t: '<b>You process the readings</b>, using the formula in each coloured header. Watch the <b>y × V</b> column. What do you notice?', until: () => R.rows.some(r => Object.entries(r.rec).some(([c, x]) => c.startsWith('p_') && x.by === S.name)) }])];
   steps.forEach((x, i) => { x.n = i + 1; x.of = steps.length; }); coach(steps, 'roleA2');
 }
@@ -588,8 +591,8 @@ function roleCoach() {
   const ranMine = () => R.rows.some(r => r.by === S.name);
   const typed = () => R.rows.some(r => Object.values(r.rec).some(c => c.by === S.name));
   const predicted = () => R.pred[S.name] != null;
-  const steps = [{ el: '#mbox', t: 'This panel always tells you <b>why</b> and <b>what</b>.' }];
-  if (k === 'B') steps.push({ el: sim.swEl, t: 'Switch on the <b>electron gun</b>: the beam shoots straight. Then switch on the <b>coils</b> and watch it curl.', until: () => { const g = sim.getState(); return g.gun && g.coils; } });
+  const steps = [];
+  if (k === 'B' && S.role === 'trial') steps.push({ el: sim.swEl, t: 'Switch on the <b>electron gun</b>: the beam shoots straight. Then switch on the <b>coils</b> and watch it curl.', until: () => { const g = sim.getState(); return g.gun && g.coils; } });
   if (S.role === 'trial') {
     steps.push({ el: sim.ctrlEl, drag: true, t: k === 'B' ? 'Change the <b>coil current</b> to change the field B. Notice that the yellow force arrow always points to the centre.' : 'Pick a beam, then adjust E and B until the <b>yellow and pink arrows are equal</b> and the spot sits on 0.', until: changed });
     steps.push({ el: sim.runEl, t: k === 'B' ? 'Drag the cyan marker to the <b>top of the ring</b>, then tap <b>Record</b>.' : 'When the two forces are equal the beam goes straight. Tap <b>Record</b>.', until: ranMine });
@@ -604,17 +607,25 @@ function roleCoach() {
 /* ----- intro scene: photos + animated diagrams, few words ----- */
 function sceneAnim(kind) {
   const e = `<circle r="7" fill="#8DB8EA"/>`;
-  if (kind === 'gun') return `<svg class="anim" viewBox="0 0 640 300" preserveAspectRatio="xMidYMid slice"><rect width="640" height="300" fill="#0E1424"/>
+  if (kind === 'gun') return `<svg class="anim" viewBox="0 0 640 300" preserveAspectRatio="xMidYMid meet"><rect width="640" height="300" fill="#0E1424"/>
     <rect x="110" y="60" width="12" height="170" fill="#c9d3e8"/><rect x="420" y="60" width="12" height="70" fill="#c9d3e8"/><rect x="420" y="160" width="12" height="70" fill="#c9d3e8"/>
     <text x="116" y="50" fill="#F07A71" font-size="26" font-weight="900" text-anchor="middle">−</text><text x="426" y="50" fill="#45C58C" font-size="26" font-weight="900" text-anchor="middle">+</text>
     <path d="M100 100 q-14 22 0 44 q14 22 0 44" stroke="#FDBA4D" stroke-width="4" fill="none"/>
     ${[0, 1, 2, 3].map(i => `<circle r="7" fill="#8DB8EA"><animate attributeName="cx" values="128;128;420;640" keyTimes="0;.12;.82;1" calcMode="spline" keySplines=".6 0 1 1;.6 0 1 1;0 0 1 1" dur="2.4s" begin="${i * .6}s" repeatCount="indefinite"/><animate attributeName="cy" values="${130 + i * 10};${130 + i * 10};145;145" keyTimes="0;.12;.82;1" dur="2.4s" begin="${i * .6}s" repeatCount="indefinite"/></circle>`).join('')}
     <text x="270" y="270" fill="#F2BD45" font-size="18" text-anchor="middle">← electric field E</text></svg>`;
-  if (kind === 'strobe') return `<svg class="anim" viewBox="0 0 640 300" preserveAspectRatio="xMidYMid slice"><rect width="640" height="300" fill="#0E1424"/>
+  if (kind === 'strobe') return `<svg class="anim" viewBox="0 0 640 300" preserveAspectRatio="xMidYMid meet"><rect width="640" height="300" fill="#0E1424"/>
     <rect x="110" y="70" width="10" height="160" fill="#c9d3e8"/><rect x="300" y="70" width="10" height="66" fill="#c9d3e8"/><rect x="300" y="164" width="10" height="66" fill="#c9d3e8"/>
     <rect x="640" y="60" width="0" height="0"/><text x="115" y="58" fill="#F07A71" font-size="24" font-weight="900" text-anchor="middle">−</text><text x="305" y="58" fill="#45C58C" font-size="24" font-weight="900" text-anchor="middle">+</text>
     <circle cx="127" cy="150" r="7" fill="#8DB8EA" opacity="0"><animate attributeName="opacity" values="0;1" begin="0.00s" dur=".2s" fill="freeze"/></circle><circle cx="149" cy="150" r="7" fill="#8DB8EA" opacity="0"><animate attributeName="opacity" values="0;1" begin="0.25s" dur=".2s" fill="freeze"/></circle><circle cx="185" cy="150" r="7" fill="#8DB8EA" opacity="0"><animate attributeName="opacity" values="0;1" begin="0.50s" dur=".2s" fill="freeze"/></circle><circle cx="235" cy="150" r="7" fill="#8DB8EA" opacity="0"><animate attributeName="opacity" values="0;1" begin="0.75s" dur=".2s" fill="freeze"/></circle><circle cx="300" cy="150" r="7" fill="#8DB8EA" opacity="0"><animate attributeName="opacity" values="0;1" begin="1.00s" dur=".2s" fill="freeze"/></circle><circle cx="372" cy="150" r="7" fill="#8DB8EA" opacity="0"><animate attributeName="opacity" values="0;1" begin="1.25s" dur=".2s" fill="freeze"/></circle><circle cx="444" cy="150" r="7" fill="#8DB8EA" opacity="0"><animate attributeName="opacity" values="0;1" begin="1.50s" dur=".2s" fill="freeze"/></circle><circle cx="516" cy="150" r="7" fill="#8DB8EA" opacity="0"><animate attributeName="opacity" values="0;1" begin="1.75s" dur=".2s" fill="freeze"/></circle><circle cx="588" cy="150" r="7" fill="#8DB8EA" opacity="0"><animate attributeName="opacity" values="0;1" begin="2.00s" dur=".2s" fill="freeze"/></circle><circle cx="660" cy="150" r="7" fill="#8DB8EA" opacity="0"><animate attributeName="opacity" values="0;1" begin="2.25s" dur=".2s" fill="freeze"/></circle>
     <text x="210" y="265" fill="#F2BD45" font-size="17" text-anchor="middle">speeds up in the gap</text><text x="480" y="265" fill="#7CFFB2" font-size="17" text-anchor="middle">equal steps: constant speed</text></svg>`;
+  if (kind === 'bendA') return `<svg class="anim" viewBox="0 0 640 300" preserveAspectRatio="xMidYMid meet"><rect width="640" height="300" fill="#0E1424"/>
+    <rect x="80" y="110" width="8" height="80" fill="#c9d3e8"/><rect x="140" y="110" width="8" height="30" fill="#c9d3e8"/><rect x="140" y="160" width="8" height="30" fill="#c9d3e8"/>
+    <text x="84" y="100" fill="#F07A71" font-size="14" font-weight="800" text-anchor="middle">−</text><text x="144" y="100" fill="#45C58C" font-size="14" font-weight="800" text-anchor="middle">+</text>
+    <rect x="200" y="60" width="380" height="180" fill="#13324a" opacity=".55"/>${Array.from({ length: 11 }, (_, i) => `<line x1="${200 + i * 38}" y1="60" x2="${200 + i * 38}" y2="240" stroke="#4d7f9c" stroke-width=".6"/>`).join('')}
+    <rect x="200" y="48" width="380" height="8" fill="#9fe3c0"/><rect x="200" y="244" width="380" height="8" fill="#c9d3e8"/><text x="590" y="56" fill="#45C58C" font-size="16" font-weight="800">+</text>
+    <line x1="88" y1="150" x2="200" y2="150" stroke="#7CFFB2" stroke-width="2" stroke-dasharray="3 4" opacity=".5"/>
+    <path d="M200 150 Q390 150 580 70" fill="none" stroke="#7CFFB2" stroke-width="4"><animate attributeName="stroke-dasharray" values="0 420;420 0" dur="2s" repeatCount="indefinite"/></path>
+    <line x1="380" y1="128" x2="380" y2="96" stroke="#F2BD45" stroke-width="3"/><polygon points="380,90 373,102 387,102" fill="#F2BD45"/><text x="390" y="104" fill="#F2BD45" font-size="14" font-weight="800">push towards +</text></svg>`;
   if (kind === 'fbStraight' || kind === 'fbCircle') { const on = kind === 'fbCircle', X = 220, Y = 150, gy = 214;
     const pill = (y, txt, lit) => `<rect x="410" y="${y - 20}" width="190" height="30" rx="15" fill="${lit ? '#3b3420' : '#1b2335'}" stroke="${lit ? '#FDE68A' : '#3a4a70'}"/><text x="505" y="${y}" fill="${lit ? '#FDE68A' : '#9AA4B8'}" font-size="15" font-weight="800" text-anchor="middle">${txt}</text>`;
     return `<svg class="anim" viewBox="0 0 640 300" preserveAspectRatio="xMidYMid meet"><rect width="640" height="300" fill="#0E1424"/>
@@ -629,7 +640,7 @@ function sceneAnim(kind) {
       <text x="410" y="205" fill="#C4A5FF" font-size="15" font-weight="800">beam goes straight</text>`}
     ${pill(80, 'electron gun: ON', true)}${pill(124, 'coils: ' + (on ? 'ON' : 'OFF'), on)}</svg>`; }
   if (kind === 'mFall' || kind === 'mHold') { const on = kind === 'mHold';
-    return `<svg class="anim" viewBox="0 0 640 300" preserveAspectRatio="xMidYMid slice"><rect width="640" height="300" fill="#0E1424"/>
+    return `<svg class="anim" viewBox="0 0 640 300" preserveAspectRatio="xMidYMid meet"><rect width="640" height="300" fill="#0E1424"/>
     <rect x="160" y="40" width="320" height="10" fill="${on ? '#9fe3c0' : '#c9d3e8'}"/><rect x="160" y="250" width="320" height="10" fill="${on ? '#f2b0aa' : '#c9d3e8'}"/>
     <text x="150" y="50" fill="${on ? '#45C58C' : '#9AA4B8'}" font-size="18" font-weight="800" text-anchor="end">${on ? '+' : '0 V'}</text><text x="150" y="260" fill="${on ? '#F07A71' : '#9AA4B8'}" font-size="18" font-weight="800" text-anchor="end">${on ? '−' : '0 V'}</text>
     ${on ? `<circle cx="320" cy="150" r="9" fill="#FDE68A"><animate attributeName="cy" values="148;152;148" dur="2s" repeatCount="indefinite"/></circle>
@@ -637,16 +648,16 @@ function sceneAnim(kind) {
       <line x1="320" y1="162" x2="320" y2="200" stroke="#F472B6" stroke-width="4"/><polygon points="320,206 312,192 328,192" fill="#F472B6"/><text x="332" y="198" fill="#F472B6" font-size="15" font-weight="800">weight mg</text>`
       : [220, 300, 380, 440].map((x, i) => `<circle cx="${x}" r="7" fill="#FDE68A"><animate attributeName="cy" values="60;240" dur="${2.2 + i * .4}s" begin="${i * .3}s" repeatCount="indefinite"/></circle>`).join('')}
     </svg>`; }
-  if (kind === 'curl') return `<svg class="anim" viewBox="0 0 640 300" preserveAspectRatio="xMidYMid slice"><rect width="640" height="300" fill="#0E1424"/>
+  if (kind === 'curl') return `<svg class="anim" viewBox="0 0 640 300" preserveAspectRatio="xMidYMid meet"><rect width="640" height="300" fill="#0E1424"/>
     ${Array.from({ length: 40 }, (_, i) => `<text x="${30 + (i % 10) * 62}" y="${40 + Math.floor(i / 10) * 70}" fill="#F472B6" font-size="16" opacity=".35">⊙</text>`).join('')}
     <path d="M320 260 A95 95 0 1 0 320 70 A95 95 0 1 0 320 260" fill="none" stroke="#7CFFB2" stroke-width="4" opacity=".9"><animate attributeName="stroke-dasharray" values="0 700;700 0" dur="2.2s" repeatCount="indefinite"/></path>
     <line x1="320" y1="260" x2="320" y2="70" stroke="#cfd8ea" stroke-dasharray="5 5"/><text x="334" y="170" fill="#cfd8ea" font-size="18">diameter</text></svg>`;
-  if (kind === 'push') return `<svg class="anim" viewBox="0 0 640 300" preserveAspectRatio="xMidYMid slice"><rect width="640" height="300" fill="#0E1424"/>
+  if (kind === 'push') return `<svg class="anim" viewBox="0 0 640 300" preserveAspectRatio="xMidYMid meet"><rect width="640" height="300" fill="#0E1424"/>
     <rect x="170" y="70" width="300" height="10" fill="#c9d3e8"/><rect x="170" y="220" width="300" height="10" fill="#c9d3e8"/><text x="150" y="82" fill="#45C58C" font-size="24" font-weight="900">+</text><text x="150" y="232" fill="#F07A71" font-size="24" font-weight="900">−</text>
     <circle cx="320" cy="150" r="10" fill="#8DB8EA"/>
     <line x1="320" y1="138" x2="320" y2="92" stroke="#45C58C" stroke-width="5"/><polygon points="320,86 311,102 329,102" fill="#45C58C"/><text x="336" y="104" fill="#45C58C" font-size="18">electric force qE</text>
     <line x1="320" y1="162" x2="320" y2="208" stroke="#F472B6" stroke-width="5"/><polygon points="320,214 311,198 329,198" fill="#F472B6"/><text x="336" y="206" fill="#F472B6" font-size="18">magnetic force qvB</text></svg>`;
-  if (kind === 'straight') return `<svg class="anim" viewBox="0 0 640 300" preserveAspectRatio="xMidYMid slice"><rect width="640" height="300" fill="#0E1424"/>
+  if (kind === 'straight') return `<svg class="anim" viewBox="0 0 640 300" preserveAspectRatio="xMidYMid meet"><rect width="640" height="300" fill="#0E1424"/>
     <rect x="170" y="70" width="300" height="10" fill="#c9d3e8"/><rect x="170" y="220" width="300" height="10" fill="#c9d3e8"/>
     <rect x="560" y="60" width="14" height="180" fill="#2c6b55"/><line x1="40" y1="150" x2="560" y2="150" stroke="#7CFFB2" stroke-width="4"><animate attributeName="stroke-dasharray" values="0 600;600 0" dur="1.8s" repeatCount="indefinite"/></line>
     <circle cx="567" cy="150" r="9" fill="#b6ffd6"/><text x="320" y="270" fill="#cfd8ea" font-size="18" text-anchor="middle">qE = qvB</text></svg>`;
@@ -701,7 +712,7 @@ function simA(host) {
    <text id="msgA" x="320" y="312" fill="#9AA4B8" font-size="12" text-anchor="middle"></text>
   </svg>
   <div class="ctrl" id="cA"><label>Gun voltage V (sets the speed) <output id="oV"></output></label><input type="range" id="sV" min="1" max="5" step="0.5" value="${kV}"></div>
-  <div class="row" id="platesRow"><button class="btn" id="bD">Deflecting plates: OFF</button><button class="btn primary big" id="recA" disabled>📏 Record</button><div class="inst" id="inst"><div>voltmeter: <b id="iV"></b> kV</div><div>y = <b id="iY">–</b> cm</div></div></div>`;
+  <div class="row" id="platesRow"><button class="btn" id="bD">Deflecting plates: OFF</button><button class="btn primary" id="recA" disabled>📏 Record</button><div class="inst" id="inst"><div>voltmeter: <b id="iV"></b> kV</div><div>y = <b id="iY">–</b> cm</div></div></div>`;
   const q = x => host.querySelector(x), svg = q('svg');
   let gr = ''; for (let c = 0; c <= 10; c++) { const x = SX + c * PXC; gr += `<line x1="${x}" y1="${CY - 3 * PXC}" x2="${x}" y2="${CY + 3 * PXC}" stroke="#4d7f9c" stroke-width="${c % 5 ? .6 : 1.1}" opacity=".7"/><text x="${x}" y="${CY + 3 * PXC + 24}" fill="#9AA4B8" font-size="10" text-anchor="middle">${c}</text>`; }
   for (let c = -3; c <= 3; c++) { const y = CY - c * PXC; gr += `<line x1="${SX}" y1="${y}" x2="${SX + 10 * PXC}" y2="${y}" stroke="#4d7f9c" stroke-width="${c ? .6 : 1.1}" opacity=".7"/><text x="${SX - 5}" y="${y + 4}" fill="#9AA4B8" font-size="10" text-anchor="end">${c > 0 ? '+' : ''}${c}</text>`;
@@ -764,22 +775,22 @@ function simB(host, cfg = {}) {
    <filter id="gl"><feGaussianBlur stdDeviation="4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>
    <circle cx="${cx}" cy="${cy}" r="${Rb + 30}" fill="none" stroke="#7a5230" stroke-width="16"/><circle cx="${cx}" cy="${cy}" r="${Rb + 30}" fill="none" stroke="#c08a52" stroke-width="16" stroke-dasharray="1.5 3" opacity=".6"/>
    <circle id="coilI" cx="${cx}" cy="${cy}" r="${Rb + 30}" fill="none" stroke="#FDE68A" stroke-width="2" stroke-dasharray="8 12" opacity="0"/>
-   <text x="${cx + Rb - 4}" y="22" fill="#F472B6" font-size="11" text-anchor="end">Helmholtz coils</text>
+   <text x="474" y="22" fill="#F472B6" font-size="11" text-anchor="end">Helmholtz coils</text>
    <circle cx="${cx}" cy="${cy}" r="${Rb}" fill="url(#bulb)" stroke="#6a5a90" stroke-width="2"/>
    <g id="ruler"></g>
    <path id="beam" fill="none" stroke="#E07BFF" stroke-width="4" filter="url(#gl)" opacity=".85"/>
    <rect x="${gx - 34}" y="${gy - 8}" width="34" height="16" rx="3" fill="#8a96b3"/><circle id="cath" cx="${gx - 30}" cy="${gy}" r="4" fill="#5b6478"/>
    <g id="mk" style="cursor:ns-resize"><line x1="${gx - 26}" x2="${gx + 26}" stroke="#22D3EE" stroke-width="3"/><polygon points="${gx + 28},0 ${gx + 42},-9 ${gx + 42},9" fill="#22D3EE"/><rect x="${gx - 44}" y="-16" width="104" height="32" fill="transparent"/></g>
    <text x="18" y="404" fill="#9AA4B8" font-size="12">B out of the screen ⊙</text>
-   <text x="18" y="22" fill="#6f7a92" font-size="10">The ring glows: the tube holds a trace of hydrogen gas.</text>
+   
    <defs><marker id="mBv" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8z" fill="#45C58C"/></marker><marker id="mBf" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8z" fill="#F2BD45"/></marker></defs>
    <g id="eB"><line id="bV" stroke="#45C58C" stroke-width="3" marker-end="url(#mBv)"/><line id="bF" stroke="#F2BD45" stroke-width="3" marker-end="url(#mBf)"/><circle id="bDot" r="6" fill="#8DB8EA" stroke="#fff" stroke-width="1.5"/><text id="tbV" fill="#45C58C" font-size="13" font-weight="800">v</text><text id="tbF" fill="#F2BD45" font-size="13" font-weight="800">F = qvB</text></g>
   </svg>
   ${cfg.fixedV ? '' : `<div class="ctrl"><label>Electron gun voltage <output id="oV2"></output></label><div class="seg" id="segV">${[150, 200, 250, 300].map(v => `<button data-v="${v}">${v} V</button>`).join('')}</div></div>
   <div class="ctrl" id="cI"><label>Coil current I <output id="oI"></output></label><input type="range" id="sI" min="1" max="3" step="0.05" value="${I}"></div>`}
-  <div class="row" id="swB"><button class="btn" id="bGun">⚡ Electron gun: OFF</button><button class="btn" id="bCoil">🧲 Coils: OFF</button></div>
-  <div class="row" style="margin-top:10px"><button class="btn primary" id="rec">📏 Record</button><div class="inst" id="inst"><div>V = <b id="iV"></b> V</div><div>I = <b id="iI"></b> A</div><div>d = <b id="iD"></b> cm</div></div></div>
-  <div class="tiny muted" id="rmsg" style="margin-top:4px">Drag the cyan marker to the top of the glowing ring.</div>`;
+  <div class="row" id="swB"><button class="btn" id="bGun">⚡ Electron gun: OFF</button><button class="btn" id="bCoil">🧲 Coils: OFF</button><button class="btn primary" id="rec">📏 Record</button></div>
+  <div class="row"><div class="inst" id="inst"><div>V = <b id="iV"></b> V</div><div>I = <b id="iI"></b> A</div><div>d = <b id="iD"></b> cm</div></div></div>
+  <div class="tiny muted" id="rmsg" style="margin-top:4px">Drag the cyan marker to the top of the glowing ring.</div><div class="tiny muted">The ring glows because the tube holds a little hydrogen gas.</div>`;
   const svg = host.querySelector('svg'), beam = host.querySelector('#beam'), mk = host.querySelector('#mk');
   let rul = ''; for (let c = 0; c <= 16; c++) { const y = gy - c * PX; rul += `<line x1="${gx - (c % 5 === 0 ? 12 : 7)}" y1="${y}" x2="${gx}" y2="${y}" stroke="#e6dcff" stroke-width="${c % 5 === 0 ? 1.6 : 1}"/>${c % 2 === 0 ? `<text x="${gx - 16}" y="${y + 4}" fill="#e6dcff" font-size="11" text-anchor="end">${c}</text>` : ''}`;
     if (c < 16) for (let m = 1; m < 10; m++) { const yy = y - m * PX / 10; rul += `<line x1="${gx - 3}" y1="${yy}" x2="${gx}" y2="${yy}" stroke="#9a8fc0" stroke-width=".6"/>`; } }
@@ -855,9 +866,9 @@ function simC(host) {
      <circle id="cDot" r="6" fill="#8DB8EA" stroke="#fff" stroke-width="1.5"/><text id="tcE" fill="#F2BD45" font-size="12" font-weight="800">qE</text><text id="tcB" fill="#F472B6" font-size="12" font-weight="800">qvB</text></g>
    <text x="300" y="45" fill="#7CFFB2" font-size="15" text-anchor="middle" font-weight="700" id="stt"></text></svg>
   <div class="ctrl"><div class="seg" id="segB">${[1, 2, 3].map(b => `<button data-b="${b}">Beam ${b}</button>`).join('')}</div></div>
-  <div class="ctrl" id="cE"><label>Plate voltage (sets E) <output id="oE"></output></label><div class="row" style="flex-wrap:nowrap"><button class="btn" data-d="-1" style="padding:4px 10px">−</button><input type="range" id="sE" min="0" max="1000" step="1" value="0"><button class="btn" data-d="1" style="padding:4px 10px">+</button></div></div>
-  <div class="ctrl" id="cB"><label>Coil current (sets B) <output id="oB"></output></label><div class="row" style="flex-wrap:nowrap"><button class="btn" data-d="-0.01" style="padding:4px 10px">−</button><input type="range" id="sB" min="0" max="3" step="0.01" value="1"><button class="btn" data-d="0.01" style="padding:4px 10px">+</button></div></div>
-  <div class="row"><button class="btn primary big" id="recC" disabled>✅ Record</button><div class="inst" id="inst"><div>beam <b id="iBm">1</b></div><div>plate V = <b id="iVp">0</b> V</div><div>I = <b id="iI">1.00</b> A</div></div></div>`;
+  <div class="ctrl" id="cE"><label>Plate voltage <output id="oE"></output></label><div class="row" style="flex-wrap:nowrap"><button class="btn" data-d="-1" style="padding:4px 10px">−</button><input type="range" id="sE" min="0" max="1000" step="1" value="0"><button class="btn" data-d="1" style="padding:4px 10px">+</button></div></div>
+  <div class="ctrl" id="cB"><label>Coil current <output id="oB"></output></label><div class="row" style="flex-wrap:nowrap"><button class="btn" data-d="-0.01" style="padding:4px 10px">−</button><input type="range" id="sB" min="0" max="3" step="0.01" value="1"><button class="btn" data-d="0.01" style="padding:4px 10px">+</button></div></div>
+  <div class="row"><button class="btn primary" id="recC" disabled>✅ Record</button><div class="inst" id="inst"><div>beam <b id="iBm">1</b></div><div>plate V = <b id="iVp">0</b> V</div><div>I = <b id="iI">1.00</b> A</div></div></div>`;
   const q = s => host.querySelector(s), toY = cm => 150 - cm * 20;
   const o = { ctrlEl: q('#cE'), runEl: q('#recC'), instEl: q('#inst') };
   const draw = () => {
@@ -870,7 +881,7 @@ function simC(host) {
     else { pts.push(hit); q('#spot').setAttribute('opacity', 0); }
     q('#bp').setAttribute('d', pts.map((p, i) => (i ? 'L' : 'M') + p[0].toFixed(1) + ' ' + p[1].toFixed(1)).join(' '));
     PTS = pts; FEl = E > 0 ? 6 + 28 * E / Math.max(E, v * B) : 0; FBl = B > 0 ? 6 + 28 * v * B / Math.max(E, v * B, 1e-9) : 0;
-    q('#oE').textContent = Vp + ' V  →  E = ' + sci(E, 3) + ' V/m'; q('#oB').textContent = fx(I, 2) + ' A  →  B = ' + fx(B * 1e3, 3) + ' mT';
+    q('#oE').textContent = Vp + ' V'; q('#oB').textContent = fx(I, 2) + ' A';
     q('#iBm').textContent = beam; q('#iVp').textContent = Vp; q('#iI').textContent = fx(I, 2);
     host.querySelectorAll('#segB button').forEach(b => b.classList.toggle('on', +b.dataset.b === beam));
     const ok = ys != null && Math.abs(ys) < 0.2 && E > 0; q('#recC').disabled = !ok;
@@ -1075,7 +1086,7 @@ function simM(host) {
   </svg>
   <div class="ctrl"><div class="seg" id="segD">${MDROPS.map((d, k) => `<button data-k="${k}">Drop ${k + 1}</button>`).join('')}</div><div class="tiny muted" id="mass" style="margin-top:4px"></div></div>
   <div class="ctrl" id="cMV"><label>Plate voltage V <output id="oMV"></output></label><div class="row" style="flex-wrap:nowrap"><button class="btn" data-dv="-1" style="padding:4px 10px">−</button><input type="range" id="sMV" min="0" max="800" step="1" value="0"><button class="btn" data-dv="1" style="padding:4px 10px">+</button></div></div>
-  <div class="row" id="swM"><button class="btn" id="bPl">Plates: OFF</button><button class="btn primary big" id="recM" disabled>📏 Record this drop</button><div class="inst"><div>V = <b id="iMV">0</b> V</div></div></div>`;
+  <div class="row" id="swM"><button class="btn" id="bPl">Plates: OFF</button><button class="btn primary" id="recM" disabled>📏 Record this drop</button><div class="inst"><div>V = <b id="iMV">0</b> V</div></div></div>`;
   const q = x => host.querySelector(x), o = { swEl: q('#swM'), ctrlEl: q('#cMV'), runEl: q('#recM') };
   const Vb = () => MDROPS[drop].m * MG * MD / (MDROPS[drop].n * QE);
   const net = () => { const d = MDROPS[drop], W = d.m * MG, F = on ? d.n * QE * V / MD : 0; return { W, F, r: (F - W) / W }; };

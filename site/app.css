@@ -220,3 +220,14 @@ table.rec th:not(.pc){white-space:nowrap}
 .btn.ondark:hover{background:rgba(255,255,255,.22)}
 .stcard .btn:not(.primary):not(.ondark),.hero .btn:not(.primary):not(.ondark){color:#15171C}
 #swB,#swM,#platesRow{margin-top:10px;margin-bottom:6px}
+
+svg.sim{max-height:58vh;width:100%}
+.simcard .fsrow{margin:0 0 6px}
+.simcard:fullscreen{display:grid;grid-template-columns:minmax(0,1fr) 380px;gap:10px 16px;align-content:start;padding:16px;background:#f4f6fb;overflow:auto;border-radius:0}
+.simcard:fullscreen .simwrap,.simcard:fullscreen #sim{display:contents}
+.simcard:fullscreen svg.sim{grid-column:1;grid-row:1 / span 40;max-height:calc(100vh - 32px);height:calc(100vh - 32px)}
+.simcard:fullscreen > :not(.simwrap),.simcard:fullscreen #sim > :not(svg){grid-column:2}
+.simcard:fullscreen .mbox{font-size:.85rem}
+.simcard:fullscreen .toast{position:fixed}
+#coach .bubble .cx{position:absolute;top:6px;right:8px;border:none;background:none;font-size:1rem;cursor:pointer;color:var(--muted)}
+#coach .bubble{position:fixed}
