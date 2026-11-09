@@ -355,11 +355,15 @@ function paintPreview() {
   bar.innerHTML = `<span class="pt">Preview</span>${['A', 'B', 'C'].map(k => b(k, S.station === k, 'st:' + k)).join('')}<i></i>
     ${LABSTEPS.map((x, i) => b(x, lab && S.step === i, 'step:' + i)).join('')}<i></i>
     ${[['check', 'Check'], ['share', 'Share'], ['final', 'Final tube'], ['millikan', 'Millikan'], ['reflect', 'Reflect']].map(([g, t]) => b(t, S.stage === g, 'go:' + g)).join('')}<i></i>
+    ${[['trial', 'Trial lead'], ['processor', 'Processor'], ['leader', 'Leader']].map(([r, t]) => b(t, S.role === r, 'role:' + r)).join('')}<i></i>
+    ${[1, 2, 3].map(l => b('Level ' + l, S.level === l, 'lv:' + l)).join('')}<i></i>
     <button data-a="intro" title="show the intro and tips again">↺ Tips</button><button data-a="exit">Exit</button>`;
   bar.querySelectorAll('button').forEach(x => x.onclick = () => { const [a, v] = x.dataset.a.split(':');
     if (a === 'st') { S.station = v; R = null; seenRows = new Set(); S.doneStation = true; S.stage = 'lab'; S.step = 0; }
     if (a === 'step') { S.stage = 'lab'; S.step = +v; S.doneStation = true; }
     if (a === 'go') { S.stage = v; S.doneStation = true; }
+    if (a === 'role') { S.role = v; R = null; seenRows = new Set(); }
+    if (a === 'lv') S.level = +v;
     if (a === 'intro') S.seen = {};
     if (a === 'exit') { S = blank(); R = null; }
     save(false); render(); });
@@ -450,7 +454,7 @@ async function rLab() {
   S.visited = S.visited || {}; S.visited[S.step] = 1;
   app().querySelectorAll('.steps4 button').forEach(b => b.onclick = () => { const i = +b.dataset.st; if (i === 5) { if (!S.doneStation) { toast('Finish Explain first, then do the progress check.'); return; } go('check'); return; } S.step = i; save(); render(); });
   // join room (once)
-  if (!R && S.preview) { R = { ver: 0, members: [{ name: S.name, role: 'trial', trial: 1 }], rows: [], sim: {}, pred: {} }; S.role = 'trial'; S.trial = 1; }
+  if (!R && S.preview) { S.role = S.role || 'trial'; S.trial = 1; R = { ver: 0, members: [{ name: S.name, role: S.role, trial: 1 }], rows: [], sim: {}, pred: {} }; }
   if (S.preview && S.step >= 3 && R.rows.filter(rowDone).length < 3) demoRows();
   if (!R) {
     try { const res = await apiPost({ op: 'join', cls: S.cls, st: k, name: S.name, level: S.level }); R = res.room; S.role = res.me.role; S.trial = res.me.trial; }
@@ -682,7 +686,7 @@ function roleCoach() {
     if (S.role === 'leader') steps.push({ el: '#predcard', t: 'Team leader: when 3 rows are processed, ask the team: <b>was our prediction right?</b>' });
   }
   steps.forEach((s, i) => { s.n = i + 1; s.of = steps.length; });
-  coach(steps, 'role' + k);
+  coach(steps, 'role' + k + (S.preview ? S.role : ''));
 }
 
 /* ----- intro scene: photos + animated diagrams, few words ----- */
@@ -1281,7 +1285,7 @@ function rMillikan() {
   const paint = () => { const ks = Object.keys(S.final.drops);
     $('#mres').innerHTML = `<h3>Your drops</h3><div class="tiny muted">q = mgd ÷ V, with d = 0.010 m and g = 9.81 N kg⁻¹</div>
       ${ks.length ? `<div style="overflow-x:auto"><table class="rec"><tr><th>drop</th><th>m / kg</th><th>V / V</th><th class="pc">q / C</th><th class="pc">q ÷ e</th></tr>${ks.map(k => { const d = S.final.drops[k], qq = d.m * MG * MD / d.V; return `<tr><td class="rv">${+k + 1}</td><td class="rv">${sci(d.m, 3)}</td><td class="rv">${d.V}</td><td class="rv">${sci(qq, 3)}</td><td class="rv"><b>${fx(qq / QE, 2)}</b></td></tr>`; }).join('')}</table></div>` : '<p class="muted small">No drops recorded yet. Switch the plates on and find the voltage that holds a drop still.</p>'}
-      ${ks.length >= 2 ? '<div class="fb good">Look at q ÷ e: every charge is a whole number of e = 1.60 × 10⁻¹⁹ C.</div>' : ''}`;
+      ${ks.length >= 2 ? '<div class="fb good">Look at q ÷ e: every charge is a whole number of e = 1.60 × 10⁻¹⁹ C.</div><div class="small muted" style="margin-top:6px">In Millikan\'s real experiment the drops usually carried many extra electrons, not just 1, 2 or 3, and the value of e was not known in advance. He measured a large number of drops and looked for the largest charge that every result was a whole-number multiple of. That common factor is e. The drops here carry only a few electrons to keep the numbers simple.</div>' : ''}`;
     if (ks.length >= 2 && !$('#m1').dataset.on) { $('#m1').dataset.on = 1; ask(); } };
   sim.onRecord = d => { S.final.drops[d.drop] = { m: d.m, V: d.V }; save(); paint(); toast('Recorded drop ' + (d.drop + 1)); };
   const mc2 = () => coach([{ el: sim.swEl, t: 'Switch the <b>plates</b> on, then change the voltage until the drop <b>stops moving</b>.', n: 1, of: 2, until: () => Object.keys(S.final.drops).length > 0 },
