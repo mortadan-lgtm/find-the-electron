@@ -33,6 +33,7 @@
   </div>
 </div></div>
 <main class="wrap">
+  <div class="card" id="alloc" style="border-left:4px solid #4F46E5"></div>
   <div class="row" style="gap:20px;margin-bottom:12px" id="kpi"></div>
   <div class="card" style="font-size:.9rem"><b>Check the student app yourself:</b> <a href="index.html?preview=1897" target="_blank">open the preview</a>. A bar at the bottom jumps to any station (A, B, C), any tab and the final stages. Demo readings fill the tables, and nothing appears on this page.</div>
   <details class="card" open style="font-size:.86rem"><summary style="cursor:pointer;font-weight:800">How to read this page</summary>
@@ -58,9 +59,9 @@
 const CODE_KEY='fte-teacher-code'; const $=s=>document.querySelector(s);
 $('#code').value=localStorage.getItem(CODE_KEY)||'';
 const RATE=['Not yet','Getting there','Confident'];
-const STAGE={welcome:'Welcome',start:'Starting point',route:'Starting point',lab:'Station',check:'Progress check',final:'Final tube',millikan:'Millikan',reflect:'Reflect',done:'Done ✓'};
+const STAGE={welcome:'Welcome',start:'Starting point',route:'Starting point',lab:'Station',check:'Progress check',share:'Sharing',final:'Final tube',millikan:'Millikan',reflect:'Reflect',done:'Done ✓'};
 const STEP=['predict','explore','experiment','processing','explain'];
-function target(s){ if(['welcome','start','route'].includes(s.stage))return 4; if(s.stage==='lab')return [6,9,13,18,21][s.step||0]||21; if(s.stage==='check')return 22; if(['final','millikan'].includes(s.stage))return 28; return 30; }
+function target(s){ if(['welcome','start','route'].includes(s.stage))return 4; if(s.stage==='lab')return [6,9,13,18,21][s.step||0]||21; if(s.stage==='check')return 22; if(s.stage==='share')return 25; if(['final','millikan'].includes(s.stage))return 28; return 30; }
 const chip=v=>{const i=RATE.indexOf(v);return `<span class="chip ${i<0?'':'c'+i}" title="${v||'not rated'}"></span>`};
 const SUP={'-':'⁻','0':'⁰','1':'¹','2':'²','3':'³','4':'⁴','5':'⁵','6':'⁶','7':'⁷','8':'⁸','9':'⁹'};
 const sci=x=>{if(!x)return '–';const e=Math.floor(Math.log10(Math.abs(x)));return (x/10**e).toFixed(2)+' × 10'+String(e).split('').map(c=>SUP[c]).join('')};
@@ -74,7 +75,34 @@ async function pull(){
     last=await r.json(); paint();
   }catch(e){ $('#kpi').innerHTML='<span class="muted">reconnecting…</span>'; }
 }
+function mixHTML(a){
+  const fin=a.fin||{}, keys=[...new Set([...Object.keys(a.st||{}),...Object.keys(fin)])], nf=Object.keys(fin).length;
+  const nm=k=>(fin[k]&&fin[k].name)||(a.subs[k]&&a.subs[k].name)||k, so=k=>(fin[k]&&fin[k].station)||a.st[k];
+  if(!a.mixed) return `<hr style="border:0;border-top:1px solid #e5e7eb;margin:12px 0"><b>Sharing:</b> ${nf} of ${keys.length} have finished their station and wait on the sharing screen.
+    <div class="tiny muted" style="margin:6px 0">Waiting: ${keys.filter(k=>!fin[k]).map(nm).join(', ')||'nobody'}</div>
+    <button class="btn primary" id="domix">Mix the teams (${nf}/${keys.length} ready)</button> <span class="tiny muted">Each table gets students from A, B and C. Students see their new table and a card with what to teach. The final opens.</span>`;
+  const by={A:[],B:[],C:[]}; Object.entries(a.mix||{}).forEach(([k,t])=>{ if(by[t]) by[t].push(`${nm(k)} <span class="muted">(${so(k)})</span>`); });
+  return `<hr style="border:0;border-top:1px solid #e5e7eb;margin:12px 0"><b>Mixed teams shown.</b> Anyone who finishes later joins the table with fewest from their station.
+    <div class="row" style="gap:18px;margin:6px 0;align-items:flex-start">${['A','B','C'].map(k=>`<div class="tiny"><b>Table ${k}</b> (${by[k].length})<br>${by[k].join('<br>')}</div>`).join('')}</div><button class="btn" id="undomix">Undo the mixing</button>`;
+}
+function paintAlloc(){
+  const a=last.alloc||{subs:{},st:{},done:false}, subs=Object.entries(a.subs).sort((x,y)=>x[1].t-y[1].t), n=subs.length;
+  const gap=c=>{const w=['A','B','C'].filter((k,i)=>!c[i]);return w.length&&w.length<3?'gap '+w.join(', '):'any'};
+  if(!a.done){ $('#alloc').innerHTML=`<b>Starting questions:</b> ${n} finished. Students wait on a holding screen until you press the button.
+    <div class="tiny muted" style="margin:6px 0">${subs.map(([k,s])=>`${s.name} <span class="muted">(${gap(s.c)})</span>`).join(' · ')||'Nobody yet.'}</div>
+    <button class="btn primary" id="doalloc" ${n?'':'disabled'}>Show stations to students (${n})</button> <span class="tiny muted">Press it when everyone has finished. Teams are as even as possible (5 at most when 15 or fewer), and each student goes to a station they got wrong where possible.</span>`;
+    const b=$('#doalloc'); if(b) b.onclick=()=>{ if(confirm('Show stations to all '+n+' students now? Anyone who finishes later joins the smallest team.')) act('allocate'); };
+  } else { const by={A:[],B:[],C:[]}; subs.forEach(([k,s])=>{const t=a.st[k]; if(by[t]) by[t].push(s.name);});
+    $('#alloc').innerHTML=`<b>Stations shown to students.</b> Latecomers join the smallest team automatically.
+    <div class="row" style="gap:18px;margin:6px 0;align-items:flex-start">${['A','B','C'].map(k=>`<div class="tiny"><b>Station ${k}</b> (${by[k].length})<br>${by[k].join('<br>')||'<span class="muted">empty</span>'}</div>`).join('')}</div>
+    <button class="btn" id="undoalloc">Undo (back to the holding screen)</button>${mixHTML(a)}`;
+    $('#undoalloc').onclick=()=>{ if(confirm('Hide the stations again? Students who already opened their station keep it on their device.')) act('unallocate'); };
+    const mb=$('#domix'); if(mb) mb.onclick=()=>{ if(confirm('Mix the teams now? Every student sees their new table, and the final opens.')) act('mixteams'); };
+    const ub=$('#undomix'); if(ub) ub.onclick=()=>{ if(confirm('Undo the mixed teams?')) act('unmix'); };
+  }
+}
 function paint(){
+  paintAlloc();
   const st=Object.values(last.cls.students).sort((a,b)=>(a.station||'').localeCompare(b.station||'')||a.name.localeCompare(b.name));
   const done=st.filter(s=>s.stage==='done').length, behind=st.filter(s=>(s.minutes||0)>target(s)&&s.stage!=='done').length;
   const qms=st.filter(s=>s.qm).map(s=>s.qm), mean=qms.length?qms.reduce((a,b)=>a+b,0)/qms.length:0;

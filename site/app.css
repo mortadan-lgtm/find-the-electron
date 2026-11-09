@@ -249,3 +249,10 @@ body:has(#pvbar){padding-bottom:70px}
 .why summary::-webkit-details-marker{display:none}
 .why[open] summary{background:#22D3EE;color:#0B1020}
 .why>div{position:absolute;z-index:20;left:-10px;top:24px;width:min(340px,80vw);background:#fff;border:1px solid #C7D2FE;border-radius:10px;padding:10px 12px;box-shadow:0 8px 20px rgba(0,0,0,.12);font-size:.9rem;line-height:1.4;font-weight:400}
+.wdots{display:flex;gap:8px;justify-content:center;margin-top:10px}
+.wdots i{width:10px;height:10px;border-radius:50%;background:#4F46E5;animation:wd 1.2s infinite ease-in-out}
+.wdots i:nth-child(2){animation-delay:.2s}.wdots i:nth-child(3){animation-delay:.4s}
+@keyframes wd{0%,80%,100%{opacity:.25;transform:scale(.8)}40%{opacity:1;transform:scale(1)}}
+ol.teach{margin:8px 0 10px 20px;padding:0;display:grid;gap:8px}
+ol.teach li{line-height:1.45}
+ol.teach .eqbig{font-size:1.3rem;margin:4px 0}

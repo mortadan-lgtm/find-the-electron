@@ -62,7 +62,7 @@ const SC = [
   { short: 'Find the electron', text: `I can combine electric and magnetic fields to find the electron's ${EQ.qmFrac}, and then its mass.` }
 ];
 const RATE = ['Not yet', 'Getting there', 'Confident'];
-const STAGES = [['welcome', 'Start'], ['start', 'Starting point'], ['lab', 'Station'], ['check', 'Progress check'], ['final', 'Find the electron'], ['reflect', 'Reflect']];
+const STAGES = [['welcome', 'Start'], ['start', 'Starting point'], ['lab', 'Station'], ['check', 'Progress check'], ['share', 'Share'], ['final', 'Find the electron'], ['reflect', 'Reflect']];
 
 /* ============ SMALL FIGURES ============ */
 const FIG = {
@@ -230,7 +230,7 @@ function paintTop() {
 const $ = s => document.querySelector(s);
 const app = () => $('#app');
 function toast(t, ms = 2600) { const d = document.createElement('div'); d.className = 'toast'; d.innerHTML = t; (document.fullscreenElement || document.body).appendChild(d); setTimeout(() => d.remove(), ms); }
-function go(stage) { stopPoll(); S.stage = stage; S.ts = S.ts || {}; if (!S.ts[stage]) S.ts[stage] = Date.now(); save(); render(); scrollTo({ top: 0, behavior: 'smooth' }); }
+function go(stage) { stopPoll(); clearInterval(sharePoll); S.stage = stage; S.ts = S.ts || {}; if (!S.ts[stage]) S.ts[stage] = Date.now(); save(); render(); scrollTo({ top: 0, behavior: 'smooth' }); }
 function card(host, html, cls = '') { const c = document.createElement('div'); c.className = 'card ' + cls; c.innerHTML = html; host.appendChild(c); return c; }
 function nextBtn(c, fn, txt = 'Next') { const d = document.createElement('div'); d.style.marginTop = '10px'; d.innerHTML = `<button class="btn primary">${txt} →</button>`; d.querySelector('button').onclick = fn; c.appendChild(d); return d; }
 function avatar(name, i) { return `<span class="av" style="background:${AV_COL[i % AV_COL.length]}">${esc(name.trim()[0] || '?').toUpperCase()}</span>`; }
@@ -354,7 +354,7 @@ function paintPreview() {
   const b = (lab, on, act) => `<button class="${on ? 'on' : ''}" data-a="${act}">${lab}</button>`, lab = S.stage === 'lab';
   bar.innerHTML = `<span class="pt">Preview</span>${['A', 'B', 'C'].map(k => b(k, S.station === k, 'st:' + k)).join('')}<i></i>
     ${LABSTEPS.map((x, i) => b(x, lab && S.step === i, 'step:' + i)).join('')}<i></i>
-    ${[['check', 'Check'], ['final', 'Final tube'], ['millikan', 'Millikan'], ['reflect', 'Reflect']].map(([g, t]) => b(t, S.stage === g, 'go:' + g)).join('')}<i></i>
+    ${[['check', 'Check'], ['share', 'Share'], ['final', 'Final tube'], ['millikan', 'Millikan'], ['reflect', 'Reflect']].map(([g, t]) => b(t, S.stage === g, 'go:' + g)).join('')}<i></i>
     <button data-a="intro" title="show the intro and tips again">↺ Tips</button><button data-a="exit">Exit</button>`;
   bar.querySelectorAll('button').forEach(x => x.onclick = () => { const [a, v] = x.dataset.a.split(':');
     if (a === 'st') { S.station = v; R = null; seenRows = new Set(); S.doneStation = true; S.stage = 'lab'; S.step = 0; }
@@ -366,7 +366,7 @@ function paintPreview() {
 }
 function render() {
   paintTop(); coachStop(); paintPreview();
-  ({ welcome: rWelcome, start: rStart, route: rRoute, lab: rLab, check: rCheck, final: rFinal, millikan: rMillikan, reflect: rReflect, done: rDone }[S.stage] || rWelcome)();
+  ({ welcome: rWelcome, start: rStart, route: rRoute, lab: rLab, check: rCheck, share: rShare, final: rFinal, millikan: rMillikan, reflect: rReflect, done: rDone }[S.stage] || rWelcome)();
 }
 
 /* ---------- welcome ---------- */
@@ -403,22 +403,32 @@ function rStart() {
 /* ---------- route ---------- */
 async function rRoute() {
   if (!S.station) {
-    app().innerHTML = `<div class="card center"><h2>Finding your team…</h2></div>`;
-    let counts = { A: 0, B: 0, C: 0 };
-    try { const b = await apiGet({ op: 'board', cls: S.cls }); counts = b.assigned || counts; } catch (e) { }
-    const correct = S.diag.map((d, i) => d === DIAG[i].a);
+    const correct = S.diag.map((d, i) => d === DIAG[i].a), nc = correct.filter(Boolean).length; S.level = nc <= 1 ? 1 : nc === 2 ? 2 : 3;
     const ov = (new URLSearchParams(location.search).get('st') || '').toUpperCase();
-    let pool = ['A', 'B', 'C'].filter((k, i) => !correct[i]); if (!pool.length) pool = ['A', 'B', 'C'];
-    let cand = pool.filter(k => (counts[k] || 0) < 5); if (!cand.length) cand = ['A', 'B', 'C'].filter(k => (counts[k] || 0) < 5); if (!cand.length) cand = pool;
-    cand.sort((a, b) => (counts[a] || 0) - (counts[b] || 0) || hash(S.name + a) - hash(S.name + b));
-    S.station = STN[ov] ? ov : cand[0];
-    const nc = correct.filter(Boolean).length; S.level = nc <= 1 ? 1 : nc === 2 ? 2 : 3; save();
+    if (STN[ov]) { S.station = ov; save(); return rRoute(); }
+    if (!ONLINE) { let pool = ['A', 'B', 'C'].filter((k, i) => !correct[i]); if (!pool.length) pool = ['A', 'B', 'C']; S.station = pool.sort((x, y) => hash(S.name + x) - hash(S.name + y))[0]; save(); return rRoute(); }
+    app().innerHTML = `<div class="card center" style="max-width:640px;margin:40px auto;padding:28px"><div class="kick" style="color:var(--accent-ink);font-weight:800">Your answers are in</div>
+      <h2 style="margin:6px 0">Thanks, ${esc(S.name.split(' ')[0])}. Waiting for the rest of the class.</h2>
+      <p class="muted"><b id="wn">…</b> finished so far. Your teacher will show everyone's station when the whole class is ready. Stay on this page.</p><div class="wdots"><i></i><i></i><i></i></div></div>`;
+    let sent = false;
+    const ask = async () => {
+      try {
+        const r = sent ? await apiGet({ op: 'alloc', cls: S.cls, name: S.name }) : await apiPost({ op: 'submit', cls: S.cls, name: S.name, correct });
+        netGood(); sent = true;
+        if (r.station) { stopPoll(); S.station = r.station; save(); render(); return; }
+        if (r.done && !r.station) sent = false;              // not on the list (e.g. after a reset): send the answers again
+        if ($('#wn')) $('#wn').textContent = r.n + (r.n === 1 ? ' student has' : ' students have');
+      } catch (e) { netFail(); }
+    };
+    stopPoll(); await ask(); if (!S.station) pollT = setInterval(ask, 3000);
+    return;
   }
   const st = STN[S.station];
   app().innerHTML = `<div class="stcard reveal"><div class="ph" style="background-image:url(${st.img})"></div>
    <div class="tx"><span class="pill">${st.icon} Station ${S.station}</span><h1 style="font-size:2rem">${st.title}</h1>
    <div style="font-size:1.15rem">${st.goal}</div>
    <div class="row">${DIAG.map((q, i) => `<span class="scchip ${S.diag[i] === q.a ? 'r2' : 'r0'}" style="background:rgba(255,255,255,.1);color:#fff;border-color:rgba(255,255,255,.2)"><i></i>Q${i + 1}</span>`).join('')}<span class="muted small">your starting point</span></div>
+   <div style="font-size:1.25rem;margin-top:6px">Go to the table labelled <b>Station ${S.station}</b>.</div>
    <div class="muted small">Your team shares one live experiment. The whole class needs your answer at the end.</div>
    <div><button class="btn primary big" id="go">Join my team →</button></div></div></div>`;
   $('#go').onclick = () => go('lab');
@@ -1086,7 +1096,54 @@ function rCheck() {
   c.appendChild(scRater(S.scMid, () => { $('#nx').disabled = !S.scMid.every(x => x != null); }, 'Rate yourself again'));
   c.insertAdjacentHTML('beforeend', `<p class="tiny muted">At the start you said: ${SC.map((x, i) => `SC${i + 1} <b>${S.scStart[i] == null ? '–' : RATE[S.scStart[i]]}</b>`).join(' · ')}</p><div class="row"><button class="btn ghost" id="back">← Back to my station</button><button class="btn primary" id="nx" ${S.scMid.every(x => x != null) ? '' : 'disabled'}>Share our discovery →</button></div>`);
   $('#back').onclick = () => { S.step = 2; go('lab'); };
-  $('#nx').onclick = () => { save(); go('final'); };
+  $('#nx').onclick = () => { save(); go('share'); };
+}
+
+/* ---------- share: mixed teams, each student teaches their station ---------- */
+function dataLine(k, rows) {
+  if (!rows || !rows.length) return '';
+  const r3 = rows.slice(0, 3).map(r => r.raw);
+  if (k === 'A') return 'y × V = ' + r3.map(r => fx(r.y * r.kV, 2)).join(', ') + ' cm kV';
+  if (k === 'B') return 'r × B = ' + r3.map(r => fx(r.d / 2 * KCOIL * 1e3 * r.I, 2)).join(', ') + ' cm mT';
+  return 'v = ' + r3.map(r => fx(r.Vp / 0.04 / (KCOIL * r.I) / 1e6, 2)).join(', ') + ' × 10⁶ m s⁻¹';
+}
+const TEACH = {
+  A: { did: 'We changed the gun voltage V and measured how far the beam bent (y). The plate voltage stayed the same.', found: 'y × V stayed the same, so y ∝ 1/V. A faster beam spends less time between the plates, so it bends less.', eq: EQ.KE, why: 'The gun gives each electron energy qV = ½mv². The final uses it to link the gun voltage to the speed.' },
+  B: { did: 'We changed the coil current, which changes B, and measured the diameter of the circle. The gun voltage stayed the same.', found: 'r × B stayed the same, so r ∝ 1/B. The magnetic force qvB is the centripetal force.', eq: EQ.r, why: 'r = mv/(qB) links the circle you measure in the final to the speed.' },
+  C: { did: 'We changed the speed of the beam with the gun voltage and found the plate voltage that made it go straight. B stayed the same.', found: 'The beam goes straight when qE = qvB, so v = E/B. Our q/m = v² ÷ 2V came out the same for every beam.', eq: EQ.vEB, why: 'v = E/B measures the speed of an electron without knowing q or m.' }
+};
+let sharePoll = null;
+async function rShare() {
+  clearInterval(sharePoll);
+  const k = S.station, t = TEACH[k];
+  let rows = []; try { const r = S.preview ? R : await apiGet({ op: 'room', cls: S.cls, st: k }); rows = (r && r.rows) || []; } catch (e) { }
+  if (S.preview && !rows.length) { R = R || { rows: [] }; demoRows(); rows = R.rows; }
+  const dl = dataLine(k, rows);
+  app().innerHTML = `<div id="mixtop"></div><div class="card"><span class="tag acc">Your job in the new team</span><h3 style="margin:8px 0">Teach Station ${k}: ${STN[k].title}</h3>
+    <ol class="teach"><li><b>What we did.</b> ${t.did}</li><li><b>What we found.</b> ${t.found}${dl ? `<div class="small muted">Our data: ${dl}.</div>` : ''}</li>
+    <li><b>The equation the final needs.</b><div class="eqbig">${t.eq}</div>${t.why}</li></ol>
+    <div class="small muted">Take about a minute. When the others teach, write their equation in your book. The final uses all three.</div></div>`;
+  const paint = r => {
+    const top = $('#mixtop'); if (!top) return;
+    if (!r.mixed || !r.team) { top.innerHTML = `<div class="card center" style="padding:22px"><div class="kick" style="color:var(--accent-ink);font-weight:800">✅ Station ${k} done</div>
+      <h2 style="margin:6px 0">Waiting for the other teams</h2><p class="muted"><b>${r.n || 0} of ${r.total || '?'}</b> students have finished their station. Next, your teacher mixes the teams so that every team has someone from A, B and C. Get ready to teach your station using the card below.</p><div class="wdots"><i></i><i></i><i></i></div></div>`; return; }
+    top.innerHTML = `<div class="card" style="border-left:5px solid #22D3EE"><div class="kick" style="color:var(--accent-ink);font-weight:800">New teams are ready</div>
+      <h2 style="margin:6px 0">Move to the table labelled <b>${r.team}</b>.</h2>
+      <div class="row" style="gap:8px;flex-wrap:wrap;margin:8px 0">${r.members.map((m, i) => `<span class="mem ${m.name === S.name ? 'me' : ''}">${avatar(m.name, i)}${esc(m.name)} <span class="tiny muted">Station ${m.station}</span></span>`).join('')}</div>
+      <p class="small">Teach in order: Station A first, then B, then C. Each person explains their card below in about a minute.</p><div id="shgo"></div></div>`;
+    nextBtn($('#shgo'), () => { S.unlocked = true; save(); go('final'); }, 'We have all shared: find the electron');
+  };
+  if (S.preview) { paint({ mixed: true, team: 'B', members: [{ name: 'Demo A', station: 'A' }, { name: S.name, station: k }, { name: 'Demo C', station: 'C' }].sort((x, y) => x.station.localeCompare(y.station)) }); return; }
+  let sent = false;
+  const ask = async () => {
+    try {
+      const r = sent ? await apiGet({ op: 'mix', cls: S.cls, name: S.name }) : await apiPost({ op: 'finished', cls: S.cls, name: S.name, station: k });
+      netGood(); sent = r.known !== false; paint(r);
+      if (r.mixed && r.team) clearInterval(sharePoll);
+    } catch (e) { netFail(); }
+  };
+  await ask();
+  if (!($('#shgo'))) sharePoll = setInterval(() => { if (S.stage === 'share') ask(); else clearInterval(sharePoll); }, 3000);
 }
 
 /* ---------- final: the Thomson tube ---------- */
@@ -1099,7 +1156,7 @@ async function rFinal() {
   const open = S.unlocked || (board && (board.unlock || ['A', 'B', 'C'].every(k => (done[k] || 0) > 0)));
   if (open && !S.unlocked) { S.unlocked = true; save(); }
   const disc = ['A', 'B', 'C'].map(k => { const rows = board && board.rooms && board.rooms[k] ? board.rooms[k].rows : [];
-    const data = rows.length ? (k === 'A' ? 'Deflections: ' + rows.slice(0, 3).map(r => fx(r.raw.y, 1) + ' cm at ' + fx(r.raw.kV, 3) + ' kV').join(', ') : k === 'B' ? 'Diameters: ' + rows.slice(0, 3).map(r => r.raw.d + ' cm').join(', ') : 'Speeds: ' + rows.slice(0, 3).map(r => sci(r.raw.Vp / 0.04 / (KCOIL * r.raw.I), 2)).join(', ') + ' m/s') : '';
+    const data = dataLine(k, rows); const _unused = rows.length ? (k === 'A' ? 'Deflections: ' + rows.slice(0, 3).map(r => fx(r.raw.y, 1) + ' cm at ' + fx(r.raw.kV, 3) + ' kV').join(', ') : k === 'B' ? 'Diameters: ' + rows.slice(0, 3).map(r => r.raw.d + ' cm').join(', ') : 'Speeds: ' + rows.slice(0, 3).map(r => sci(r.raw.Vp / 0.04 / (KCOIL * r.raw.I), 2)).join(', ') + ' m/s') : '';
     return `<div class="d ${k === S.station ? 'mine' : ''}"><div class="ph" style="background-image:url(${STN[k].img})"></div><b>${STN[k].icon} ${STN[k].title}</b><div class="eqbig">${STN[k].find.eq}</div><div class="small">${STN[k].find.t}</div>
       <div class="tiny muted" style="margin-top:4px">${(done[k] || 0) > 0 ? '✅ ' + (done[k] || 0) + ' finished' : '⏳ still working'}${data ? ' · ' + data : ''}</div></div>`; }).join('');
   if (!open) {
