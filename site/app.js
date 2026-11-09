@@ -214,7 +214,9 @@ function postProgress() { if (!S.name) return; apiPost({ op: 'progress', cls: S.
 function paintTop() {
   const alias = { route: 'start', millikan: 'final', done: 'reflect' };
   let idx = STAGES.findIndex(x => x[0] === (alias[S.stage] || S.stage)); if (S.stage === 'done') idx = STAGES.length;
-  $('#rail').innerHTML = STAGES.map((s, i) => `<span class="${i < idx ? 'on' : i === idx ? 'now' : ''}" title="${s[1]}"></span>`).join('');
+  S.maxIdx = Math.max(S.maxIdx || 0, idx);
+  $('#rail').innerHTML = STAGES.map((s, i) => { const can = i >= 2 && i <= S.maxIdx && i !== idx; return `<span class="${i < idx || (i <= S.maxIdx && i !== idx) ? 'on' : i === idx ? 'now' : ''}${can ? ' click' : ''}" data-i="${i}" title="${s[1]}${can ? ' (tap to go back)' : ''}"></span>`; }).join('');
+  $('#rail').querySelectorAll('span.click').forEach(sp => sp.onclick = () => { const st = STAGES[+sp.dataset.i][0]; if (st === 'lab' && S.step > 3) S.step = 3; go(st); });
   const latest = i => [S.scEnd[i], S.scMid[i], S.scStart[i]].find(x => x != null);
   $('#scbar').innerHTML = SC.map((c, i) => { const v = latest(i); return `<span class="scchip ${v == null ? '' : 'r' + v}" title="SC${i + 1} ${c.short}: ${v == null ? 'not rated yet' : RATE[v]}"><i></i>SC${i + 1}</span>`; }).join('') +
     `<span class="net ${!ONLINE ? '' : netOK ? 'on' : 'off'}" title="connection to your group">${!ONLINE ? 'solo mode' : netOK ? '● live' : '● reconnecting'}</span>`;
@@ -962,11 +964,12 @@ async function rFinal() {
     return;
   }
   const F = S.final;
-  app().innerHTML = `<div class="stcard reveal"><div class="ph" style="background-image:url(img/finebeam.webp)"></div><div class="tx"><span class="pill">🔓 The Thomson tube</span><h2>Put the three pieces together.</h2><div class="muted">Everyone, the same task. Use all three discoveries.</div></div></div>
+  app().innerHTML = `<div class="stcard reveal"><div class="ph" style="background-image:url(img/finebeam.webp)"></div><div class="tx"><span class="pill">🔓 The Thomson tube</span><h2>Put the three pieces together.</h2><div class="muted">Everyone, the same task. Use all three discoveries.</div><div><button class="btn ghost" id="fback" style="color:#fff;border-color:rgba(255,255,255,.4)">← Back to my station</button></div></div></div>
    <div class="card" style="margin-top:14px"><div class="disc">${disc}</div></div>
    <div class="card"><h3>Combine A and B: make the speed disappear</h3><ol class="steps" id="cmb"></ol><button class="btn" id="more">Show the next line ↓</button></div>
    <div class="grid2"><div class="card"><h3>Measure it</h3><div class="tiny muted">V = 250 V · coil current 1.50 A, so B = ${fx(KCOIL * 1.5 * 1e3, 2)} mT</div><div id="tube" style="margin-top:6px"></div></div>
    <div class="card" id="calc"><h3>Find q/m</h3><p class="muted">Line up the marker and tap Record first.</p></div></div>`;
+  $('#fback').onclick = () => { S.step = 1; go('lab'); };
   const lines = [
     { m: M(mi('q') + mi('V') + mo('=') + frac(mn(1), mn(2)) + mi('m') + sq(mi('v')) + mo('⇒') + sq(mi('v')) + mo('=') + frac(mn(2) + mi('q') + mi('V'), mi('m'))), w: '⚡ Station A: the speed the gun gives.' },
     { m: M(mi('r') + mo('=') + frac(mi('m') + mi('v'), mi('q') + mi('B')) + mo('⇒') + mi('v') + mo('=') + frac(mi('q') + mi('B') + mi('r'), mi('m'))), w: '🧲 Station B: rearrange for v.' },
