@@ -212,3 +212,5 @@ table.rec th:not(.pc){white-space:nowrap}
 .scene .nav .btn:disabled{opacity:.4}
 .scene .dots i{cursor:pointer}
 .scene .cap{margin-bottom:64px}
+.scene .nav .btn:not(.primary){color:#15171C;background:#fff}
+.sci.plain input.m{width:80px;text-align:left}

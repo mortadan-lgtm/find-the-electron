@@ -96,7 +96,7 @@ const STN = {
     title: 'Why does the beam bend?', icon: '⚡', img: 'img/filament.webp',
     goal: 'Why does a beam of electrons bend, and why does a faster beam bend less?',
     readHint: 'Drag the <b>cyan marker</b> onto the glowing trace at the 8 cm line, then tap <b>Record</b>.',
-    proc: [{ k: 'iV', h: '1 ÷ V', u: 'kV⁻¹', ph: '', f: r => 1 / r.kV }, { k: 'yV', h: 'y × V', u: 'cm kV', ph: '', f: r => r.y * r.kV }],
+    proc: [{ k: 'iV', h: '1 ÷ V', u: 'kV⁻¹', plain: true, f: r => 1 / r.kV }, { k: 'yV', h: 'y × V', u: 'cm kV', plain: true, f: r => r.y * r.kV }],
     scene: [
       { img: 'img/filament.webp', cap: 'Hot metal boils off electrons.', sub: 'The electron gun turns them into a fast, steady beam.' },
       { anim: 'gun', cap: 'The gun voltage V sets how fast they go.', sub: 'Higher V, faster electrons.' },
@@ -122,7 +122,7 @@ const STN = {
       { anim: 'curl', cap: 'Your mission: measure the circle.', sub: 'Change B. Read the diameter on the ruler.' }],
     pred: { q: 'You make the magnetic field STRONGER. The circle gets…', o: ['smaller', 'bigger', 'no change'] },
     cols: [{ k: 'V', label: 'V / V', tol: v => 0.6 }, { k: 'I', label: 'I / A', tol: v => 0.051 }, { k: 'd', label: 'd / cm', tol: v => 0.21 }],
-    proc: [{ k: 'r', h: 'r = d ÷ 2', u: 'm', ph: '0.04', f: r => r.d / 200 }, { k: 'B', h: 'B = 0.78 mT × I', u: 'T', ph: '1.2e-3', f: r => KCOIL * r.I }, { k: 'rB', h: 'r × B', u: 'T m', ph: '5e-5', f: r => r.d / 200 * KCOIL * r.I }],
+    proc: [{ k: 'r', h: 'r = d ÷ 2', u: 'cm', plain: true, f: r => r.d / 2 }, { k: 'B', h: 'B = 0.78 × I', u: 'mT', plain: true, f: r => 0.78 * r.I }, { k: 'rB', h: 'r × B', u: 'cm mT', plain: true, f: r => r.d / 2 * 0.78 * r.I }],
     steps: [
       { m: EQ.FqvB, w: 'A moving charge feels a force at right angles to its velocity.' },
       { m: '<b>sideways force → no work → constant speed</b>', w: 'It never speeds the electron up, it only turns it: a circle.' },
@@ -141,7 +141,7 @@ const STN = {
       { anim: 'straight', cap: 'Your mission: balance them.', sub: 'Spot on the centre line means the forces cancel.' }],
     pred: { q: 'A FASTER beam, same B. To keep it straight you need…', o: ['a bigger E', 'a smaller E', 'the same E'] },
     cols: [{ k: 'beam', label: 'beam', tol: v => 0.01 }, { k: 'Vp', label: 'plate V / V', tol: v => 1.5 }, { k: 'I', label: 'I / A', tol: v => 0.011 }],
-    proc: [{ k: 'E', h: 'E = V ÷ 0.040 m', u: 'V m⁻¹', ph: '5e3', f: r => r.Vp / 0.04 }, { k: 'B', h: 'B = 0.78 mT × I', u: 'T', ph: '7.8e-4', f: r => KCOIL * r.I }, { k: 'v', h: 'v = E ÷ B', u: 'm s⁻¹', ph: '7e6', f: r => r.Vp / 0.04 / (KCOIL * r.I) }],
+    proc: [{ k: 'E', h: 'E = V ÷ 0.040 m', u: 'V m⁻¹', plain: true, f: r => r.Vp / 0.04 }, { k: 'B', h: 'B = 0.78 × I', u: 'mT', plain: true, f: r => 0.78 * r.I }, { k: 'v', h: 'v = E ÷ B', u: 'm s⁻¹ · B in tesla!', f: r => r.Vp / 0.04 / (KCOIL * r.I) }],
     steps: [
       { m: EQ.FqE, w: 'The electric field pushes the electron up, towards the positive plate.' },
       { m: EQ.FqvB, w: 'The magnetic field pushes it down.' },
@@ -159,9 +159,9 @@ const AN = {
     tasks: true,
     formula: `${M(mi('y') + mo('∝') + frac(mn(1), mi('V')))} &nbsp; so &nbsp; ${M(mi('y') + mo('×') + mi('V') + mo('=') + mtext('constant'))} &nbsp;&nbsp; ${EQ.KE}`,
     list: (lvl, rows) => { const r = rows[0], Vn = r.kV >= 4 ? 1.5 : 4.0, out = [
-      { id: 'y', p: `Trial 1 bent y = ${r.y} cm at ${r.kV} kV. Predict the bend at ${Vn} kV.`, unit: 'cm', exp: r.y * r.kV / Vn, tol: 0.06, hint: `y × V stays the same: ${r.y} × ${r.kV} = ? × ${Vn}` }];
-      if (lvl >= 2) out.push({ id: 'V', p: `What gun voltage would make the beam bend exactly 1.0 cm?`, unit: 'kV', exp: r.y * r.kV / 1.0, tol: 0.06, hint: 'y × V stays the same, so V = (y × V) ÷ 1.0' });
-      if (lvl >= 3) out.push({ id: 'W', p: `Each electron in trial 1 gains W = qV. Give W in electronvolts (1 eV = the energy one electron gains through 1 V).`, unit: 'eV', exp: r.kV * 1000, tol: 0.01, hint: 'One electron through V volts gains V electronvolts. Watch the kilo.' });
+      { id: 'y', p: `Trial 1 bent y = ${r.y} cm at ${r.kV} kV. Predict the bend at ${Vn} kV.`, unit: 'cm', plain: true, exp: r.y * r.kV / Vn, tol: 0.06, hint: `y × V stays the same: ${r.y} × ${r.kV} = ? × ${Vn}` }];
+      if (lvl >= 2) out.push({ id: 'V', p: `What gun voltage would make the beam bend exactly 1.0 cm?`, unit: 'kV', plain: true, exp: r.y * r.kV / 1.0, tol: 0.06, hint: 'y × V stays the same, so V = (y × V) ÷ 1.0' });
+      if (lvl >= 3) out.push({ id: 'W', p: `Each electron in trial 1 gains W = qV. Give W in electronvolts (1 eV = the energy one electron gains through 1 V).`, unit: 'eV', plain: true, exp: r.kV * 1000, tol: 0.01, hint: 'One electron through V volts gains V electronvolts. Watch the kilo.' });
       return out; },
     graph: rows => ({ pts: rows.map(r => [1 / r.kV, r.y]), xl: '1/V / kV⁻¹', yl: 'y / cm', fit: 'origin', note: 'Straight line through the origin: y ∝ 1/V. Faster beam, less bend.' })
   },
@@ -169,9 +169,9 @@ const AN = {
     tasks: true,
     formula: `${M(mi('B') + mo('=') + mn('0.78 mT') + mo('×') + mi('I'))} &nbsp;&nbsp; ${EQ.r} &nbsp;&nbsp; ${M(mi('r') + mi('B') + mo('=') + frac(mi('m') + mi('v'), mi('q')))}`,
     list: (lvl, rows) => { const r = rows[0], out = [
-      { id: 'B', p: `Trial 1: the coil current is ${r.I} A. What is B? (0.78 mT for every amp)`, unit: 'T', ph: '1.2e-3', exp: KCOIL * r.I, tol: 0.03, hint: `0.78 × 10⁻³ × ${r.I}` }];
-      if (lvl >= 2) out.push({ id: 'r2', p: `Same beam, but B made twice as strong. Predict the new radius from trial 1.`, unit: 'cm', ph: '2.0', exp: r.d / 4, tol: 0.05, hint: `r ∝ 1/B. Trial 1 radius = ${fx(r.d / 2, 2)} cm.` });
-      if (lvl >= 3) out.push({ id: 'I2', p: `Same beam. What coil current would make the diameter ${fx(r.d * 0.8, 1)} cm?`, unit: 'A', ph: '1.9', exp: r.I / 0.8, tol: 0.04, hint: 'r × B stays the same, so I × d stays the same.' });
+      { id: 'B', p: `Trial 1: the coil current is ${r.I} A. What is B? (0.78 mT for every amp)`, unit: 'mT', plain: true, exp: 0.78 * r.I, tol: 0.03, hint: `0.78 × ${r.I}` }];
+      if (lvl >= 2) out.push({ id: 'r2', p: `Same beam, but B made twice as strong. Predict the new radius from trial 1.`, unit: 'cm', plain: true, exp: r.d / 4, tol: 0.05, hint: `r ∝ 1/B. Trial 1 radius = ${fx(r.d / 2, 2)} cm.` });
+      if (lvl >= 3) out.push({ id: 'I2', p: `Same beam. What coil current would make the diameter ${fx(r.d * 0.8, 1)} cm?`, unit: 'A', plain: true, exp: r.I / 0.8, tol: 0.04, hint: 'r × B stays the same, so I × d stays the same.' });
       return out; },
     graph: rows => { const V0 = rows[0].V, same = rows.filter(r => r.V === V0); return { pts: same.map(r => [1 / (KCOIL * r.I * 1e3), r.d / 2]), xl: `1/B / mT⁻¹ (beam at ${V0} V)`, yl: 'r / cm', fit: 'origin', note: 'Same beam, straight line through the origin: r ∝ 1/B. That is why r × B stays the same.' }; }
   },
@@ -179,8 +179,8 @@ const AN = {
     tasks: true,
     formula: `${M(mi('E') + mo('=') + frac(mi('V'), mi('d')))} &nbsp;&nbsp; ${M(mi('B') + mo('=') + mn('0.78 mT') + mo('×') + mi('I'))} &nbsp;&nbsp; ${EQ.vEB}`,
     list: (lvl, rows) => { const r = rows[0], E = r.Vp / 0.04, B = KCOIL * r.I, v = E / B, out = [
-      { id: 'v', p: `Beam ${r.beam} balanced at E = ${sci(E, 3)} V m⁻¹ and B = ${sci(B, 3)} T. How fast is it?`, unit: 'm s⁻¹', ph: '7e6', exp: v, tol: 0.03, hint: 'Balanced: qE = qvB, so v = E ÷ B.' }];
-      if (lvl >= 2 && rows[1]) { const r2 = rows[1]; out.push({ id: 'E2', p: `Beam ${r2.beam} has the speed in your table. If B were doubled, what E would balance it?`, unit: 'V m⁻¹', ph: '1e4', exp: 2 * r2.Vp / 0.04, tol: 0.03, hint: 'v = E/B must stay the same, so E doubles too.' }); }
+      { id: 'v', p: `Beam ${r.beam} balanced at E = ${sci(E, 3)} V m⁻¹ and B = ${sci(B, 3)} T. How fast is it?`, unit: 'm s⁻¹', ph: '7e6', exp: v, tol: 0.03, hint: 'Balanced: qE = qvB, so v = E ÷ B. B must be in tesla.' }];
+      if (lvl >= 2 && rows[1]) { const r2 = rows[1]; out.push({ id: 'E2', p: `Beam ${r2.beam} has the speed in your table. If B were doubled, what E would balance it?`, unit: 'V m⁻¹', plain: true, exp: 2 * r2.Vp / 0.04, tol: 0.03, hint: 'v = E/B must stay the same, so E doubles too.' }); }
       if (lvl >= 3) out.push({ id: 'qm', p: `Beam ${r.beam} came from a ${GUN[r.beam]} V gun. Use qV = ½mv² to find q/m.`, unit: 'C kg⁻¹', ph: '1.8e11', exp: v * v / (2 * GUN[r.beam]), tol: 0.05, hint: 'q/m = v² ÷ (2V)' });
       return out; },
     graph: rows => ({ pts: rows.map(r => [r.beam, (r.Vp / 0.04) / (KCOIL * r.I) / 1e6]), xl: 'beam', yl: 'v / 10⁶ m s⁻¹', fit: null, xint: true, note: 'Each beam has its own speed, v = E/B, found without knowing q or m.' })
@@ -248,18 +248,18 @@ function mcq(host, q, id, onDone) {
   });
 }
 /* scientific-notation box: [mantissa] × 10^[power]; value string "m" or "m e p" */
-const sciHTML = (attr = '') => `<span class="sci" ${attr}><input class="m" inputmode="decimal" placeholder="?" aria-label="number"><span class="t">× 10</span><input class="x" inputmode="numeric" placeholder="0" aria-label="power of ten"></span>`;
-const sciGet = box => { const m = box.querySelector('.m').value.trim(), x = box.querySelector('.x').value.trim().replace(/[−–]/g, '-'); return m === '' ? '' : x === '' ? m : m + 'e' + x; };
-const sciSet = (box, str) => { str = String(str || ''); const i = str.toLowerCase().indexOf('e'); box.querySelector('.m').value = i < 0 ? str : str.slice(0, i); box.querySelector('.x').value = i < 0 ? '' : str.slice(i + 1); };
+const sciHTML = (attr = '', plain = false) => plain ? `<span class="sci plain" ${attr}><input class="m" inputmode="decimal" placeholder="?" aria-label="number"></span>` : `<span class="sci" ${attr}><input class="m" inputmode="decimal" placeholder="?" aria-label="number"><span class="t">× 10</span><input class="x" inputmode="numeric" placeholder="0" aria-label="power of ten"></span>`;
+const sciGet = box => { const m = box.querySelector('.m').value.trim(), xe = box.querySelector('.x'), x = xe ? xe.value.trim().replace(/[−–]/g, '-') : ''; return m === '' ? '' : x === '' ? m : m + 'e' + x; };
+const sciSet = (box, str) => { str = String(str || ''); const xe = box.querySelector('.x'); if (!xe) { box.querySelector('.m').value = str; return; } const i = str.toLowerCase().indexOf('e'); box.querySelector('.m').value = i < 0 ? str : str.slice(0, i); xe.value = i < 0 ? '' : str.slice(i + 1); };
 function numTask(host, cfg, id, onDone) {
   const d = document.createElement('div');
   d.innerHTML = `<div class="q">${cfg.p}</div>${cfg.help ? `<div class="muted small" style="margin:2px 0 8px">${cfg.help}</div>` : ''}
-   <div class="row">${sciHTML()}<span>${cfg.unit || ''}</span><button class="btn primary">Check</button></div><div class="fbx"></div>`;
+   <div class="row">${sciHTML('', !!cfg.plain)}<span>${cfg.unit || ''}</span><button class="btn primary">Check</button></div><div class="fbx"></div>`;
   host.appendChild(d);
   const box = d.querySelector('.sci'), fbx = d.querySelector('.fbx'), btn = d.querySelector('button'); let tries = 0;
   const inp = { get value() { return sciGet(box); }, set disabled(v) { box.querySelectorAll('input').forEach(i => i.disabled = v); }, addEventListener: (ev, fn) => box.querySelectorAll('input').forEach(i => i.addEventListener(ev, fn)) };
   btn.onclick = () => {
-    const v = parseNum(inp.value); if (!isFinite(v)) { fbx.innerHTML = `<div class="fb hint">Type a number. For 8.4 × 10⁶, type 8.4 in the first box and 6 in the small box.</div>`; return; }
+    const v = parseNum(inp.value); if (!isFinite(v)) { fbx.innerHTML = `<div class="fb hint">${cfg.plain ? 'Type a number.' : 'Type a number. For 8.4 × 10⁶, type 8.4 in the first box and 6 in the small box.'}</div>`; return; }
     tries++; const ok = cfg.check(v);
     if (!(id in S.first)) { S.first[id] = ok; save(); }
     box.classList.toggle('ok', ok); box.classList.toggle('chk', !ok);
@@ -545,7 +545,7 @@ function paintTable() {
   if (host.dataset.key !== key) {
     host.dataset.key = key;
     host.innerHTML = R.rows.length ? `<div style="overflow-x:auto"><table class="rec"><tr><th>#</th>${st.cols.map(c => `<th>${c.label}</th>`).join('')}${st.proc.map(p => `<th class="pc">${p.h}<small>${p.u}</small></th>`).join('')}<th></th></tr>
-      ${R.rows.map((r, i) => `<tr><td><b>${i + 1}</b><span class="by">${esc(r.by.split(' ')[0])}</span></td>${st.cols.map(c => `<td class="rv">${fmtRaw(r.raw[c.k])}</td>`).join('')}${st.proc.map(p => `<td>${sciHTML(`data-cell="${r.id}|p_${p.k}"`)}</td>`).join('')}<td><button class="x" data-del="${r.id}" title="delete this reading">×</button></td></tr>`).join('')}</table></div>`
+      ${R.rows.map((r, i) => `<tr><td><b>${i + 1}</b><span class="by">${esc(r.by.split(' ')[0])}</span></td>${st.cols.map(c => `<td class="rv">${fmtRaw(r.raw[c.k])}</td>`).join('')}${st.proc.map(p => `<td>${sciHTML(`data-cell="${r.id}|p_${p.k}"`, !!p.plain)}</td>`).join('')}<td><button class="x" data-del="${r.id}" title="delete this reading">×</button></td></tr>`).join('')}</table></div>`
       : `<div class="muted small">No readings yet. Trial leads: run the first trial.</div>`;
     host.querySelectorAll('.sci[data-cell]').forEach(box => {
       const commit = () => { const [id, col] = box.dataset.cell.split('|'); const v = sciGet(box); const row = R.rows.find(x => x.id === id); if (!row) return; if ((row.rec[col] && row.rec[col].v) === v) return; roomOp('cell', { id, col, value: v }); paintTable(); };
@@ -874,7 +874,7 @@ function labProcessTasks(body) {
     c.querySelector('#mk').innerHTML = `<span class="mark">${S.mark}</span> <span class="tiny muted">right first time</span>`;
     if (!c.querySelector('#gonext')) { const nb = nextBtn(c, () => { S.step = 3; save(); render(); }, 'Explain it'); nb.id = 'gonext'; } };
   const run = i => { if (i >= list.length) { fin(); return; } const t = list[i];
-    numTask(host, { p: t.p, unit: t.unit, ph: t.ph, check: v => within(v, t.exp, t.tol), hint: t.hint, why: () => `${sci(t.exp, 3)} ${t.unit}` }, k + '·p·' + t.id, () => run(i + 1)); };
+    numTask(host, { p: t.p, unit: t.unit, ph: t.ph, plain: !!t.plain, check: v => within(v, t.exp, t.tol), hint: t.hint, why: () => `${sci(t.exp, 3)} ${t.unit}` }, k + '·p·' + t.id, () => run(i + 1)); };
   run(0);
   const back = document.createElement('button'); back.className = 'btn ghost small'; back.textContent = '← back to the experiment'; back.style.marginTop = '8px';
   back.onclick = () => { S.step = 1; save(); render(); }; c.appendChild(back);
