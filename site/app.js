@@ -171,7 +171,7 @@ const AN = {
     tasks: true,
     formula: `${M(mi('B') + mo('=') + mn('0.78 mT') + mo('×') + mi('I'))} &nbsp;&nbsp; ${EQ.r} &nbsp;&nbsp; ${M(mi('r') + mi('B') + mo('=') + frac(mi('m') + mi('v'), mi('q')))}`,
     list: (lvl, rows) => { const r = rows[0], out = [
-      { id: 'B', p: `Trial 1: the coil current is ${fx(r.I, 2)} A. What is B? (0.78 mT for every amp)`, unit: 'mT', plain: true, exp: 0.78 * r.I, tol: 0.03, hint: `0.78 × ${fx(r.I, 2)}` }];
+      { id: 'B', p: `Trial 1: the ammeter reads I = ${fx(r.I, 2)} A. For these coils B = 0.78 mT × I. What is B?`, unit: 'mT', plain: true, exp: 0.78 * r.I, tol: 0.03, hint: `0.78 × ${fx(r.I, 2)}` }];
       if (lvl >= 2) out.push({ id: 'r2', p: `Same beam, but B made twice as strong. Predict the new radius from trial 1.`, unit: 'cm', plain: true, exp: r.d / 4, tol: 0.05, hint: `r ∝ 1/B. Trial 1 radius = ${fx(r.d / 2, 2)} cm.` });
       if (lvl >= 3) out.push({ id: 'I2', p: `Same beam. What coil current would make the diameter ${fx(r.d * 0.8, 1)} cm?`, unit: 'A', plain: true, exp: r.I / 0.8, tol: 0.04, hint: 'r × B stays the same, so I × d stays the same.' });
       return out; },
@@ -209,7 +209,7 @@ function summary() {
     diag: S.diag.map((d, i) => d == null ? '' : d === DIAG[i].a ? '✓' : '✗'), mark: S.mark, first: S.first, doneStation: S.doneStation,
     qm: S.final.qm || null, m: S.final.m || null, dRead: S.final.dRead || null, exit: S.exit == null ? '' : (S.exit === EXIT.a ? '✓' : '✗'), minutes: Math.round((Date.now() - S.t0) / 60000) };
 }
-function postProgress() { if (!S.name) return; apiPost({ op: 'progress', cls: S.cls, name: S.name, data: summary() }).catch(() => { netFail(); }); }
+function postProgress() { if (!S.name || S.preview) return; apiPost({ op: 'progress', cls: S.cls, name: S.name, data: summary() }).catch(() => { netFail(); }); }
 
 /* ============ TOP BAR ============ */
 function paintTop() {
@@ -217,7 +217,7 @@ function paintTop() {
   let idx = STAGES.findIndex(x => x[0] === (alias[S.stage] || S.stage)); if (S.stage === 'done') idx = STAGES.length;
   S.maxIdx = Math.max(S.maxIdx || 0, idx);
   $('#rail').innerHTML = STAGES.map((s, i) => { const can = i >= 2 && i <= S.maxIdx && i !== idx; return `<span class="${i < idx || (i <= S.maxIdx && i !== idx) ? 'on' : i === idx ? 'now' : ''}${can ? ' click' : ''}" data-i="${i}" title="${s[1]}${can ? ' (tap to go back)' : ''}"></span>`; }).join('');
-  $('#rail').querySelectorAll('span.click').forEach(sp => sp.onclick = () => { const st = STAGES[+sp.dataset.i][0]; if (st === 'lab' && S.step > 3) S.step = 3; go(st); });
+  $('#rail').querySelectorAll('span.click').forEach(sp => sp.onclick = () => { const st = STAGES[+sp.dataset.i][0]; if (st === 'lab' && S.step > 4) S.step = 4; go(st); });
   const latest = i => [S.scEnd[i], S.scMid[i], S.scStart[i]].find(x => x != null);
   $('#scbar').innerHTML = SC.map((c, i) => { const v = latest(i); return `<span class="scchip ${v == null ? '' : 'r' + v}" title="SC${i + 1} ${c.short}: ${v == null ? 'not rated yet' : RATE[v]}"><i></i>SC${i + 1}</span>`; }).join('') +
     `<span class="net ${!ONLINE ? '' : netOK ? 'on' : 'off'}" title="connection to your group">${!ONLINE ? 'solo mode' : netOK ? '● live' : '● reconnecting'}</span>`;
@@ -331,8 +331,38 @@ function coachNext() {
 }
 
 /* ============ ROUTER ============ */
+/* ---------- teacher preview: jump to any station, tab or stage; nothing is saved to the class ---------- */
+function demoRows() {
+  const k = S.station, st = STN[k];
+  const raws = k === 'A' ? [1.5, 2.5, 4.0].map(kV => ({ kV, y: Math.round(20 / kV) / 10 }))
+    : k === 'B' ? [1.2, 1.6, 2.2].map(I => ({ V: 250, I, d: Math.round(2 * speed(250) / (QM * KCOIL * I) * 1000) / 10 }))
+    : [1, 2, 3].map(beam => ({ beam, Vp: Math.round(speed(GUN[beam]) * KCOIL * 0.04), I: 1 }));
+  R.rows = raws.map((raw, i) => { const rec = {}; st.proc.forEach(p => rec['p_' + p.k] = { v: String(+(p.f(raw) / 10 ** (p.pow || 0)).toPrecision(4)), by: 'demo' }); return { id: 'demo' + i, by: 'Demo', raw, rec }; });
+}
+function startPreview() {
+  const keep = S.preview ? S : null;
+  S = Object.assign(blank(), { name: 'Teacher preview', cls: 'Test group', preview: true, unlocked: true, level: 2, scStart: [1, 1, 1], scMid: [1, 1, 1], diag: DIAG.map(d => d.a), stage: 'lab', station: 'A', step: 0 });
+  if (keep) S.seen = keep.seen || {};
+  R = null; seenRows = new Set(); save(false); history.replaceState(null, '', location.pathname); render();
+}
+function paintPreview() {
+  let bar = document.getElementById('pvbar'); if (!S.preview) { if (bar) bar.remove(); return; }
+  if (!bar) { bar = document.createElement('div'); bar.id = 'pvbar'; document.body.appendChild(bar); }
+  const b = (lab, on, act) => `<button class="${on ? 'on' : ''}" data-a="${act}">${lab}</button>`, lab = S.stage === 'lab';
+  bar.innerHTML = `<span class="pt">Preview</span>${['A', 'B', 'C'].map(k => b(k, S.station === k, 'st:' + k)).join('')}<i></i>
+    ${LABSTEPS.map((x, i) => b(x, lab && S.step === i, 'step:' + i)).join('')}<i></i>
+    ${[['check', 'Check'], ['final', 'Final tube'], ['millikan', 'Millikan'], ['reflect', 'Reflect']].map(([g, t]) => b(t, S.stage === g, 'go:' + g)).join('')}<i></i>
+    <button data-a="intro" title="show the intro and tips again">↺ Tips</button><button data-a="exit">Exit</button>`;
+  bar.querySelectorAll('button').forEach(x => x.onclick = () => { const [a, v] = x.dataset.a.split(':');
+    if (a === 'st') { S.station = v; R = null; seenRows = new Set(); S.doneStation = true; S.stage = 'lab'; S.step = 0; }
+    if (a === 'step') { S.stage = 'lab'; S.step = +v; S.doneStation = true; }
+    if (a === 'go') { S.stage = v; S.doneStation = true; }
+    if (a === 'intro') S.seen = {};
+    if (a === 'exit') { S = blank(); R = null; }
+    save(false); render(); });
+}
 function render() {
-  paintTop(); coachStop();
+  paintTop(); coachStop(); paintPreview();
   ({ welcome: rWelcome, start: rStart, route: rRoute, lab: rLab, check: rCheck, final: rFinal, millikan: rMillikan, reflect: rReflect, done: rDone }[S.stage] || rWelcome)();
 }
 
@@ -397,26 +427,28 @@ function hash(s) { let h = 0; for (const c of s) h = (h * 31 + c.charCodeAt(0)) 
    ====================================================================== */
 let R = null, pollT = null, sim = null, lastSimT = 0, localEditT = 0, seenRows = new Set(), labStep = null;
 function stopPoll() { clearInterval(pollT); pollT = null; }
-const LABSTEPS = ['Predict', 'Experiment', 'Process', 'Explain'];
+const LABSTEPS = ['Predict', 'Explore', 'Experiment', 'Process', 'Explain'];
 
 let lastLabStep = null;
 async function rLab() {
   const k = S.station; if (lastLabStep !== S.step) { lastLabStep = S.step; scrollTo(0, 0); }
-  if (S.step >= LABSTEPS.length) { S.doneStation = true; S.step = 3; save(); go('check'); return; }
+  if (S.step >= LABSTEPS.length) { S.doneStation = true; S.step = 4; save(); go('check'); return; }
   app().innerHTML = `<div class="card" style="padding:12px 16px"><div class="labhead"><div><span class="tag">${STN[k].icon} Station ${k}</span> <b>${STN[k].title}</b></div>
-    <div class="steps4">${LABSTEPS.map((x, i) => `<button data-st="${i}" class="${i === S.step ? 'now' : (S.visited || {})[i] ? 'done' : ''}">${x}</button>`).join('')}<button data-st="4" class="${S.doneStation ? 'done' : ''}">Progress check</button></div></div></div><div id="body"></div>`;
+    <div class="steps4">${LABSTEPS.map((x, i) => `<button data-st="${i}" class="${i === S.step ? 'now' : (S.visited || {})[i] ? 'done' : ''}">${x}</button>`).join('')}<button data-st="5" class="${S.doneStation ? 'done' : ''}">Progress check</button></div></div></div><div id="body"></div>`;
   S.visited = S.visited || {}; S.visited[S.step] = 1;
-  app().querySelectorAll('.steps4 button').forEach(b => b.onclick = () => { const i = +b.dataset.st; if (i === 4) { if (!S.doneStation) { toast('Finish Explain first, then do the progress check.'); return; } go('check'); return; } S.step = i; save(); render(); });
+  app().querySelectorAll('.steps4 button').forEach(b => b.onclick = () => { const i = +b.dataset.st; if (i === 5) { if (!S.doneStation) { toast('Finish Explain first, then do the progress check.'); return; } go('check'); return; } S.step = i; save(); render(); });
   // join room (once)
+  if (!R && S.preview) { R = { ver: 0, members: [{ name: S.name, role: 'trial', trial: 1 }], rows: [], sim: {}, pred: {} }; S.role = 'trial'; S.trial = 1; }
+  if (S.preview && S.step >= 3 && R.rows.filter(rowDone).length < 3) demoRows();
   if (!R) {
     try { const res = await apiPost({ op: 'join', cls: S.cls, st: k, name: S.name, level: S.level }); R = res.room; S.role = res.me.role; S.trial = res.me.trial; }
     catch (e) { netFail(); R = R || { ver: 0, members: [{ name: S.name, role: 'trial', trial: 1 }], rows: [], sim: {}, pred: {} }; S.role = S.role || 'trial'; S.trial = S.trial || 1; }
     R.rows.forEach(r => seenRows.add(r.id)); save();
   }
-  [labPredict, labExperiment, labProcess, labExplain][S.step]($('#body'));
+  [labPredict, labExplore, labExperiment, labProcess, labExplain][S.step]($('#body'));
 }
 function startPoll(onUpdate) {
-  stopPoll(); if (!ONLINE) return;
+  stopPoll(); if (!ONLINE || S.preview) return;
   pollT = setInterval(async () => {
     try { const r = await apiGet({ op: 'room', cls: S.cls, st: S.station }); netGood();
       if (!R || r.ver !== R.ver) { R = r; onUpdate && onUpdate(); } }
@@ -430,6 +462,7 @@ function roomOp(op, payload) {   // optimistic local apply + server
   if (op === 'run') { if (!R.rows.some(x => x.id === payload.row.id)) R.rows.push({ ...payload.row, by: S.name, t: Date.now(), rec: {} }); }
   if (op === 'cell') { const row = R.rows.find(x => x.id === payload.id); if (row) row.rec[payload.col] = { v: payload.value, by: S.name }; }
   if (op === 'delrow') R.rows = R.rows.filter(x => x.id !== payload.id);
+  if (S.preview) return;
   apiPost({ op, cls: S.cls, st: S.station, name: S.name, ...payload }).then(res => { if (res && res.room && res.room.ver >= (R.ver || 0)) R = res.room; }).catch(() => { netFail(); });
 }
 function recVals(row) {   // readings come straight from the instruments
@@ -457,8 +490,8 @@ function labPredict(body) {
   const k = S.station, st = STN[k];
   body.innerHTML = `<div class="card" style="max-width:820px;margin:auto"><span class="tag acc">Step 1 · Predict</span>
     <div class="figbox" style="margin-top:10px">${PREDFIG[k]}</div><p style="font-size:1.08rem;margin:10px 0">${PREDTXT[k]}</p>
-    <div class="q">${st.pred.q}</div><div class="pred" id="pred"></div><div class="tiny muted" style="margin-top:6px">Your team's picks show live. You will test it in the experiment.</div><div id="pgo"></div><button class="linkbtn" id="rintro" style="margin-top:10px">▶ Watch the intro again</button></div>`;
-  const refresh = () => { paintPred(); if (R.pred[S.name] != null && !$('#pgo').dataset.on) { $('#pgo').dataset.on = 1; nextBtn($('#pgo'), () => { S.step = 1; save(); render(); }, 'Go to the experiment'); } };
+    <div class="q">${st.pred.q}</div><div class="pred" id="pred"></div><div class="tiny muted" style="margin-top:6px">Your team's picks show live. Next you can try the apparatus, then test your prediction.</div><div id="pgo"></div><button class="linkbtn" id="rintro" style="margin-top:10px">▶ Watch the intro again</button></div>`;
+  const refresh = () => { paintPred(); if (R.pred[S.name] != null && !$('#pgo').dataset.on) { $('#pgo').dataset.on = 1; nextBtn($('#pgo'), () => { S.step = 1; save(); render(); }, 'Try the apparatus'); } };
   refresh(); startPoll(refresh);
   $('#pred').addEventListener('click', () => setTimeout(refresh, 50));
   const intro = () => { const cd = body.querySelector('.card'); cd.style.position = 'relative'; cd.style.minHeight = '400px'; cd.style.overflow = 'hidden'; playScene(cd, st.scene, () => { S.seen['scene' + k] = 1; save(false); }); };
@@ -466,10 +499,48 @@ function labPredict(body) {
   if (!S.seen['scene' + k]) intro();
 }
 
+/* ----- Explore (own copy, nothing recorded) ----- */
+const EXPLORE = {
+  A: 'Switch the plates on and off, then move both sliders: the gun voltage and the plate voltage. Watch the yellow force arrow and how far the beam bends.',
+  B: 'Switch on the gun and the coils. Try different gun voltages and coil currents and watch how the circle changes.',
+  C: 'Pick a beam and move both sliders. The plates push the beam up and the coils push it down. Find a setting where the beam goes straight.'
+};
+const VARS = {
+  A: { iv: 'the gun voltage V', dv: 'the deflection y at the 8 cm line', cv: 'the plates: 750 V, 6.0 cm apart, always on',
+       t: 'The plates are set to 750 V as the control. Change the gun voltage and measure the deflection y for at least 3 different voltages.' },
+  B: { iv: 'the coil current I', dv: 'the diameter d of the circle', cv: 'the gun voltage: 250 V',
+       t: 'The gun voltage is set to 250 V as the control. Change the current in the coils and measure the diameter for at least 3 different currents.' },
+  C: { iv: 'the beam (beams 1, 2 and 3 come from 150 V, 200 V and 250 V guns)', dv: 'the plate voltage that makes the beam go straight', cv: 'the coil current: 1.00 A, and the plates 4.0 cm apart',
+       t: 'The coil current is set to 1.00 A as the control. For each beam, change the plate voltage until the beam goes straight, then record that voltage.' }
+};
+const PROCNOTE = {
+  A: 'The voltmeter reads the gun voltage V in kV. Work out 1 ÷ V, then y × V. If y × V stays about the same, then y ∝ 1/V.',
+  B: 'The ammeter measures the coil current I. For these coils the magnetic field at the centre is <b>B = 0.78 mT × I</b> (the 0.78 comes from the size of the coils and their number of turns). Work out r = d ÷ 2, then B, then r × B.',
+  C: 'The plates are 0.040 m apart, so <b>E = V ÷ 0.040 m</b>. The ammeter measures the coil current I, and for these coils <b>B = 0.78 mT × I</b>. Then v = E ÷ B, with B in tesla (1 mT = 0.001 T).'
+};
+function fsHook() {
+  const sc = $('#simcard'), fsb = $('#fsbtn');
+  fsb.onclick = () => { if (document.fullscreenElement) document.exitFullscreen(); else if (sc.requestFullscreen) sc.requestFullscreen().catch(() => toast('Full screen is not available on this device.')); else toast('Full screen is not available on this device.'); };
+  document.onfullscreenchange = () => { if ($('#fsbtn')) $('#fsbtn').textContent = document.fullscreenElement ? '✕ Exit full screen' : '⛶ Full screen'; };
+}
+function labExplore(body) {
+  const k = S.station; stopPoll();
+  body.innerHTML = `<div class="card simcard" id="simcard" style="max-width:900px;margin:auto"><div class="mbox"><div class="row between"><span class="st">Step 2 · Explore the apparatus</span></div>
+    <div>${EXPLORE[k]}</div><div class="tiny muted">This is your own copy. Nothing is recorded, and your team's experiment is not changed.</div></div>
+    <div class="row between fsrow"><span class="tiny muted">Go full screen for a bigger view.</span><button class="btn" id="fsbtn">⛶ Full screen</button></div><div class="simwrap" id="simwrap"><div id="sim"></div></div><div id="exgo"></div></div>`;
+  const s = ({ A: simA, B: simB, C: simC })[k]($('#sim'), { mode: 'explore' });
+  if (k === 'A') s.onObserve = o => { if (o.plates && !S.seenPlates) { S.seenPlates = 1; save(false); } };
+  fsHook();
+  nextBtn($('#exgo'), () => { S.step = 2; save(); render(); }, 'Start the experiment');
+}
+
 /* ----- Experiment (shared) ----- */
 function labExperiment(body) {
   const k = S.station, st = STN[k], role = ROLES[S.role] || ROLES.trial;
-  body.innerHTML = `<div class="grid2">
+  const vb = VARS[k];
+  body.innerHTML = `<div class="card" id="varcard" style="padding:12px 16px"><div class="vars"><div><span>Change</span>${vb.iv}</div><div><span>Measure</span>${vb.dv}</div><div><span>Keep fixed</span>${vb.cv}</div></div>
+    <div class="small" style="margin-top:8px">${vb.t} In an experiment everything is kept the same except the one thing you change, and you measure what happens.</div></div>
+    <div class="grid2">
     <div class="card simcard" id="simcard"><div class="mbox" id="mbox"></div><div class="row between fsrow"><span class="tiny muted">Taking readings? Go full screen.</span><button class="btn" id="fsbtn">⛶ Full screen</button></div><div class="simwrap" id="simwrap"><div id="sim"></div></div><div class="remote" id="remote"></div></div>
     <div>
       <div class="card"><div class="role" id="rolecard"><span class="ic">${role.ic}</span><div><b>${role.name}${S.role === 'trial' ? ' ' + S.trial : ''}</b><div class="small muted">${role.job(S.trial)} Anyone can help with any job.</div></div></div>
@@ -477,12 +548,10 @@ function labExperiment(body) {
       <div class="card small" id="predcard">Your prediction: <b>${R.pred[S.name] != null ? st.pred.o[R.pred[S.name]] : '–'}</b> <button class="linkbtn" id="chgp">change</button><div class="tiny muted">${st.pred.q}</div></div>
     </div></div>
     <div class="card" id="reccard"><div class="row between"><h3 style="margin:0">Table of record</h3><span class="tiny muted" id="cnt"></span></div>
-      <div class="tiny muted" style="margin:2px 0 8px">Processors fill in the <b style="color:var(--accent-ink)">coloured columns</b> using the formula in each header. A cell turns green when it is right. Take 3 to 5 readings.</div>
+      <div class="small procnote">${PROCNOTE[k]}</div><div class="tiny muted" style="margin:2px 0 8px">Processors fill in the <b style="color:var(--accent-ink)">coloured columns</b> using the formula in each header. A cell turns green when it is right. Take 3 to 5 readings.</div>
       <div id="rectbl"></div><div id="recnext"></div></div>`;
-  sim = ({ A: simA, B: simB, C: simC })[k]($('#sim'));
-  const sc = $('#simcard'), fsb = $('#fsbtn');
-  fsb.onclick = () => { if (document.fullscreenElement) document.exitFullscreen(); else if (sc.requestFullscreen) sc.requestFullscreen().catch(() => toast('Full screen is not available on this device.')); else toast('Full screen is not available on this device.'); };
-  document.onfullscreenchange = () => { if ($('#fsbtn')) $('#fsbtn').textContent = document.fullscreenElement ? '✕ Exit full screen' : '⛶ Full screen'; };
+  sim = ({ A: simA, B: simB, C: simC })[k]($('#sim'), { mode: 'exp' });
+  fsHook();
   sim.onChange = s => { localEditT = Date.now(); clearTimeout(sim._t); sim._t = setTimeout(() => roomOp('sim', { sim: s }), 220); };
   sim.onRun = (raw, rec) => {
     if (R.rows.length >= 5) { toast('The table is full (5 readings). Delete one with × to add another.'); return false; }
@@ -515,13 +584,13 @@ function paintQuest(obs) {
 /* mission panel: why + what, 2–3 lines, changes with progress */
 const MISSION = {
   A: [['Bend the beam', 'The beam is a stream of electrons. Why does it curve when the plates are on?', 'Switch the deflecting plates on and off. Watch the yellow force arrow and the green velocity arrow.'],
-      ['Test your prediction', 'A higher gun voltage gives faster electrons. Do they bend more or less? Switch the plates on and watch the yellow force arrow.', 'Trial leads: 3 to 5 readings at different voltages. Processors: fill the coloured columns.'],
+      ['Test your prediction', 'A higher gun voltage gives faster electrons. Do they bend more or less? The plates stay at 750 V, so only the speed changes.', 'Trial leads: 3 to 5 readings at different gun voltages. Processors: fill the coloured columns.'],
       ['Check your prediction', 'Is y × V the same for every reading? If so, y ∝ 1/V, and doubling the voltage halves the bend. Can you explain why?', 'Agree on an answer as a team, then tap Process the data.']],
   B: [['Predict', 'A magnetic field bends a moving electron into a circle. What sets the size of the circle?', 'Make your prediction first. Your team\'s picks show live.'],
-      ['Test your prediction', 'The force qvB always points to the centre, so the beam goes round. What does a stronger field B do to the circle?', 'Trial leads: change the current, marker on top of the ring, Record. Processors: fill the coloured columns.'],
-      ['Check your prediction', 'Is r × B the same for every reading with one beam? If so, r ∝ 1/B.', 'Agree on an answer as a team, then tap Process the data.']],
+      ['Test your prediction', 'The gun voltage stays at 250 V, so every reading uses the same beam. What does a stronger field B do to the circle?', 'Trial leads: change the coil current, marker on top of the ring, Record. Processors: fill the coloured columns.'],
+      ['Check your prediction', 'Is r × B the same for every reading? If so, r ∝ 1/B.', 'Agree on an answer as a team, then tap Process the data.']],
   C: [['Predict', 'The electric field pushes the beam up, the magnetic field pushes it down. Balanced, the beam goes straight.', 'Make your prediction first. Your team\'s picks show live.'],
-      ['Test your prediction', 'Watch the electron between the plates. The electric force qE pushes it up and the magnetic force qvB pushes it down. When the two arrows are equal the beam goes straight, and v = E ÷ B.', 'Trial leads: balance each beam and Record. Processors: work out E, B and the speed v = E ÷ B.'],
+      ['Test your prediction', 'The coil current stays at 1.00 A, so B is the same for every beam. When the forces qE and qvB are equal the beam goes straight, and v = E ÷ B.', 'Trial leads: for each beam, change the plate voltage until it goes straight, then Record. Processors: work out E, B and the speed v = E ÷ B.'],
       ['Check your prediction', 'Look at the v column. Each beam has a different speed, and you found it without knowing q or m.', 'Agree on an answer as a team, then tap Process the data.']]
 };
 function paintMission() {
@@ -572,13 +641,12 @@ function paintTable() {
   });
   const n = R.rows.filter(rowDone).length; $('#cnt').textContent = `${R.rows.length} reading${R.rows.length === 1 ? '' : 's'} · ${n} processed · need 3`;
   const nx = $('#recnext');
-  if (n >= 3 && !nx.dataset.on) { nx.dataset.on = 1; nx.innerHTML = `<div class="fb good">Three readings processed. Everyone: make sense of the data on your own.</div>`; nextBtn(nx, () => { S.step = 2; save(); render(); }, 'Make sense of it'); }
+  if (n >= 3 && !nx.dataset.on) { nx.dataset.on = 1; nx.innerHTML = `<div class="fb good">Three readings processed. Everyone: make sense of the data on your own.</div>`; nextBtn(nx, () => { S.step = 3; save(); render(); }, 'Make sense of it'); }
   if (n < 3 && nx.dataset.on) { nx.dataset.on = ''; nx.innerHTML = ''; }
 }
 function roleCoachA2() {
   const predicted = () => R.pred[S.name] != null, ranMine = () => R.rows.some(r => r.by === S.name);
-  const steps = [{ el: sim.platesEl, t: 'Switch the <b>deflecting plates</b> on. Watch the arrows ride along the beam.', until: () => !!S.seenPlates },
-    ...(S.role === 'trial' ? [{ el: sim.ctrlEl, drag: true, t: 'Change the <b>gun voltage</b> for your reading.' },
+  const steps = [...(S.role === 'trial' ? [{ el: sim.ctrlEl, drag: true, t: 'Change the <b>gun voltage</b> for your reading. The plates stay at 750 V.' },
       { el: sim.runEl, t: STN.A.readHint + ' Take 3 to 5 readings at different voltages.', until: ranMine }]
     : [{ el: '#reccard', t: '<b>You process the readings</b>, using the formula in each coloured header. Watch the <b>y × V</b> column. What do you notice?', until: () => R.rows.some(r => Object.entries(r.rec).some(([c, x]) => c.startsWith('p_') && x.by === S.name)) }])];
   steps.forEach((x, i) => { x.n = i + 1; x.of = steps.length; }); coach(steps, 'roleA2');
@@ -594,7 +662,7 @@ function roleCoach() {
   const steps = [];
   if (k === 'B' && S.role === 'trial') steps.push({ el: sim.swEl, t: 'Switch on the <b>electron gun</b>: the beam shoots straight. Then switch on the <b>coils</b> and watch it curl.', until: () => { const g = sim.getState(); return g.gun && g.coils; } });
   if (S.role === 'trial') {
-    steps.push({ el: sim.ctrlEl, drag: true, t: k === 'B' ? 'Change the <b>coil current</b> to change the field B. Notice that the yellow force arrow always points to the centre.' : 'Pick a beam, then adjust E and B until the <b>yellow and pink arrows are equal</b> and the spot sits on 0.', until: changed });
+    steps.push({ el: sim.ctrlEl, drag: true, t: k === 'B' ? 'Change the <b>coil current</b> to change the field B. The gun voltage stays at 250 V. Notice that the yellow force arrow always points to the centre.' : 'Pick a beam, then adjust the <b>plate voltage</b> until the yellow and pink arrows are equal and the spot sits on 0. The coil current stays at 1.00 A.', until: changed });
     steps.push({ el: sim.runEl, t: k === 'B' ? 'Drag the cyan marker to the <b>top of the ring</b>, then tap <b>Record</b>.' : 'When the two forces are equal the beam goes straight. Tap <b>Record</b>.', until: ranMine });
   } else {
     steps.push({ el: '#reccard', t: `<b>You process the readings</b>, using the formula in each coloured header. ${k === 'C' ? 'The last column is the <b>speed</b>.' : 'Watch the <b>r × B</b> column. What do you notice?'}`, until: () => R.rows.some(r => Object.entries(r.rec).some(([c, x]) => c.startsWith('p_') && x.by === S.name)) });
@@ -682,9 +750,9 @@ function playScene(host, frames, done) {
 }
 
 /* ===== SIM A: deflection tube. Steady beam (invisible in vacuum, glows on the screen) + live force and velocity arrows ===== */
-function simA(host) {
-  const VP = 750, DP = 0.06, SX = 220, PXC = 34, CY = 160, XR = 8, CX = 64, AX = 144;
-  let kV = 2.0, Vr = realV(2000) / 1000, plates = false, mark = 0, unlocked = true;
+function simA(host, cfg = {}) {
+  const EXP = cfg.mode === 'exp', EXPL = cfg.mode === 'explore'; let VP = 750; const DP = 0.06, SX = 220, PXC = 34, CY = 160, XR = 8, CX = 64, AX = 144;
+  let kV = 2.0, Vr = realV(2000) / 1000, plates = EXP, mark = 0, unlocked = true;
   host.innerHTML = `<svg class="sim" viewBox="0 0 640 320">
    <defs><filter id="glA"><feGaussianBlur stdDeviation="2.4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
    <radialGradient id="bulbA" cx=".5" cy=".5"><stop offset="0" stop-color="#18223b"/><stop offset="1" stop-color="#0f1628"/></radialGradient>
@@ -712,7 +780,8 @@ function simA(host) {
    <text id="msgA" x="320" y="312" fill="#9AA4B8" font-size="12" text-anchor="middle"></text>
   </svg>
   <div class="ctrl" id="cA"><label>Gun voltage V (sets the speed) <output id="oV"></output></label><input type="range" id="sV" min="1" max="5" step="0.5" value="${kV}"></div>
-  <div class="row" id="platesRow"><button class="btn" id="bD">Deflecting plates: OFF</button><button class="btn primary" id="recA" disabled>📏 Record</button><div class="inst" id="inst"><div>voltmeter: <b id="iV"></b> kV</div><div>y = <b id="iY">–</b> cm</div></div></div>`;
+  ${EXPL ? '<div class="ctrl" id="cP"><label>Plate voltage <output id="oP"></output></label><input type="range" id="sP" min="250" max="1000" step="50" value="750"></div>' : ''}
+  <div class="row" id="platesRow"><button class="btn" id="bD" ${EXP ? 'disabled' : ''}>Deflecting plates: OFF</button><button class="btn primary" id="recA" disabled ${EXPL ? 'style="display:none"' : ''}>📏 Record</button><div class="inst" id="inst"><div>voltmeter: <b id="iV"></b> kV</div><div>y = <b id="iY">–</b> cm</div></div></div>`;
   const q = x => host.querySelector(x), svg = q('svg');
   let gr = ''; for (let c = 0; c <= 10; c++) { const x = SX + c * PXC; gr += `<line x1="${x}" y1="${CY - 3 * PXC}" x2="${x}" y2="${CY + 3 * PXC}" stroke="#4d7f9c" stroke-width="${c % 5 ? .6 : 1.1}" opacity=".7"/><text x="${x}" y="${CY + 3 * PXC + 24}" fill="#9AA4B8" font-size="10" text-anchor="middle">${c}</text>`; }
   for (let c = -3; c <= 3; c++) { const y = CY - c * PXC; gr += `<line x1="${SX}" y1="${y}" x2="${SX + 10 * PXC}" y2="${y}" stroke="#4d7f9c" stroke-width="${c ? .6 : 1.1}" opacity=".7"/><text x="${SX - 5}" y="${y + 4}" fill="#9AA4B8" font-size="10" text-anchor="end">${c > 0 ? '+' : ''}${c}</text>`;
@@ -727,9 +796,9 @@ function simA(host) {
     q('#mk').setAttribute('transform', `translate(0,${CY - mark * PXC})`);
     q('#oV').textContent = fx(Vr, 3) + ' kV'; q('#iV').textContent = fx(Vr, 3); q('#iY').textContent = fx(mark, 1);
     q('#ptop').textContent = plates ? `+ ${VP} V` : '0 V'; q('#ptop').setAttribute('fill', plates ? '#45C58C' : '#9AA4B8'); q('#pt').setAttribute('fill', plates ? '#9fe3c0' : '#c9d3e8');
-    q('#bD').textContent = 'Deflecting plates: ' + (plates ? 'ON' : 'OFF'); q('#bD').classList.toggle('primary', plates);
+    q('#bD').textContent = EXP ? 'Plates: ON at 750 V (control)' : 'Deflecting plates: ' + (plates ? 'ON' : 'OFF'); if (q('#oP')) q('#oP').textContent = VP + ' V'; q('#bD').classList.toggle('primary', plates);
     q('#recA').disabled = !(unlocked && plates);
-    q('#msgA').textContent = !plates ? 'With the plates off there is no force, so the beam goes straight.' : !unlocked ? 'The plates push the beam towards +, with the same force all the way.' : 'Line up the marker with the trace at 8 cm, then Record.';
+    q('#msgA').textContent = !plates ? 'With the plates off there is no force, so the beam goes straight.' : EXPL ? 'Change the voltages and watch how far the beam bends.' : !unlocked ? 'The plates push the beam towards +, with the same force all the way.' : 'Line up the marker with the trace at 8 cm, then Record.';
     o.onObserve && o.onObserve({ plates });
   };
   // live electron riding the trace, with velocity (green) and force (yellow) arrows
@@ -748,7 +817,8 @@ function simA(host) {
     requestAnimationFrame(ride); };
   requestAnimationFrame(ride);
   const changed = () => { draw(); o.onChange && o.onChange(o.getState()); };
-  q('#bD').onclick = () => { plates = !plates; changed(); };
+  q('#bD').onclick = () => { if (EXP) return; plates = !plates; changed(); };
+  if (q('#sP')) q('#sP').oninput = () => { VP = +q('#sP').value; changed(); };
   q('#sV').oninput = () => { kV = +q('#sV').value; Vr = realV(kV * 1000) / 1000; changed(); };
   const mk = q('#mk'); let drag = false;
   const toCm = ev => { const p = svg.createSVGPoint(); p.x = ev.clientX; p.y = ev.clientY; const z = p.matrixTransform(svg.getScreenCTM().inverse()); return Math.max(-3, Math.min(3, (CY - z.y) / PXC)); };
@@ -760,7 +830,7 @@ function simA(host) {
     if (Math.abs(mark - yt) > 0.15) { toast('Not lined up yet: put the marker exactly on the glowing trace at the 8 cm line.'); return; }
     o.onRun && o.onRun({ kV: Vr, y: mark, yTrue: +yt.toFixed(3) }); };
   o.getState = () => ({ kV, Vr, plates, mark });
-  o.setState = s => { if (s.kV != null) { kV = Math.round(s.kV * 2) / 2; q('#sV').value = kV; Vr = s.Vr != null ? s.Vr : s.kV; } if (s.plates != null) plates = s.plates; if (s.mark != null) mark = s.mark; draw(); };
+  o.setState = s => { if (s.kV != null) { kV = Math.round(s.kV * 2) / 2; q('#sV').value = kV; Vr = s.Vr != null ? s.Vr : s.kV; } if (s.plates != null && !EXP) plates = s.plates; if (s.mark != null) mark = s.mark; draw(); };
   o.unlock = () => { if (!unlocked) { unlocked = true; draw(); } };
   o.playRow = row => { o.setState({ kV: row.raw.kV, plates: true, mark: row.raw.y }); q('#trace').animate([{ opacity: .3 }, { opacity: 1 }], { duration: 600 }); };
   draw(); return o;
@@ -768,8 +838,9 @@ function simA(host) {
 
 /* ===== SIM B: fine-beam tube (also the final Thomson tube) ===== */
 function simB(host, cfg = {}) {
-  const PX = 21, cx = 260, cy = 222, Rb = 8.6 * PX, gx = cx, gy = cy + Rb - 14;
-  let V = cfg.fixedV || 200, Vr = cfg.fixedV || realV(200), I = cfg.fixedI || 1.5, mark = 6, gun = false, coils = false;
+  const PX = 21, cx = 260, cy = 222, Rb = 8.6 * PX, gx = cx, gy = cy + Rb - 14, EXP = cfg.mode === 'exp', EXPL = cfg.mode === 'explore';
+  if (EXP) cfg.lockV = 250;
+  let V = cfg.fixedV || cfg.lockV || 200, Vr = cfg.fixedV || cfg.lockV || realV(200), I = cfg.fixedI || 1.5, mark = 6, gun = false, coils = false;
   host.innerHTML = `<svg class="sim" viewBox="0 0 520 470">
    <defs><radialGradient id="bgB" cx=".5" cy=".42"><stop offset="0" stop-color="#161c2c"/><stop offset="1" stop-color="#06080e"/></radialGradient>
    <radialGradient id="bulb" cx=".42" cy=".36" r=".72"><stop offset="0" stop-color="#2b2244"/><stop offset=".72" stop-color="#140f25"/><stop offset="1" stop-color="#0b0915"/></radialGradient>
@@ -799,9 +870,10 @@ function simB(host, cfg = {}) {
    <defs><marker id="mBv" markerWidth="7" markerHeight="7" refX="5" refY="3.5" orient="auto"><path d="M0,0 L7,3.5 L0,7z" fill="#45C58C"/></marker><marker id="mBf" markerWidth="7" markerHeight="7" refX="5" refY="3.5" orient="auto"><path d="M0,0 L7,3.5 L0,7z" fill="#F2BD45"/></marker></defs>
    <g id="eB"><line id="bV" stroke="#45C58C" stroke-width="2.5" marker-end="url(#mBv)"/><line id="bF" stroke="#F2BD45" stroke-width="2.5" marker-end="url(#mBf)"/><circle id="bDot" r="5" fill="#cfe0ff" stroke="#fff" stroke-width="1.2"/><text id="tbV" fill="#45C58C" font-size="12" font-weight="800">v</text><text id="tbF" fill="#F2BD45" font-size="12" font-weight="800">F = qvB</text></g>
   </svg>
-  ${cfg.fixedV ? '' : `<div class="ctrl"><label>Electron gun voltage <output id="oV2"></output></label><div class="seg" id="segV">${[150, 200, 250, 300].map(v => `<button data-v="${v}">${v} V</button>`).join('')}</div></div>
+  ${cfg.fixedV ? '' : cfg.lockV ? `<div class="ctrl"><label>Electron gun voltage <output>${cfg.lockV} V (control)</output></label></div>
+  <div class="ctrl" id="cI"><label>Coil current I <output id="oI"></output></label><input type="range" id="sI" min="1" max="3" step="0.05" value="${I}"></div>` : `<div class="ctrl"><label>Electron gun voltage <output id="oV2"></output></label><div class="seg" id="segV">${[150, 200, 250, 300].map(v => `<button data-v="${v}">${v} V</button>`).join('')}</div></div>
   <div class="ctrl" id="cI"><label>Coil current I <output id="oI"></output></label><input type="range" id="sI" min="1" max="3" step="0.05" value="${I}"></div>`}
-  <div class="row" id="swB"><button class="btn" id="bGun">⚡ Electron gun: OFF</button><button class="btn" id="bCoil">🧲 Coils: OFF</button><button class="btn primary" id="rec">📏 Record</button></div>
+  <div class="row" id="swB"><button class="btn" id="bGun">⚡ Electron gun: OFF</button><button class="btn" id="bCoil">🧲 Coils: OFF</button><button class="btn primary" id="rec" ${EXPL ? 'style="display:none"' : ''}>📏 Record</button></div>
   <div class="row"><div class="inst" id="inst"><div>V = <b id="iV"></b> V</div><div>I = <b id="iI"></b> A</div></div></div>
   <div class="tiny muted" id="rmsg" style="margin-top:4px">Drag the cyan marker to the top of the glowing ring.</div><div class="tiny muted">The ring glows because the tube holds a little hydrogen gas.</div>`;
   const svg = host.querySelector('svg'), beam = host.querySelector('#beam'), mk = host.querySelector('#mk');
@@ -819,7 +891,7 @@ function simB(host, cfg = {}) {
     host.querySelector('#bGun').textContent = '⚡ Electron gun: ' + (gun ? 'ON' : 'OFF'); host.querySelector('#bGun').classList.toggle('primary', gun);
     host.querySelector('#bCoil').textContent = '🧲 Coils: ' + (coils ? 'ON' : 'OFF'); host.querySelector('#bCoil').classList.toggle('primary', coils);
     host.querySelector('#rec').disabled = !(gun && coils);
-    host.querySelector('#rmsg').textContent = !gun ? 'Switch on the electron gun.' : !coils ? 'No magnetic field: the beam goes straight. Switch on the coils.' : 'Drag the cyan marker to the top of the glowing ring, then read the diameter on the scale.';
+    host.querySelector('#rmsg').textContent = !gun ? 'Switch on the electron gun.' : !coils ? 'No magnetic field: the beam goes straight. Switch on the coils.' : EXPL ? 'Try a different gun voltage or coil current and watch the circle change.' : 'Drag the cyan marker to the top of the glowing ring, then read the diameter on the scale.';
     host.querySelector('#iV').textContent = Vr; host.querySelector('#iI').textContent = fx(I, 2);
     if (host.querySelector('#oI')) host.querySelector('#oI').textContent = fx(I, 2) + ' A';
     if (host.querySelector('#oV2')) { host.querySelector('#oV2').textContent = 'about ' + V + ' V'; host.querySelectorAll('#segV button').forEach(b => b.classList.toggle('on', +b.dataset.v === V)); }
@@ -833,7 +905,7 @@ function simB(host, cfg = {}) {
   mk.addEventListener('pointerup', () => drag = false);
   svg.addEventListener('click', e => { if (e.target.closest('#mk')) return; mark = Math.round(toCm(e) * 10) / 10; changed(); });
   host.querySelector('#bGun').onclick = () => { gun = !gun; changed(); }; host.querySelector('#bCoil').onclick = () => { coils = !coils; changed(); };
-  o.getState = () => ({ V, Vr, I, mark, gun, coils }); o.setState = s => { if (s.gun != null) gun = s.gun; if (s.coils != null) coils = s.coils; if (s.V) { V = [150, 200, 250, 300].reduce((a, b) => Math.abs(b - s.V) < Math.abs(a - s.V) ? b : a); Vr = s.Vr || s.V; } if (s.I) { I = s.I; if (sI) sI.value = I; } if (s.mark != null) mark = s.mark; draw(); };
+  o.getState = () => ({ V, Vr, I, mark, gun, coils }); o.setState = s => { if (s.gun != null) gun = s.gun; if (s.coils != null) coils = s.coils; if (s.V && !cfg.lockV && !cfg.fixedV) { V = [150, 200, 250, 300].reduce((a, b) => Math.abs(b - s.V) < Math.abs(a - s.V) ? b : a); Vr = s.Vr || s.V; } if (s.I) { I = s.I; if (sI) sI.value = I; } if (s.mark != null) mark = s.mark; draw(); };
   host.querySelector('#rec').onclick = () => { const d = 2 * rOf() * 100, msg = host.querySelector('#rmsg');
     if (Math.abs(mark - d) > 0.2) { msg.innerHTML = '<b style="color:var(--bad)">Not lined up.</b> Put the marker exactly on the top of the ring.'; return; }
     msg.innerHTML = cfg.fixedV ? `You measured <b>d = ${fx(mark, 1)} cm</b>.` : `Recorded <b>d = ${fx(mark, 1)} cm</b>. Change the current for the next trial.`;
@@ -858,7 +930,8 @@ function simB(host, cfg = {}) {
 }
 
 /* ===== SIM C: crossed fields ===== */
-function simC(host) {
+function simC(host, cfg = {}) {
+  const EXP = cfg.mode === 'exp', EXPL = cfg.mode === 'explore';
   let beam = 1, Vp = 0, I = 1.0, PTS = [], FEl = 0, FBl = 0; const d = 0.040, Lp = 0.08, D = 0.10;
   host.innerHTML = `<svg class="sim" viewBox="0 0 640 300">
    <defs><filter id="gl2"><feGaussianBlur stdDeviation="2.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>
@@ -881,8 +954,8 @@ function simC(host) {
    <text x="300" y="45" fill="#7CFFB2" font-size="15" text-anchor="middle" font-weight="700" id="stt"></text></svg>
   <div class="ctrl"><div class="seg" id="segB">${[1, 2, 3].map(b => `<button data-b="${b}">Beam ${b}</button>`).join('')}</div></div>
   <div class="ctrl" id="cE"><label>Plate voltage <output id="oE"></output></label><div class="row" style="flex-wrap:nowrap"><button class="btn" data-d="-1" style="padding:4px 10px">−</button><input type="range" id="sE" min="0" max="1000" step="1" value="0"><button class="btn" data-d="1" style="padding:4px 10px">+</button></div></div>
-  <div class="ctrl" id="cB"><label>Coil current <output id="oB"></output></label><div class="row" style="flex-wrap:nowrap"><button class="btn" data-d="-0.01" style="padding:4px 10px">−</button><input type="range" id="sB" min="0" max="3" step="0.01" value="1"><button class="btn" data-d="0.01" style="padding:4px 10px">+</button></div></div>
-  <div class="row"><button class="btn primary" id="recC" disabled>✅ Record</button><div class="inst" id="inst"><div>beam <b id="iBm">1</b></div><div>plate V = <b id="iVp">0</b> V</div><div>I = <b id="iI">1.00</b> A</div></div></div>`;
+  ${EXP ? '<div class="ctrl"><label>Coil current <output>1.00 A (control)</output></label></div>' : ''}<div class="ctrl" id="cB" ${EXP ? 'style="display:none"' : ''}><label>Coil current <output id="oB"></output></label><div class="row" style="flex-wrap:nowrap"><button class="btn" data-d="-0.01" style="padding:4px 10px">−</button><input type="range" id="sB" min="0" max="3" step="0.01" value="1"><button class="btn" data-d="0.01" style="padding:4px 10px">+</button></div></div>
+  <div class="row"><button class="btn primary" id="recC" disabled ${EXPL ? 'style="display:none"' : ''}>✅ Record</button><div class="inst" id="inst"><div>beam <b id="iBm">1</b></div><div>plate V = <b id="iVp">0</b> V</div><div>I = <b id="iI">1.00</b> A</div></div></div>`;
   const q = s => host.querySelector(s), toY = cm => 150 - cm * 20;
   const o = { ctrlEl: q('#cE'), runEl: q('#recC'), instEl: q('#inst') };
   const draw = () => {
@@ -905,7 +978,7 @@ function simC(host) {
   q('#sE').oninput = () => { Vp = +q('#sE').value; changed(); }; q('#sB').oninput = () => { I = +q('#sB').value; changed(); };
   host.querySelectorAll('[data-d]').forEach(b => b.onclick = () => { const dd = +b.dataset.d; if (Math.abs(dd) >= 1) { Vp = Math.max(0, Math.min(1000, Vp + dd)); q('#sE').value = Vp; } else { I = Math.max(0, Math.min(3, Math.round((I + dd) * 100) / 100)); q('#sB').value = I; } changed(); });
   host.querySelectorAll('#segB button').forEach(b => b.onclick = () => { beam = +b.dataset.b; changed(); });
-  o.getState = () => ({ beam, Vp, I }); o.setState = s => { if (s.beam) beam = s.beam; if (s.Vp != null) { Vp = s.Vp; q('#sE').value = Vp; } if (s.I != null) { I = s.I; q('#sB').value = I; } draw(); };
+  o.getState = () => ({ beam, Vp, I }); o.setState = s => { if (s.beam) beam = s.beam; if (s.Vp != null) { Vp = s.Vp; q('#sE').value = Vp; } if (s.I != null && !EXP) { I = s.I; q('#sB').value = I; } draw(); };
   q('#recC').onclick = () => { if (R && R.rows.some(r => r.raw.beam === beam)) { toast('Beam ' + beam + ' is already in the table. Try another beam.'); return; } o.onRun && o.onRun({ beam, Vp, I }); toast('Recorded beam ' + beam); };
   o.playRow = row => o.setState(row.raw);
   const svgC = q('svg'), t0C = performance.now();
@@ -952,11 +1025,11 @@ function labProcess(body) {
     const g = A.graph(rows); const gr = graph(g.pts, g);
     c.querySelector('#after').innerHTML = `<div class="fb ${got === tot ? 'good' : 'hint'}">${got === tot ? 'All correct.' : 'Grey numbers under each box are the auto-processed values. Fix any amber boxes and check again.'}</div>
       <div class="grid2" style="margin-top:10px"><div>${gr.svg}</div><div><h3>What does the graph show?</h3><p>${g.note}</p></div></div>`;
-    if (!c.querySelector('#gonext')) { const nb = nextBtn(c, () => { S.step = 3; save(); render(); }, 'Explain it'); nb.id = 'gonext'; }
+    if (!c.querySelector('#gonext')) { const nb = nextBtn(c, () => { S.step = 4; save(); render(); }, 'Explain it'); nb.id = 'gonext'; }
   }
   if (!rows.length) T.innerHTML = '<div class="fb hint">Your table of record has no complete rows. Go back and finish it with your team.</div>';
   const back = document.createElement('button'); back.className = 'btn ghost small'; back.textContent = '← back to the experiment'; back.style.marginTop = '8px';
-  back.onclick = () => { S.step = 1; save(); render(); }; c.appendChild(back);
+  back.onclick = () => { S.step = 2; save(); render(); }; c.appendChild(back);
 }
 
 function labProcessTasks(body) {
@@ -973,12 +1046,12 @@ function labProcessTasks(body) {
   const list = A.list(S.level, rows), host = c.querySelector('#tasks');
   const fin = () => { const got = list.filter(t => S.first[k + '·p·' + t.id]).length; if (S.mark == null) { S.mark = `${got}/${list.length}`; save(); }
     c.querySelector('#mk').innerHTML = `<span class="mark">${S.mark}</span> <span class="tiny muted">right first time</span>`;
-    if (!c.querySelector('#gonext')) { const nb = nextBtn(c, () => { S.step = 3; save(); render(); }, 'Explain it'); nb.id = 'gonext'; } };
+    if (!c.querySelector('#gonext')) { const nb = nextBtn(c, () => { S.step = 4; save(); render(); }, 'Explain it'); nb.id = 'gonext'; } };
   const run = i => { if (i >= list.length) { fin(); return; } const t = list[i];
     numTask(host, { p: t.p, unit: t.unit, ph: t.ph, plain: !!t.plain, exp: t.exp, check: v => within(v, t.exp, t.tol), hint: t.hint, why: () => `${sci(t.exp, 3)} ${t.unit}` }, k + '·p·' + t.id, () => run(i + 1)); };
   run(0);
   const back = document.createElement('button'); back.className = 'btn ghost small'; back.textContent = '← back to the experiment'; back.style.marginTop = '8px';
-  back.onclick = () => { S.step = 1; save(); render(); }; c.appendChild(back);
+  back.onclick = () => { S.step = 2; save(); render(); }; c.appendChild(back);
 }
 
 /* ----- Explain (POE explain + theory) ----- */
@@ -993,8 +1066,8 @@ function labExplain(body) {
     const gapMode = S.level >= 2;
     const draw = filled => { t.querySelector('#stp').innerHTML = st.steps.map(s => { const hide = s.gap && gapMode && !filled; return `<li class="${hide ? 'gap' : ''}"><div class="eqbig">${hide ? '<b>?</b>' : s.m}</div><div class="why">${hide ? 'Which line goes here?' : s.w}</div></li>`; }).join(''); };
     draw(!gapMode);
-    if (gapMode) { const g = st.steps.find(s => s.gap); mcq(t.querySelector('#gapq'), { p: 'Which line fills the gap?', o: g.opts, a: 0, hint: g.w, why: g.w }, k + '·theory', () => { draw(true); nextBtn(t, () => { S.step = 4; save(); render(); }, 'Finish the station'); }); }
-    else nextBtn(t, () => { S.step = 4; save(); render(); }, 'Finish the station');
+    if (gapMode) { const g = st.steps.find(s => s.gap); mcq(t.querySelector('#gapq'), { p: 'Which line fills the gap?', o: g.opts, a: 0, hint: g.w, why: g.w }, k + '·theory', () => { draw(true); nextBtn(t, () => { S.step = 5; save(); render(); }, 'Finish the station'); }); }
+    else nextBtn(t, () => { S.step = 5; save(); render(); }, 'Finish the station');
   });
 }
 /* ---------- progress check ---------- */
@@ -1006,7 +1079,7 @@ function rCheck() {
   const c = card(app(), '');
   c.appendChild(scRater(S.scMid, () => { $('#nx').disabled = !S.scMid.every(x => x != null); }, 'Rate yourself again'));
   c.insertAdjacentHTML('beforeend', `<p class="tiny muted">At the start you said: ${SC.map((x, i) => `SC${i + 1} <b>${S.scStart[i] == null ? '–' : RATE[S.scStart[i]]}</b>`).join(' · ')}</p><div class="row"><button class="btn ghost" id="back">← Back to my station</button><button class="btn primary" id="nx" ${S.scMid.every(x => x != null) ? '' : 'disabled'}>Share our discovery →</button></div>`);
-  $('#back').onclick = () => { S.step = 1; go('lab'); };
+  $('#back').onclick = () => { S.step = 2; go('lab'); };
   $('#nx').onclick = () => { save(); go('final'); };
 }
 
@@ -1036,7 +1109,7 @@ async function rFinal() {
    <div class="card"><h3>Combine A and B: make the speed disappear</h3><ol class="steps" id="cmb"></ol><button class="btn" id="more">Show the next line ↓</button></div>
    <div class="grid2"><div class="card"><h3>Measure it</h3><div class="tiny muted">V = 250 V · coil current 1.50 A, so B = ${fx(KCOIL * 1.5 * 1e3, 2)} mT</div><div id="tube" style="margin-top:6px"></div></div>
    <div class="card" id="calc"><h3>Find q/m</h3><p class="muted">Line up the marker and tap Record first.</p></div></div>`;
-  $('#fback').onclick = () => { S.step = 1; go('lab'); };
+  $('#fback').onclick = () => { S.step = 2; go('lab'); };
   const lines = [
     { m: M(mi('q') + mi('V') + mo('=') + frac(mn(1), mn(2)) + mi('m') + sq(mi('v')) + mo('⇒') + sq(mi('v')) + mo('=') + frac(mn(2) + mi('q') + mi('V'), mi('m'))), w: '⚡ Station A: the speed the gun gives.' },
     { m: M(mi('r') + mo('=') + frac(mi('m') + mi('v'), mi('q') + mi('B')) + mo('⇒') + mi('v') + mo('=') + frac(mi('q') + mi('B') + mi('r'), mi('m'))), w: '🧲 Station B: rearrange for v.' },
@@ -1198,7 +1271,8 @@ function rDone() {
 let taps = 0, tapT = null;
 document.getElementById('logo').onclick = () => { taps++; clearTimeout(tapT); tapT = setTimeout(() => taps = 0, 1500);
   if (taps >= 5) { taps = 0; const c = prompt('Teacher code'); if (c !== TEACHER_CODE) return;
-    const a = prompt('Type: unlock, A / B / C (move this student), dash (teacher page), or reset (clear this device)'); if (!a) return; const x = a.trim().toLowerCase();
+    const a = prompt('Type: preview (see every part), unlock, A / B / C (move this student), dash (teacher page), or reset (clear this device)'); if (!a) return; const x = a.trim().toLowerCase();
+    if (x === 'preview') { startPreview(); return; }
     if (x === 'unlock') { S.unlocked = true; save(); render(); }
     else if (['a', 'b', 'c'].includes(x)) { const K = x.toUpperCase(); S.station = K; S.step = 0; S.visited = {}; S.doneStation = false; S.mark = null; S.maxIdx = 2; S.seenPlates = 0;
       ['scene' + K, 'role' + K, 'roleA2', 'questA'].forEach(k => delete S.seen[k]); Object.keys(S.first).filter(k => k.startsWith(K)).forEach(k => delete S.first[k]);
@@ -1206,5 +1280,5 @@ document.getElementById('logo').onclick = () => { taps++; clearTimeout(tapT); ta
     else if (x === 'dash') location.href = 'teacher.html';
     else if (x === 'reset') { localStorage.removeItem(KEY); S = blank(); R = null; render(); } } };
 
-render();
+if (new URLSearchParams(location.search).get('preview') === TEACHER_CODE) startPreview(); else render();
 setInterval(() => { if (S.name) postProgress(); }, 45000);

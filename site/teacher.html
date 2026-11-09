@@ -34,12 +34,13 @@
 </div></div>
 <main class="wrap">
   <div class="row" style="gap:20px;margin-bottom:12px" id="kpi"></div>
+  <div class="card" style="font-size:.9rem"><b>Check the student app yourself:</b> <a href="index.html?preview=1897" target="_blank">open the preview</a>. A bar at the bottom jumps to any station (A, B, C), any tab and the final stages. Demo readings fill the tables, and nothing appears on this page.</div>
   <details class="card" open style="font-size:.86rem"><summary style="cursor:pointer;font-weight:800">How to read this page</summary>
    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:6px 22px;margin-top:8px">
     <div><b>Station</b> · A = why the beam bends (electric field), B = the circle (magnetic field), C = balancing the fields.</div>
     <div><b>Level</b> · from the 3 starting questions: 1 = needs support, 2 = secure, 3 = stretch. It sets how much processing they do.</div>
     <div><b>Role</b> · trial = runs the readings, processor = fills the coloured columns, leader = leads the team and processes.</div>
-    <div><b>Now</b> · where they are: station tab (predict, experiment, processing, explain), progress check, final tube, Millikan, reflect, done.</div>
+    <div><b>Now</b> · where they are: station tab (predict, explore, experiment, processing, explain), progress check, final tube, Millikan, reflect, done.</div>
     <div><b>Min</b> · minutes since they started. Amber row and red number = behind the 30-minute plan.</div>
     <div><b>Start Q</b> · the 3 starting questions in order (Q1 electric field, Q2 magnetic field, Q3 balance): ✓ right, ✗ wrong.</div>
     <div><b>SC start · SC check · SC end</b> · their self-rating on the 3 success criteria at the start, at the progress check and at the end. <span class="chip c0"></span>not yet <span class="chip c1"></span>getting there <span class="chip c2"></span>confident <span class="chip"></span>not rated yet.</div>
@@ -51,15 +52,15 @@
    </div></details>
   <div class="rooms" id="rooms"></div>
   <div class="card" style="padding:0;overflow:auto"><table class="dash" id="tbl"></table></div>
-  <p class="tiny muted">30-minute plan used for "behind": starting point by 4 min, predict by 6, experiment by 13, processing by 18, explain by 21, final by 28, reflection by 30.</p>
+  <p class="tiny muted">30-minute plan used for "behind": starting point by 4 min, predict by 6, explore by 9, experiment by 13, processing by 18, explain by 21, final by 28, reflection by 30.</p>
 </main>
 <script>
 const CODE_KEY='fte-teacher-code'; const $=s=>document.querySelector(s);
 $('#code').value=localStorage.getItem(CODE_KEY)||'';
 const RATE=['Not yet','Getting there','Confident'];
 const STAGE={welcome:'Welcome',start:'Starting point',route:'Starting point',lab:'Station',check:'Progress check',final:'Final tube',millikan:'Millikan',reflect:'Reflect',done:'Done ✓'};
-const STEP=['predict','experiment','processing','explain'];
-function target(s){ if(['welcome','start','route'].includes(s.stage))return 4; if(s.stage==='lab')return [6,13,18,21][s.step||0]||21; if(s.stage==='check')return 22; if(['final','millikan'].includes(s.stage))return 28; return 30; }
+const STEP=['predict','explore','experiment','processing','explain'];
+function target(s){ if(['welcome','start','route'].includes(s.stage))return 4; if(s.stage==='lab')return [6,9,13,18,21][s.step||0]||21; if(s.stage==='check')return 22; if(['final','millikan'].includes(s.stage))return 28; return 30; }
 const chip=v=>{const i=RATE.indexOf(v);return `<span class="chip ${i<0?'':'c'+i}" title="${v||'not rated'}"></span>`};
 const SUP={'-':'⁻','0':'⁰','1':'¹','2':'²','3':'³','4':'⁴','5':'⁵','6':'⁶','7':'⁷','8':'⁸','9':'⁹'};
 const sci=x=>{if(!x)return '–';const e=Math.floor(Math.log10(Math.abs(x)));return (x/10**e).toFixed(2)+' × 10'+String(e).split('').map(c=>SUP[c]).join('')};
