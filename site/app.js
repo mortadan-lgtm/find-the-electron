@@ -516,11 +516,11 @@ const VARS = {
   C: { iv: 'the speed of the electrons, set by the gun voltage', dv: 'the plate voltage that makes the beam go straight', cv: 'the coil current (1.18 A), so B stays the same, and the plate separation',
        t: 'The coil current is set to 1.18 A as the control, so B does not change. Change the speed by choosing a different gun voltage. A faster beam feels a bigger magnetic force qvB, so it bends. Raise the plate voltage until qE balances qvB and the beam goes straight again. Do this for at least 3 gun voltages.' }
 };
-const HNOTE = `<div class="hnote">The field at the centre of a pair of Helmholtz coils is <b>B = (4/5)<sup>3/2</sup> μ₀NI ÷ R</b>. You are not expected to know this equation: it is not in the DP course. For these coils N = 130 turns and R = 0.150 m, so<div class="hcalc">(4/5)<sup>3/2</sup> × 4π × 10⁻⁷ × 130 ÷ 0.150 = 7.8 × 10⁻⁴ T for every amp = <b>0.78 mT per amp</b></div>That is where the 0.78 comes from, so for these coils <b>B = 0.78 mT × I</b>.</div>`;
+const HNOTE = `<b>B = 0.78 mT × I</b> <details class="why"><summary title="Why 0.78?">i</summary><div><b>Why 0.78?</b> The field from the coils depends on three things: the number of turns, the size of the coils and the current. In this apparatus the turns (130) and the size (radius 15.0 cm) never change, so B is proportional to I. For these coils each amp gives 0.78 mT.<div class="tiny muted" style="margin-top:4px">For the curious: B = (4/5)<sup>3/2</sup> μ₀NI ÷ R. You do not need this equation.</div></div></details>. `;
 const PROCNOTE = {
   A: 'The voltmeter reads the gun voltage V in kV. Work out 1 ÷ V, then y × V. If y × V stays about the same, then y ∝ 1/V.',
-  B: `The ammeter measures the coil current I. ${HNOTE}Work out r = d ÷ 2, then B, then r × B.`,
-  C: `The electric field is <b>E = plate V ÷ d</b>, where d is the plate separation on the apparatus. Change d to metres first. The ammeter measures the coil current I. ${HNOTE}Then v = E ÷ B, with B in tesla. Finally, the gun gave each electron energy qV = ½mv², so q/m = v² ÷ (2 × gun V).`
+  B: `The ammeter measures the coil current I, and ${HNOTE}Work out r = d ÷ 2, then B, then r × B.`,
+  C: `The electric field is <b>E = plate V ÷ d</b>, where d is the plate separation on the apparatus. Change d to metres first. The ammeter measures the coil current I, and ${HNOTE}Then v = E ÷ B, with B in tesla. Finally, the gun gave each electron energy qV = ½mv², so q/m = v² ÷ (2 × gun V).`
 };
 function fsHook() {
   const sc = $('#simcard'), fsb = $('#fsbtn');

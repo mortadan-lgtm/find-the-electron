@@ -244,5 +244,8 @@ svg.sim{max-height:58vh;width:100%}
 #pvbar button.on{background:#22D3EE;color:#0B1020;font-weight:700}
 #pvbar i{width:1px;height:18px;background:#4C4A8A;margin:0 3px}
 body:has(#pvbar){padding-bottom:70px}
-.hnote{margin:6px 0;padding:6px 10px;background:#fff;border:1px dashed #A5F3FC;border-radius:8px}
-.hcalc{margin:5px 0;padding:4px 8px;background:#F0F9FF;border-radius:6px;font-family:ui-monospace,Menlo,monospace;font-size:.9em}
+.why{display:inline-block;position:relative;vertical-align:middle}
+.why summary{list-style:none;cursor:pointer;width:18px;height:18px;border-radius:50%;background:#4F46E5;color:#fff;font:italic 700 12px/18px Georgia,serif;text-align:center}
+.why summary::-webkit-details-marker{display:none}
+.why[open] summary{background:#22D3EE;color:#0B1020}
+.why>div{position:absolute;z-index:20;left:-10px;top:24px;width:min(340px,80vw);background:#fff;border:1px solid #C7D2FE;border-radius:10px;padding:10px 12px;box-shadow:0 8px 20px rgba(0,0,0,.12);font-size:.9rem;line-height:1.4;font-weight:400}
