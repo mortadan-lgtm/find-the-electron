@@ -6,10 +6,13 @@ const CLASSES = ['Y13 Physics', 'Test group'];
 
 /* ============ PHYSICS ============ */
 const QE = 1.602e-19, ME = 9.109e-31, QM = QE / ME;
-const KCOIL = 0.78e-3;                         // T per A at the centre of the Helmholtz coils
+const COILN = 130, COILR = 0.150;              // Helmholtz coils: turns on each coil, radius in m
+const KCOIL = Math.pow(0.8, 1.5) * 4 * Math.PI * 1e-7 * COILN / COILR;   // T per A at the centre (about 0.78 mT per A)
+const CTRL = { VP: 746, VB: 247, IC: 1.18 };
+const FV = 252, FI = 1.46;                     // the final Thomson tube settings   // control variables: plate V (A), gun V (B), coil current (C)
 const speed = V => Math.sqrt(2 * QM * V);
 const jitter = (x, p) => x * (1 + (Math.random() * 2 - 1) * p);
-const GUN = { 1: 150, 2: 200, 3: 250 };
+const GUN = { 1: 150, 2: 200, 3: 250, 4: 300 };
 const realV = nominal => Math.round(nominal * (1 + (Math.random() * 2 - 1) * 0.004));   // a real supply never sits exactly on the dial value; voltmeter reads to 1 V          // Station C beams (hidden until the end)
 
 /* ============ FORMAT ============ */
@@ -124,7 +127,7 @@ const STN = {
       { img: 'img/coil.webp', cap: 'Measure the circle.', sub: 'A bigger current makes a stronger field B. Read the diameter on the ruler.' }],
     pred: { q: 'You make the magnetic field STRONGER. The circle gets…', o: ['smaller', 'bigger', 'no change'] },
     cols: [{ k: 'V', label: 'V / V', dp: 0, tol: v => 0.6 }, { k: 'I', label: 'I / A', dp: 2, tol: v => 0.051 }, { k: 'd', label: 'd / cm', dp: 1, tol: v => 0.21 }],
-    proc: [{ k: 'r', h: 'r = d ÷ 2', u: 'cm', plain: true, f: r => r.d / 2 }, { k: 'B', h: 'B = 0.78 × I', u: 'mT', plain: true, f: r => 0.78 * r.I }, { k: 'rB', h: 'r × B', u: 'cm mT', plain: true, f: r => r.d / 2 * 0.78 * r.I }],
+    proc: [{ k: 'r', h: 'r = d ÷ 2', u: 'cm', plain: true, f: r => r.d / 2 }, { k: 'B', h: 'B = (4/5)^(3/2) μ₀NI ÷ R', u: 'mT', plain: true, f: r => KCOIL * 1e3 * r.I }, { k: 'rB', h: 'r × B', u: 'cm mT', plain: true, f: r => r.d / 2 * KCOIL * 1e3 * r.I }],
     steps: [
       { m: EQ.FqvB, w: 'A moving charge feels a force at right angles to its velocity.' },
       { m: '<b>a sideways force does no work, so the speed stays constant</b>', w: 'The force is always sideways, so it changes the electron\'s direction but not its speed. The path becomes a circle.' },
@@ -142,8 +145,8 @@ const STN = {
       { anim: 'push', cap: 'E pushes up. B pushes down.', sub: 'Plates make the electric field, coils make the magnetic field.' },
       { anim: 'straight', cap: 'Balance the two forces.', sub: 'Spot on the centre line means the forces cancel.' }],
     pred: { q: 'A FASTER beam, same B. To keep it straight you need…', o: ['a bigger E', 'a smaller E', 'the same E'] },
-    cols: [{ k: 'beam', label: 'beam', dp: 0, tol: v => 0.01 }, { k: 'Vp', label: 'plate V / V', dp: 0, tol: v => 1.5 }, { k: 'I', label: 'I / A', dp: 2, tol: v => 0.011 }],
-    proc: [{ k: 'E', h: 'E = V ÷ 0.040 m', u: 'V m⁻¹', plain: true, f: r => r.Vp / 0.04 }, { k: 'B', h: 'B = 0.78 × I', u: 'mT', plain: true, f: r => 0.78 * r.I }, { k: 'v', h: 'v = E ÷ B', u: '× 10⁶ m s⁻¹ · B in tesla!', plain: true, pow: 6, f: r => r.Vp / 0.04 / (KCOIL * r.I) }],
+    cols: [{ k: 'Vg', label: 'gun V / V', dp: 0, tol: v => 0.6 }, { k: 'Vp', label: 'plate V / V', dp: 0, tol: v => 1.5 }, { k: 'I', label: 'I / A', dp: 2, tol: v => 0.011 }],
+    proc: [{ k: 'E', h: 'E = plate V ÷ d', u: 'V m⁻¹', plain: true, f: r => r.Vp / 0.04 }, { k: 'B', h: 'B = (4/5)^(3/2) μ₀NI ÷ R', u: 'mT', plain: true, f: r => KCOIL * 1e3 * r.I }, { k: 'v', h: 'v = E ÷ B', u: '× 10⁶ m s⁻¹ (B in tesla)', plain: true, pow: 6, f: r => r.Vp / 0.04 / (KCOIL * r.I) }, { k: 'qm', h: 'q/m = v² ÷ (2 × gun V)', u: '× 10¹¹ C kg⁻¹', plain: true, pow: 11, f: r => (r.Vp / 0.04 / (KCOIL * r.I)) ** 2 / (2 * r.Vg) }],
     steps: [
       { m: EQ.FqE, w: 'The electric field pushes the electron up, towards the positive plate.' },
       { m: EQ.FqvB, w: 'The magnetic field pushes it down.' },
@@ -169,9 +172,9 @@ const AN = {
   },
   B: {
     tasks: true,
-    formula: `${M(mi('B') + mo('=') + mn('0.78 mT') + mo('×') + mi('I'))} &nbsp;&nbsp; ${EQ.r} &nbsp;&nbsp; ${M(mi('r') + mi('B') + mo('=') + frac(mi('m') + mi('v'), mi('q')))}`,
+    formula: `${M(mi('B') + mo('=') + `<msup><mrow><mo>(</mo>${frac(mn(4), mn(5))}<mo>)</mo></mrow><mrow>${frac(mn(3), mn(2))}</mrow></msup>` + frac('<msub><mi>μ</mi><mn>0</mn></msub>' + mi('N') + mi('I'), mi('R')))} &nbsp;&nbsp; ${EQ.r} &nbsp;&nbsp; ${M(mi('r') + mi('B') + mo('=') + frac(mi('m') + mi('v'), mi('q')))}`,
     list: (lvl, rows) => { const r = rows[0], out = [
-      { id: 'B', p: `Trial 1: the ammeter reads I = ${fx(r.I, 2)} A. For these coils B = 0.78 mT × I. What is B?`, unit: 'mT', plain: true, exp: 0.78 * r.I, tol: 0.03, hint: `0.78 × ${fx(r.I, 2)}` }];
+      { id: 'B', p: `Trial 1: the ammeter reads I = ${fx(r.I, 2)} A. The coils have N = 130 turns and radius R = 15.0 cm. Use B = (4/5)^(3/2) μ₀NI ÷ R. What is B?`, unit: 'mT', plain: true, exp: KCOIL * 1e3 * r.I, tol: 0.03, hint: `(4/5)^(3/2) × 4π × 10⁻⁷ × 130 × ${fx(r.I, 2)} ÷ 0.150 gives B in tesla. Change it to mT.` }];
       if (lvl >= 2) out.push({ id: 'r2', p: `Same beam, but B made twice as strong. Predict the new radius from trial 1.`, unit: 'cm', plain: true, exp: r.d / 4, tol: 0.05, hint: `r ∝ 1/B. Trial 1 radius = ${fx(r.d / 2, 2)} cm.` });
       if (lvl >= 3) out.push({ id: 'I2', p: `Same beam. What coil current would make the diameter ${fx(r.d * 0.8, 1)} cm?`, unit: 'A', plain: true, exp: r.I / 0.8, tol: 0.04, hint: 'r × B stays the same, so I × d stays the same.' });
       return out; },
@@ -179,13 +182,13 @@ const AN = {
   },
   C: {
     tasks: true,
-    formula: `${M(mi('E') + mo('=') + frac(mi('V'), mi('d')))} &nbsp;&nbsp; ${M(mi('B') + mo('=') + mn('0.78 mT') + mo('×') + mi('I'))} &nbsp;&nbsp; ${EQ.vEB}`,
+    formula: `${M(mi('E') + mo('=') + frac(mi('V'), mi('d')))} &nbsp;&nbsp; ${M(mi('B') + mo('=') + `<msup><mrow><mo>(</mo>${frac(mn(4), mn(5))}<mo>)</mo></mrow><mrow>${frac(mn(3), mn(2))}</mrow></msup>` + frac('<msub><mi>μ</mi><mn>0</mn></msub>' + mi('N') + mi('I'), mi('R')))} &nbsp;&nbsp; ${EQ.vEB}`,
     list: (lvl, rows) => { const r = rows[0], E = r.Vp / 0.04, B = KCOIL * r.I, v = E / B, out = [
-      { id: 'v', p: `Beam ${r.beam} balanced at E = ${sci(E, 3)} V m⁻¹ and B = ${sci(B, 3)} T. How fast is it?`, unit: 'm s⁻¹', ph: '7e6', exp: v, tol: 0.03, hint: 'Balanced: qE = qvB, so v = E ÷ B. B must be in tesla.' }];
-      if (lvl >= 2 && rows[1]) { const r2 = rows[1]; out.push({ id: 'E2', p: `Beam ${r2.beam} has the speed in your table. If B were doubled, what E would balance it?`, unit: 'V m⁻¹', plain: true, exp: 2 * r2.Vp / 0.04, tol: 0.03, hint: 'v = E/B must stay the same, so E doubles too.' }); }
-      if (lvl >= 3) out.push({ id: 'qm', p: `Beam ${r.beam} came from a ${GUN[r.beam]} V gun. Use qV = ½mv² to find q/m.`, unit: 'C kg⁻¹', ph: '1.8e11', exp: v * v / (2 * GUN[r.beam]), tol: 0.05, hint: 'q/m = v² ÷ (2V)' });
+      { id: 'v', p: `The ${r.Vg} V beam balanced at E = ${sci(E, 3)} V m⁻¹ and B = ${sci(B, 3)} T. How fast is it?`, unit: 'm s⁻¹', ph: '7e6', exp: v, tol: 0.03, hint: 'Balanced: qE = qvB, so v = E ÷ B. B must be in tesla.' }];
+      if (lvl >= 2 && rows[1]) { const r2 = rows[1]; out.push({ id: 'E2', p: `The ${r2.Vg} V beam has the speed in your table. If B were doubled, what E would balance it?`, unit: 'V m⁻¹', plain: true, exp: 2 * r2.Vp / 0.04, tol: 0.03, hint: 'v = E/B must stay the same, so E doubles too.' }); }
+      if (lvl >= 3) out.push({ id: 'qm', p: `The first beam came from a ${r.Vg} V gun. Use qV = ½mv² to find q/m.`, unit: 'C kg⁻¹', ph: '1.8e11', exp: v * v / (2 * r.Vg), tol: 0.05, hint: 'q/m = v² ÷ (2V)' });
       return out; },
-    graph: rows => ({ pts: rows.map(r => [r.beam, (r.Vp / 0.04) / (KCOIL * r.I) / 1e6]), xl: 'beam', yl: 'v / 10⁶ m s⁻¹', fit: null, xint: true, note: 'Each beam has a different speed, v = E/B, found without knowing q or m.' })
+    graph: rows => ({ pts: rows.map(r => [r.Vg, (r.Vp / 0.04) / (KCOIL * r.I) / 1e6]), xl: 'gun V / V', yl: 'v / 10⁶ m s⁻¹', fit: null, note: 'A higher gun voltage gives a faster beam. You found each speed from v = E/B without knowing q or m, and q/m comes out the same for every beam.' })
   }
 };
 function fitOrigin(pts) { let a = 0, b = 0; pts.forEach(p => { a += p[0] * p[1]; b += p[0] * p[0]; }); return a / b; }
@@ -335,8 +338,8 @@ function coachNext() {
 function demoRows() {
   const k = S.station, st = STN[k];
   const raws = k === 'A' ? [1.5, 2.5, 4.0].map(kV => ({ kV, y: Math.round(20 / kV) / 10 }))
-    : k === 'B' ? [1.2, 1.6, 2.2].map(I => ({ V: 250, I, d: Math.round(2 * speed(250) / (QM * KCOIL * I) * 1000) / 10 }))
-    : [1, 2, 3].map(beam => ({ beam, Vp: Math.round(speed(GUN[beam]) * KCOIL * 0.04), I: 1 }));
+    : k === 'B' ? [1.2, 1.6, 2.2].map(I => ({ V: CTRL.VB, I, d: Math.round(2 * speed(CTRL.VB) / (QM * KCOIL * I) * 1000) / 10 }))
+    : [1, 2, 3].map(beam => ({ beam, Vg: GUN[beam], Vp: Math.round(speed(GUN[beam]) * KCOIL * CTRL.IC * 0.04), I: CTRL.IC }));
   R.rows = raws.map((raw, i) => { const rec = {}; st.proc.forEach(p => rec['p_' + p.k] = { v: String(+(p.f(raw) / 10 ** (p.pow || 0)).toPrecision(4)), by: 'demo' }); return { id: 'demo' + i, by: 'Demo', raw, rec }; });
 }
 function startPreview() {
@@ -503,20 +506,20 @@ function labPredict(body) {
 const EXPLORE = {
   A: 'Switch the plates on and off, then move both sliders: the gun voltage and the plate voltage. Watch the yellow force arrow and how far the beam bends.',
   B: 'Switch on the gun and the coils. Try different gun voltages and coil currents and watch how the circle changes.',
-  C: 'Pick a beam and move both sliders. The plates push the beam up and the coils push it down. Find a setting where the beam goes straight.'
+  C: 'Pick a gun voltage and move both sliders. The plates push the beam up and the coils push it down. Find a setting where the beam goes straight.'
 };
 const VARS = {
-  A: { iv: 'the gun voltage V', dv: 'the deflection y at the 8 cm line', cv: 'the plates: 750 V, 6.0 cm apart, always on',
-       t: 'The plates are set to 750 V as the control. Change the gun voltage and measure the deflection y for at least 3 different voltages.' },
-  B: { iv: 'the coil current I', dv: 'the diameter d of the circle', cv: 'the gun voltage: 250 V',
-       t: 'The gun voltage is set to 250 V as the control. Change the current in the coils and measure the diameter for at least 3 different currents.' },
-  C: { iv: 'the beam (beams 1, 2 and 3 come from 150 V, 200 V and 250 V guns)', dv: 'the plate voltage that makes the beam go straight', cv: 'the coil current: 1.00 A, and the plates 4.0 cm apart',
-       t: 'The coil current is set to 1.00 A as the control. For each beam, change the plate voltage until the beam goes straight, then record that voltage.' }
+  A: { iv: 'the gun voltage V', dv: 'the deflection y at the 8 cm line', cv: 'the plates: 746 V, 6.0 cm apart, always on',
+       t: 'The plate voltage is set to 746 V as the control. Change the gun voltage and measure the deflection y for at least 3 different voltages.' },
+  B: { iv: 'the coil current I', dv: 'the diameter d of the circle', cv: 'the gun voltage: 247 V',
+       t: 'The gun voltage is set to 247 V as the control. Change the current in the coils and measure the diameter for at least 3 different currents.' },
+  C: { iv: 'the speed of the electrons, set by the gun voltage', dv: 'the plate voltage that makes the beam go straight', cv: 'the coil current (1.18 A), so B stays the same, and the plate separation',
+       t: 'The coil current is set to 1.18 A as the control, so B does not change. Change the speed by choosing a different gun voltage. A faster beam feels a bigger magnetic force qvB, so it bends. Raise the plate voltage until qE balances qvB and the beam goes straight again. Do this for at least 3 gun voltages.' }
 };
 const PROCNOTE = {
   A: 'The voltmeter reads the gun voltage V in kV. Work out 1 ÷ V, then y × V. If y × V stays about the same, then y ∝ 1/V.',
-  B: 'The ammeter measures the coil current I. For these coils the magnetic field at the centre is <b>B = 0.78 mT × I</b> (the 0.78 comes from the size of the coils and their number of turns). Work out r = d ÷ 2, then B, then r × B.',
-  C: 'The plates are 0.040 m apart, so <b>E = V ÷ 0.040 m</b>. The ammeter measures the coil current I, and for these coils <b>B = 0.78 mT × I</b>. Then v = E ÷ B, with B in tesla (1 mT = 0.001 T).'
+  B: 'The ammeter measures the coil current I. The field at the centre of a pair of Helmholtz coils is <b>B = (4/5)<sup>3/2</sup> μ₀NI ÷ R</b>, where N = 130 turns on each coil and R = 15.0 cm is their radius (μ₀ = 4π × 10⁻⁷ T m A⁻¹). Only I changes, so (4/5)<sup>3/2</sup> μ₀N ÷ R is the field per amp for these coils: work it out once, then multiply by each current. Then work out r = d ÷ 2, and r × B.',
+  C: 'The electric field is <b>E = plate V ÷ d</b>, where d is the plate separation on the apparatus. Change d to metres first. The magnetic field comes from the coil current: <b>B = (4/5)<sup>3/2</sup> μ₀NI ÷ R</b>, with N = 130 turns on each coil and R = 15.0 cm (μ₀ = 4π × 10⁻⁷ T m A⁻¹). Then v = E ÷ B, with B in tesla. Finally, the gun gave each electron energy qV = ½mv², so q/m = v² ÷ (2 × gun V).'
 };
 function fsHook() {
   const sc = $('#simcard'), fsb = $('#fsbtn');
@@ -584,14 +587,14 @@ function paintQuest(obs) {
 /* mission panel: why + what, 2–3 lines, changes with progress */
 const MISSION = {
   A: [['Bend the beam', 'The beam is a stream of electrons. Why does it curve when the plates are on?', 'Switch the deflecting plates on and off. Watch the yellow force arrow and the green velocity arrow.'],
-      ['Test your prediction', 'A higher gun voltage gives faster electrons. Do they bend more or less? The plates stay at 750 V, so only the speed changes.', 'Trial leads: 3 to 5 readings at different gun voltages. Processors: fill the coloured columns.'],
+      ['Test your prediction', 'A higher gun voltage gives faster electrons. Do they bend more or less? The plates stay at 746 V, so only the speed changes.', 'Trial leads: 3 to 5 readings at different gun voltages. Processors: fill the coloured columns.'],
       ['Check your prediction', 'Is y × V the same for every reading? If so, y ∝ 1/V, and doubling the voltage halves the bend. Can you explain why?', 'Agree on an answer as a team, then tap Process the data.']],
   B: [['Predict', 'A magnetic field bends a moving electron into a circle. What sets the size of the circle?', 'Make your prediction first. Your team\'s picks show live.'],
-      ['Test your prediction', 'The gun voltage stays at 250 V, so every reading uses the same beam. What does a stronger field B do to the circle?', 'Trial leads: change the coil current, marker on top of the ring, Record. Processors: fill the coloured columns.'],
+      ['Test your prediction', 'The gun voltage stays at 247 V, so every reading uses the same beam. What does a stronger field B do to the circle?', 'Trial leads: change the coil current, marker on top of the ring, Record. Processors: fill the coloured columns.'],
       ['Check your prediction', 'Is r × B the same for every reading? If so, r ∝ 1/B.', 'Agree on an answer as a team, then tap Process the data.']],
   C: [['Predict', 'The electric field pushes the beam up, the magnetic field pushes it down. Balanced, the beam goes straight.', 'Make your prediction first. Your team\'s picks show live.'],
-      ['Test your prediction', 'The coil current stays at 1.00 A, so B is the same for every beam. When the forces qE and qvB are equal the beam goes straight, and v = E ÷ B.', 'Trial leads: for each beam, change the plate voltage until it goes straight, then Record. Processors: work out E, B and the speed v = E ÷ B.'],
-      ['Check your prediction', 'Look at the v column. Each beam has a different speed, and you found it without knowing q or m.', 'Agree on an answer as a team, then tap Process the data.']]
+      ['Test your prediction', 'The coil current stays at 1.18 A, so B never changes. A faster beam feels a bigger qvB, so it needs a bigger E to balance it. When qE = qvB the beam goes straight, and v = E ÷ B.', 'Trial leads: choose a gun voltage, change the plate voltage until the beam goes straight, then Record. Processors: work out E, B, v and q/m.'],
+      ['Check your prediction', 'Look at the v and q/m columns. Each beam has a different speed, but q/m comes out the same every time.', 'Agree on an answer as a team, then tap Process the data.']]
 };
 function paintMission() {
   const host = $('#mbox'); if (!host || !R) return;
@@ -646,7 +649,7 @@ function paintTable() {
 }
 function roleCoachA2() {
   const predicted = () => R.pred[S.name] != null, ranMine = () => R.rows.some(r => r.by === S.name);
-  const steps = [...(S.role === 'trial' ? [{ el: sim.ctrlEl, drag: true, t: 'Change the <b>gun voltage</b> for your reading. The plates stay at 750 V.' },
+  const steps = [...(S.role === 'trial' ? [{ el: sim.ctrlEl, drag: true, t: 'Change the <b>gun voltage</b> for your reading. The plates stay at 746 V.' },
       { el: sim.runEl, t: STN.A.readHint + ' Take 3 to 5 readings at different voltages.', until: ranMine }]
     : [{ el: '#reccard', t: '<b>You process the readings</b>, using the formula in each coloured header. Watch the <b>y × V</b> column. What do you notice?', until: () => R.rows.some(r => Object.entries(r.rec).some(([c, x]) => c.startsWith('p_') && x.by === S.name)) }])];
   steps.forEach((x, i) => { x.n = i + 1; x.of = steps.length; }); coach(steps, 'roleA2');
@@ -662,10 +665,10 @@ function roleCoach() {
   const steps = [];
   if (k === 'B' && S.role === 'trial') steps.push({ el: sim.swEl, t: 'Switch on the <b>electron gun</b>: the beam shoots straight. Then switch on the <b>coils</b> and watch it curl.', until: () => { const g = sim.getState(); return g.gun && g.coils; } });
   if (S.role === 'trial') {
-    steps.push({ el: sim.ctrlEl, drag: true, t: k === 'B' ? 'Change the <b>coil current</b> to change the field B. The gun voltage stays at 250 V. Notice that the yellow force arrow always points to the centre.' : 'Pick a beam, then adjust the <b>plate voltage</b> until the yellow and pink arrows are equal and the spot sits on 0. The coil current stays at 1.00 A.', until: changed });
+    steps.push({ el: sim.ctrlEl, drag: true, t: k === 'B' ? 'Change the <b>coil current</b> to change the field B. The gun voltage stays at 247 V. Notice that the yellow force arrow always points to the centre.' : 'Pick a gun voltage, then adjust the <b>plate voltage</b> until the yellow and pink arrows are equal and the spot sits on 0. The coil current stays at 1.18 A.', until: changed });
     steps.push({ el: sim.runEl, t: k === 'B' ? 'Drag the cyan marker to the <b>top of the ring</b>, then tap <b>Record</b>.' : 'When the two forces are equal the beam goes straight. Tap <b>Record</b>.', until: ranMine });
   } else {
-    steps.push({ el: '#reccard', t: `<b>You process the readings</b>, using the formula in each coloured header. ${k === 'C' ? 'The last column is the <b>speed</b>.' : 'Watch the <b>r × B</b> column. What do you notice?'}`, until: () => R.rows.some(r => Object.entries(r.rec).some(([c, x]) => c.startsWith('p_') && x.by === S.name)) });
+    steps.push({ el: '#reccard', t: `<b>You process the readings</b>, using the formula in each coloured header. ${k === 'C' ? 'The last two columns are the <b>speed</b> and <b>q/m</b>.' : 'Watch the <b>r × B</b> column. What do you notice?'}`, until: () => R.rows.some(r => Object.entries(r.rec).some(([c, x]) => c.startsWith('p_') && x.by === S.name)) });
     if (S.role === 'leader') steps.push({ el: '#predcard', t: 'Team leader: when 3 rows are processed, ask the team: <b>was our prediction right?</b>' });
   }
   steps.forEach((s, i) => { s.n = i + 1; s.of = steps.length; });
@@ -751,7 +754,7 @@ function playScene(host, frames, done) {
 
 /* ===== SIM A: deflection tube. Steady beam (invisible in vacuum, glows on the screen) + live force and velocity arrows ===== */
 function simA(host, cfg = {}) {
-  const EXP = cfg.mode === 'exp', EXPL = cfg.mode === 'explore'; let VP = 750; const DP = 0.06, SX = 220, PXC = 34, CY = 160, XR = 8, CX = 64, AX = 144;
+  const EXP = cfg.mode === 'exp', EXPL = cfg.mode === 'explore'; let VP = EXP ? CTRL.VP : 750; const DP = 0.06, SX = 220, PXC = 34, CY = 160, XR = 8, CX = 64, AX = 144;
   let kV = 2.0, Vr = realV(2000) / 1000, plates = EXP, mark = 0, unlocked = true;
   host.innerHTML = `<svg class="sim" viewBox="0 0 640 320">
    <defs><filter id="glA"><feGaussianBlur stdDeviation="2.4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
@@ -796,7 +799,7 @@ function simA(host, cfg = {}) {
     q('#mk').setAttribute('transform', `translate(0,${CY - mark * PXC})`);
     q('#oV').textContent = fx(Vr, 3) + ' kV'; q('#iV').textContent = fx(Vr, 3); q('#iY').textContent = fx(mark, 1);
     q('#ptop').textContent = plates ? `+ ${VP} V` : '0 V'; q('#ptop').setAttribute('fill', plates ? '#45C58C' : '#9AA4B8'); q('#pt').setAttribute('fill', plates ? '#9fe3c0' : '#c9d3e8');
-    q('#bD').textContent = EXP ? 'Plates: ON at 750 V (control)' : 'Deflecting plates: ' + (plates ? 'ON' : 'OFF'); if (q('#oP')) q('#oP').textContent = VP + ' V'; q('#bD').classList.toggle('primary', plates);
+    q('#bD').textContent = EXP ? 'Plates: ON at ' + VP + ' V (control)' : 'Deflecting plates: ' + (plates ? 'ON' : 'OFF'); if (q('#oP')) q('#oP').textContent = VP + ' V'; q('#bD').classList.toggle('primary', plates);
     q('#recA').disabled = !(unlocked && plates);
     q('#msgA').textContent = !plates ? 'With the plates off there is no force, so the beam goes straight.' : EXPL ? 'Change the voltages and watch how far the beam bends.' : !unlocked ? 'The plates push the beam towards +, with the same force all the way.' : 'Line up the marker with the trace at 8 cm, then Record.';
     o.onObserve && o.onObserve({ plates });
@@ -839,7 +842,7 @@ function simA(host, cfg = {}) {
 /* ===== SIM B: fine-beam tube (also the final Thomson tube) ===== */
 function simB(host, cfg = {}) {
   const PX = 21, cx = 260, cy = 222, Rb = 8.6 * PX, gx = cx, gy = cy + Rb - 14, EXP = cfg.mode === 'exp', EXPL = cfg.mode === 'explore';
-  if (EXP) cfg.lockV = 250;
+  if (EXP) cfg.lockV = CTRL.VB;
   let V = cfg.fixedV || cfg.lockV || 200, Vr = cfg.fixedV || cfg.lockV || realV(200), I = cfg.fixedI || 1.5, mark = 6, gun = false, coils = false;
   host.innerHTML = `<svg class="sim" viewBox="0 0 520 470">
    <defs><radialGradient id="bgB" cx=".5" cy=".42"><stop offset="0" stop-color="#161c2c"/><stop offset="1" stop-color="#06080e"/></radialGradient>
@@ -864,7 +867,7 @@ function simB(host, cfg = {}) {
    <circle cx="${cx}" cy="${cy}" r="${Rb + 34}" fill="none" stroke="url(#copB)" stroke-width="18"/>
    <circle cx="${cx}" cy="${cy}" r="${Rb + 34}" fill="none" stroke="#3a2410" stroke-width="18" stroke-dasharray="1 2.2" opacity=".45"/>
    <circle id="coilI" cx="${cx}" cy="${cy}" r="${Rb + 34}" fill="none" stroke="#FDE68A" stroke-width="1.6" stroke-dasharray="6 14" opacity="0"/>
-   <text x="508" y="20" fill="#F472B6" font-size="12" text-anchor="end">Helmholtz coils</text>
+   <text x="508" y="20" fill="#F472B6" font-size="12" text-anchor="end">Helmholtz coils: N = 130, R = 15.0 cm</text>
    <g id="mk" style="cursor:ns-resize"><line x1="${gx - 24}" x2="${gx + 24}" stroke="#22D3EE" stroke-width="3"/><polygon points="${gx + 26},0 ${gx + 38},-8 ${gx + 38},8" fill="#22D3EE"/><rect x="${gx - 44}" y="-16" width="100" height="32" fill="transparent"/></g>
    <text x="14" y="20" fill="#9AA4B8" font-size="12">B out of the screen ⊙</text>
    <defs><marker id="mBv" markerWidth="7" markerHeight="7" refX="5" refY="3.5" orient="auto"><path d="M0,0 L7,3.5 L0,7z" fill="#45C58C"/></marker><marker id="mBf" markerWidth="7" markerHeight="7" refX="5" refY="3.5" orient="auto"><path d="M0,0 L7,3.5 L0,7z" fill="#F2BD45"/></marker></defs>
@@ -932,16 +935,17 @@ function simB(host, cfg = {}) {
 /* ===== SIM C: crossed fields ===== */
 function simC(host, cfg = {}) {
   const EXP = cfg.mode === 'exp', EXPL = cfg.mode === 'explore';
-  let beam = 1, Vp = 0, I = 1.0, PTS = [], FEl = 0, FBl = 0; const d = 0.040, Lp = 0.08, D = 0.10;
+  const VG = {}; [1, 2, 3, 4].forEach(b => VG[b] = realV(GUN[b]));
+  let beam = 1, Vp = 0, I = EXP ? CTRL.IC : 1.0, PTS = [], FEl = 0, FBl = 0; const d = 0.040, Lp = 0.08, D = 0.10;
   host.innerHTML = `<svg class="sim" viewBox="0 0 640 300">
    <defs><filter id="gl2"><feGaussianBlur stdDeviation="2.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>
    <rect x="10" y="20" width="620" height="260" rx="40" fill="#141c30" stroke="#3a4a70"/>
    <rect x="30" y="140" width="50" height="20" rx="4" fill="#8a96b3"/><circle cx="36" cy="150" r="4" fill="#22D3EE"/>
-   <circle cx="280" cy="150" r="92" fill="#B5763B" opacity=".14"/><text x="280" y="262" fill="#F472B6" font-size="11" text-anchor="middle">coils: B into screen ⊗</text>
+   <circle cx="280" cy="150" r="92" fill="#B5763B" opacity=".14"/><text x="280" y="262" fill="#F472B6" font-size="11" text-anchor="middle">coils: B into screen ⊗ · N = 130, R = 15.0 cm</text>
    ${[0, 1, 2, 3].map(i => [0, 1, 2].map(j => `<text x="${222 + i * 38}" y="${126 + j * 24}" fill="#F472B6" font-size="13" opacity=".55" text-anchor="middle">⊗</text>`).join('')).join('')}
    <rect x="200" y="100" width="160" height="7" fill="#c9d3e8"/><text x="190" y="108" fill="#45C58C" font-size="18" font-weight="800" text-anchor="end">+</text>
    <rect x="200" y="193" width="160" height="7" fill="#c9d3e8"/><text x="190" y="202" fill="#F07A71" font-size="18" font-weight="800" text-anchor="end">−</text>
-   <text x="280" y="92" fill="#9AA4B8" font-size="11" text-anchor="middle">plates 4.0 cm apart</text>
+   <text x="280" y="92" fill="#9AA4B8" font-size="11" text-anchor="middle">plates d = 4.0 cm apart</text>
    <rect x="556" y="60" width="10" height="180" fill="#2c6b55"/><line x1="548" y1="150" x2="574" y2="150" stroke="#cfd8ea" stroke-dasharray="3 3"/>
    ${[-4, -2, 0, 2, 4].map(c => `<text x="584" y="${150 - c * 20 + 4}" fill="#9AA4B8" font-size="10">${c > 0 ? '+' : ''}${c}</text>`).join('')}<text x="590" y="52" fill="#9AA4B8" font-size="10" text-anchor="middle">cm</text>
    <g id="arE" opacity="0"><line x1="280" y1="150" x2="280" y2="118" stroke="#45C58C" stroke-width="4"/><polygon points="280,112 273,124 287,124" fill="#45C58C"/></g>
@@ -952,14 +956,14 @@ function simC(host, cfg = {}) {
    <g id="eC"><line id="cV" stroke="#45C58C" stroke-width="3" marker-end="url(#mCv)"/><line id="cE" stroke="#F2BD45" stroke-width="3" marker-end="url(#mCe)"/><line id="cB" stroke="#F472B6" stroke-width="3" marker-end="url(#mCb)"/>
      <circle id="cDot" r="6" fill="#8DB8EA" stroke="#fff" stroke-width="1.5"/><text id="tcE" fill="#F2BD45" font-size="12" font-weight="800">qE</text><text id="tcB" fill="#F472B6" font-size="12" font-weight="800">qvB</text></g>
    <text x="300" y="45" fill="#7CFFB2" font-size="15" text-anchor="middle" font-weight="700" id="stt"></text></svg>
-  <div class="ctrl"><div class="seg" id="segB">${[1, 2, 3].map(b => `<button data-b="${b}">Beam ${b}</button>`).join('')}</div></div>
+  <div class="ctrl"><label>Electron gun voltage (sets the speed)</label><div class="seg" id="segB">${[1, 2, 3, 4].map(b => `<button data-b="${b}">${GUN[b]} V</button>`).join('')}</div></div>
   <div class="ctrl" id="cE"><label>Plate voltage <output id="oE"></output></label><div class="row" style="flex-wrap:nowrap"><button class="btn" data-d="-1" style="padding:4px 10px">−</button><input type="range" id="sE" min="0" max="1000" step="1" value="0"><button class="btn" data-d="1" style="padding:4px 10px">+</button></div></div>
-  ${EXP ? '<div class="ctrl"><label>Coil current <output>1.00 A (control)</output></label></div>' : ''}<div class="ctrl" id="cB" ${EXP ? 'style="display:none"' : ''}><label>Coil current <output id="oB"></output></label><div class="row" style="flex-wrap:nowrap"><button class="btn" data-d="-0.01" style="padding:4px 10px">−</button><input type="range" id="sB" min="0" max="3" step="0.01" value="1"><button class="btn" data-d="0.01" style="padding:4px 10px">+</button></div></div>
-  <div class="row"><button class="btn primary" id="recC" disabled ${EXPL ? 'style="display:none"' : ''}>✅ Record</button><div class="inst" id="inst"><div>beam <b id="iBm">1</b></div><div>plate V = <b id="iVp">0</b> V</div><div>I = <b id="iI">1.00</b> A</div></div></div>`;
+  ${EXP ? `<div class="ctrl"><label>Coil current <output>${fx(CTRL.IC, 2)} A (control)</output></label></div>` : ''}<div class="ctrl" id="cB" ${EXP ? 'style="display:none"' : ''}><label>Coil current <output id="oB"></output></label><div class="row" style="flex-wrap:nowrap"><button class="btn" data-d="-0.01" style="padding:4px 10px">−</button><input type="range" id="sB" min="0" max="3" step="0.01" value="1"><button class="btn" data-d="0.01" style="padding:4px 10px">+</button></div></div>
+  <div class="row"><button class="btn primary" id="recC" disabled ${EXPL ? 'style="display:none"' : ''}>✅ Record</button><div class="inst" id="inst"><div>gun V = <b id="iBm"></b> V</div><div>plate V = <b id="iVp">0</b> V</div><div>I = <b id="iI">1.00</b> A</div></div></div>`;
   const q = s => host.querySelector(s), toY = cm => 150 - cm * 20;
   const o = { ctrlEl: q('#cE'), runEl: q('#recC'), instEl: q('#inst') };
   const draw = () => {
-    const v = speed(GUN[beam]), E = Vp / d, B = KCOIL * I, a = QM * (E - v * B);
+    const v = speed(VG[beam]), E = Vp / d, B = KCOIL * I, a = QM * (E - v * B);
     const pts = [[80, 150], [200, 150]]; let hit = null;
     for (let i = 1; i <= 40; i++) { const x = Lp * i / 40, t = x / v, y = 0.5 * a * t * t; if (Math.abs(y) >= d / 2 - 0.0018) { hit = [200 + x * 2000, toY(Math.sign(y) * (d / 2 - 0.0018) * 100)]; break; } pts.push([200 + x * 2000, toY(y * 100)]); }
     let ys = null;
@@ -969,7 +973,7 @@ function simC(host, cfg = {}) {
     q('#bp').setAttribute('d', pts.map((p, i) => (i ? 'L' : 'M') + p[0].toFixed(1) + ' ' + p[1].toFixed(1)).join(' '));
     PTS = pts; FEl = E > 0 ? 6 + 28 * E / Math.max(E, v * B) : 0; FBl = B > 0 ? 6 + 28 * v * B / Math.max(E, v * B, 1e-9) : 0;
     q('#oE').textContent = Vp + ' V'; q('#oB').textContent = fx(I, 2) + ' A';
-    q('#iBm').textContent = beam; q('#iVp').textContent = Vp; q('#iI').textContent = fx(I, 2);
+    q('#iBm').textContent = VG[beam]; q('#iVp').textContent = Vp; q('#iI').textContent = fx(I, 2);
     host.querySelectorAll('#segB button').forEach(b => b.classList.toggle('on', +b.dataset.b === beam));
     const ok = ys != null && Math.abs(ys) < 0.2 && E > 0; q('#recC').disabled = !ok;
     q('#stt').textContent = hit ? 'The beam hits a plate' : ok ? 'Balanced, so the beam goes straight through' : (ys > 0 ? 'The spot is high, so the electric force is bigger' : 'The spot is low, so the magnetic force is bigger');
@@ -979,7 +983,8 @@ function simC(host, cfg = {}) {
   host.querySelectorAll('[data-d]').forEach(b => b.onclick = () => { const dd = +b.dataset.d; if (Math.abs(dd) >= 1) { Vp = Math.max(0, Math.min(1000, Vp + dd)); q('#sE').value = Vp; } else { I = Math.max(0, Math.min(3, Math.round((I + dd) * 100) / 100)); q('#sB').value = I; } changed(); });
   host.querySelectorAll('#segB button').forEach(b => b.onclick = () => { beam = +b.dataset.b; changed(); });
   o.getState = () => ({ beam, Vp, I }); o.setState = s => { if (s.beam) beam = s.beam; if (s.Vp != null) { Vp = s.Vp; q('#sE').value = Vp; } if (s.I != null && !EXP) { I = s.I; q('#sB').value = I; } draw(); };
-  q('#recC').onclick = () => { if (R && R.rows.some(r => r.raw.beam === beam)) { toast('Beam ' + beam + ' is already in the table. Try another beam.'); return; } o.onRun && o.onRun({ beam, Vp, I }); toast('Recorded beam ' + beam); };
+  q('#recC').onclick = () => { if (R && R.rows.some(r => r.raw.beam === beam)) { toast('The ' + GUN[beam] + ' V beam is already in the table. Choose another gun voltage.'); return; } o.onRun && o.onRun({ beam, Vg: VG[beam], Vp, I }); toast('Recorded the ' + VG[beam] + ' V beam'); };
+  o.VG = VG;
   o.playRow = row => o.setState(row.raw);
   const svgC = q('svg'), t0C = performance.now();
   const rideC = now => { if (!document.body.contains(svgC)) return;
@@ -1107,7 +1112,7 @@ async function rFinal() {
   app().innerHTML = `<div class="stcard reveal"><div class="ph" style="background-image:url(img/finebeam.webp)"></div><div class="tx"><span class="pill">🔓 The Thomson tube</span><h2>Put the three pieces together.</h2><div><button class="btn ondark" id="fback">← Back to my station</button></div></div></div>
    <div class="card" style="margin-top:14px"><div class="disc">${disc}</div></div>
    <div class="card"><h3>Combine A and B: make the speed disappear</h3><ol class="steps" id="cmb"></ol><button class="btn" id="more">Show the next line ↓</button></div>
-   <div class="grid2"><div class="card"><h3>Measure it</h3><div class="tiny muted">V = 250 V · coil current 1.50 A, so B = ${fx(KCOIL * 1.5 * 1e3, 2)} mT</div><div id="tube" style="margin-top:6px"></div></div>
+   <div class="grid2"><div class="card"><h3>Measure it</h3><div class="tiny muted">V = ${FV} V · coil current ${fx(FI, 2)} A, so B = ${fx(KCOIL * FI * 1e3, 3)} mT</div><div id="tube" style="margin-top:6px"></div></div>
    <div class="card" id="calc"><h3>Find q/m</h3><p class="muted">Line up the marker and tap Record first.</p></div></div>`;
   $('#fback').onclick = () => { S.step = 2; go('lab'); };
   const lines = [
@@ -1119,11 +1124,11 @@ async function rFinal() {
     { m: EQ.qmT, w: '⚖️ Station C gives Thomson\'s own method: put v = E/B into v = qBr/m.' }];
   let shown = F.lines || 1; const paintL = () => { $('#cmb').innerHTML = lines.slice(0, shown).map(l => `<li class="reveal"><div class="eqbig">${l.m}</div><div class="why">${l.w}</div></li>`).join(''); $('#more').hidden = shown >= lines.length; };
   paintL(); $('#more').onclick = () => { shown++; F.lines = shown; save(false); paintL(); };
-  const tube = simB($('#tube'), { fixedV: 250, fixedI: 1.5 });
+  const tube = simB($('#tube'), { fixedV: FV, fixedI: FI });
   tube.onRun = raw => { F.dRead = raw.d; save(); calcStage(); };
-  const FINTRO = [{ img: 'img/finebeam.webp', cap: 'Thomson\'s idea in one tube.', sub: 'An electron gun at 250 V inside a glass bulb, between two coils.' },
+  const FINTRO = [{ img: 'img/finebeam.webp', cap: 'Thomson\'s idea in one tube.', sub: `An electron gun at ${FV} V inside a glass bulb, between two coils.` },
     { anim: 'fbStraight', cap: 'Switch on the electron gun.', sub: 'With the coils off, the beam shoots straight across the bulb.' },
-    { anim: 'fbCircle', cap: 'Switch on the coils (1.50 A).', sub: 'The magnetic force always points to the centre, so the beam curls into a circle.' },
+    { anim: 'fbCircle', cap: `Switch on the coils (${fx(FI, 2)} A).`, sub: 'The magnetic force always points to the centre, so the beam curls into a circle.' },
     { img: 'img/coil.webp', cap: 'Measure the diameter of the circle.', sub: 'Then use your three discoveries to find q/m.' }];
   const tcard = $('#tube').closest('.card'); tcard.insertAdjacentHTML('beforeend', '<button class="linkbtn" id="tintro" style="margin-top:8px">▶ Watch the intro again</button>');
   const fintro = done => { tcard.style.position = 'relative'; tcard.style.minHeight = '440px'; tcard.style.overflow = 'hidden'; playScene(tcard, FINTRO, () => { S.seen.fscene = 1; save(false); done && done(); }); };
@@ -1133,14 +1138,14 @@ async function rFinal() {
   if (!S.seen.fscene) fintro(fcoach); else fcoach();
   if (F.dRead) calcStage();
   function calcStage() {
-    const r = F.dRead / 200, B = KCOIL * 1.5, V = 250, qmT = 2 * V / (B * B * r * r), c = $('#calc');
-    c.innerHTML = `<h3>Find q/m</h3><p>d = <b>${fx(F.dRead, 1)} cm</b> → r = <b>${fx(r, 4)} m</b> · B = ${sci(B, 3)} T · V = 250 V</p><div class="eqbig">${EQ.qm}</div>`;
+    const r = F.dRead / 200, B = KCOIL * FI, V = FV, qmT = 2 * V / (B * B * r * r), c = $('#calc');
+    c.innerHTML = `<h3>Find q/m</h3><p>d = <b>${fx(F.dRead, 1)} cm</b> → r = <b>${fx(r, 4)} m</b> · B = ${sci(B, 3)} T · V = ${FV} V</p><div class="eqbig">${EQ.qm}</div>`;
     const finish = v => { F.qm = v; save(); nextBtn(c, () => go('millikan'), 'Who found the charge?'); };
     if (S.level === 1) {
       numTask(c, { p: 'Step 1: B²', unit: 'T²', exp: B * B, check: v => within(v, B * B, 0.03), hint: `${sci(B, 3)} × ${sci(B, 3)}` }, 'F·B2', () =>
         numTask(c, { p: 'Step 2: r²', unit: 'm²', exp: r * r, check: v => within(v, r * r, 0.03), hint: `${fx(r, 4)} × ${fx(r, 4)}` }, 'F·r2', () =>
-          numTask(c, { p: 'Step 3: 2V ÷ (B² × r²)', unit: 'C kg⁻¹', exp: qmT, check: v => within(v, qmT, 0.04), hint: '2 × 250 = 500, then divide.', why: v => `q/m = ${sci(qmT, 3)} C kg⁻¹` }, 'F·qm', finish)));
-    } else numTask(c, { p: `Calculate ${EQ.qmFrac}.`, unit: 'C kg⁻¹', exp: qmT, check: v => within(v, qmT, 0.04), hint: 'B in tesla, r in metres.', hint2: `500 ÷ (${sci(B * B, 3)} × ${sci(r * r, 3)})`, why: v => `q/m = ${sci(qmT, 3)} C kg⁻¹. Accepted value: 1.76 × 10¹¹ C kg⁻¹.` }, 'F·qm', finish);
+          numTask(c, { p: 'Step 3: 2V ÷ (B² × r²)', unit: 'C kg⁻¹', exp: qmT, check: v => within(v, qmT, 0.04), hint: `2 × ${FV} = ${2 * FV}, then divide.`, why: v => `q/m = ${sci(qmT, 3)} C kg⁻¹` }, 'F·qm', finish)));
+    } else numTask(c, { p: `Calculate ${EQ.qmFrac}.`, unit: 'C kg⁻¹', exp: qmT, check: v => within(v, qmT, 0.04), hint: 'B in tesla, r in metres.', hint2: `${2 * FV} ÷ (${sci(B * B, 3)} × ${sci(r * r, 3)})`, why: v => `q/m = ${sci(qmT, 3)} C kg⁻¹. Accepted value: 1.76 × 10¹¹ C kg⁻¹.` }, 'F·qm', finish);
   }
 }
 
