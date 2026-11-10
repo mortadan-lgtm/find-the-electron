@@ -480,7 +480,7 @@ function roleReveal() {
   const ov = document.createElement('div'); ov.id = 'rolereveal';
   ov.innerHTML = `<div class="rcard"><div class="rflip">
     <div class="rface rback"><div class="rq">?</div><div class="rbt">Your role at Station ${S.station}</div></div>
-    <div class="rface rfront"><div class="rimg" style="background-image:url(${c.img})"><span class="rbadge">${c.ic}</span></div>
+    <div class="rface rfront"><div class="rimg" style="background-image:url(${c.img})"></div>
       <div class="rtx"><div class="rk">Your role · Station ${S.station}</div><h2>${sub}</h2><ul>${c.jobs(S.trial).map(j => `<li>${j}</li>`).join('')}</ul>
       <div class="tiny muted">Anyone can help with any job if a teammate is stuck.</div><button class="btn primary" id="rgo">Got it</button></div></div></div></div>`;
   document.body.appendChild(ov);

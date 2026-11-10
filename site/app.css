@@ -280,3 +280,4 @@ body:has(#pvbar.min){padding-bottom:20px}
 #rolereveal h2{margin:0;font-size:1.7rem;color:#1E1B4B}
 #rolereveal ul{margin:4px 0 4px 18px;padding:0;display:grid;gap:4px;font-size:.95rem;line-height:1.35}
 #rolereveal #rgo{align-self:flex-start;margin-top:6px}
+#rolereveal .rimg{flex:1 1 50%;background:#FAF7FC center/contain no-repeat;border-bottom:1px solid #EDE9FE}
