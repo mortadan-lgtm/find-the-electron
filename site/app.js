@@ -90,8 +90,11 @@ const DIAG = [
 
 /* ============ STATIONS ============ */
 const AV_COL = ['#2F6FB5', '#4F46E5', '#0C9C98', '#6D3FC0', '#C8463E', '#1D8F5F', '#E6A413'];
+// which of the 3 readings a trial lead takes: with fewer than 3 trial leads, each takes more than one
+const myTrials = n => { const k = Math.min(3, S.nTrial || 3); return [1, 2, 3].filter(t => ((t - 1) % k) + 1 === n); };
+const trialText = n => { const t = myTrials(n); return t.length === 1 ? `trial ${t[0]}` : 'trials ' + t.slice(0, -1).join(', ') + ' and ' + t[t.length - 1]; };
 const ROLES = {
-  trial: { ic: '🎛️', name: 'Trial lead', job: n => `Run <b>trial ${n}</b> on the shared simulation.` },
+  trial: { ic: '🎛️', name: 'Trial lead', job: n => `Run <b>${trialText(n)}</b> on your team's shared apparatus.` },
   processor: { ic: '🧮', name: 'Data processor', job: () => 'You <b>process</b> the readings in the coloured columns.' },
   leader: { ic: '⭐', name: 'Team leader + processor', job: () => 'Lead the team and the prediction, and <b>process</b> the data with the processor.' }
 };
@@ -460,7 +463,7 @@ async function rLab() {
   if (!R && S.preview) { S.role = S.role || 'trial'; S.trial = 1; R = { ver: 0, members: [{ name: S.name, role: S.role, trial: 1 }], rows: [], sim: {}, pred: {} }; }
   if (S.preview && S.step >= 3 && R.rows.filter(rowDone).length < 3) demoRows();
   if (!R) {
-    try { const res = await apiPost({ op: 'join', cls: S.cls, st: k, name: S.name, level: S.level }); R = res.room; S.role = res.me.role; S.trial = res.me.trial; }
+    try { const res = await apiPost({ op: 'join', cls: S.cls, st: k, name: S.name, level: S.level }); R = res.room; S.role = res.me.role; S.trial = res.me.trial; S.nTrial = res.me.nTrial || 3; }
     catch (e) { netFail(); R = R || { ver: 0, members: [{ name: S.name, role: 'trial', trial: 1 }], rows: [], sim: {}, pred: {} }; S.role = S.role || 'trial'; S.trial = S.trial || 1; }
     R.rows.forEach(r => seenRows.add(r.id)); save();
   }
@@ -469,7 +472,7 @@ async function rLab() {
 }
 /* ---------- role card: flips over the first time a student gets a role at a station ---------- */
 const ROLECARD = {
-  trial: { img: 'img/glyph-trial.png', c1: '#22D3EE', c2: '#2563EB', ic: '🎛️', name: 'Trial lead', jobs: n => [`You run <b>trial ${n}</b> on your team's shared apparatus.`, 'Change only the variable you are told to change, line up the marker and press Record.', 'Look at your reading before the next trial: does it fit the pattern?'] },
+  trial: { img: 'img/glyph-trial.png', c1: '#22D3EE', c2: '#2563EB', ic: '🎛️', name: 'Trial lead', jobs: n => [`You run <b>${trialText(n)}</b> on your team's shared apparatus. Your teammates see every reading appear in the same table.`, 'Change only the variable you are told to change, line up the marker and press Record.', 'Look at your reading before the next trial: does it fit the pattern?'] },
   processor: { img: 'img/glyph-processor.png', c1: '#A3E635', c2: '#059669', ic: '🧮', name: 'Data processor', jobs: () => ['You turn the readings into results.', 'Fill in the coloured columns using the formula in each header. A cell turns green when it is right.', 'If a reading does not fit, tell the trial leads so they can repeat it.'] },
   leader: { img: 'img/glyph-leader.png', c1: '#F472B6', c2: '#7C3AED', ic: '⭐', name: 'Team leader', jobs: () => ['You lead the team prediction and keep everyone on time.', 'You also process the data with the processor.', 'When 3 rows are processed, ask the team: was our prediction right?'] }
 };

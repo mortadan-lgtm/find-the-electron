@@ -76,9 +76,28 @@ async function update(key, init, fn) {
   throw new Error("busy");
 }
 
+// roles decided when the stations are shown: in each team the best starting score leads, the next processes,
+// and everyone else is a trial lead. Small teams lose trial leads first, never the leader or the processor.
+const lvlOf = sub => (sub && sub.c ? sub.c.filter(Boolean).length : 1);
+function assignTeamRoles(a, subs) {
+  a.roles = {};
+  for (const s of STATIONS) {
+    const ks = Object.keys(a.st).filter(k => a.st[k] === s).sort((x, y) => lvlOf(subs[y]) - lvlOf(subs[x]) || (subs[x].t - subs[y].t));
+    const nT = Math.max(1, ks.length - 2);
+    ks.forEach((k, i) => { a.roles[k] = i === 0 ? { role: "leader", nTrial: nT } : i === 1 ? { role: "processor", nTrial: nT } : { role: "trial", trial: i - 1, nTrial: nT }; });
+  }
+  return a;
+}
+function roleForLatecomer(a, k) {
+  const mates = Object.keys(a.st).filter(j => j !== k && a.st[j] === a.st[k]).map(j => (a.roles || {})[j]).filter(Boolean);
+  const has = r => mates.some(m => m.role === r), nT = mates.filter(m => m.role === "trial").length;
+  a.roles = a.roles || {};
+  a.roles[k] = !has("leader") ? { role: "leader", nTrial: Math.max(1, nT) } : !has("processor") ? { role: "processor", nTrial: Math.max(1, nT) } : { role: "trial", trial: nT + 1, nTrial: nT + 1 };
+  return a;
+}
 function assignRole(members, level) {
   const has = r => members.filter(m => m.role === r).length;
-  const order = level >= 3 ? ["leader", "processor", "trial"] : level === 2 ? ["processor", "trial", "leader"] : ["trial", "processor", "leader"];
+  const order = level >= 3 ? ["leader", "processor", "trial"] : ["processor", "leader", "trial"];
   const cap = { trial: 3, processor: 1, leader: 1 };
   for (const r of order) if (has(r) < cap[r]) return r;
   return "trial";
@@ -130,13 +149,13 @@ export default async (req) => {
     const { op, cls, st } = b;
     const name = String(b.name || "").trim().slice(0, 60);
     if (op === "join") {
-      let me;
+      let me; const al = await getAlloc(cls), pre = (al.st[safe(name)] === st && al.roles) ? al.roles[safe(name)] : null;
       const r = await update(roomKey(cls, st), emptyRoom, room => {
         me = room.members.find(m => m.name.toLowerCase() === name.toLowerCase());
         if (me) return null;
-        const role = assignRole(room.members, b.level || 2);
-        const trial = role === "trial" ? (room.members.filter(m => m.role === "trial").length % 3) + 1 : null;
-        me = { name, level: b.level || 2, role, trial, t: Date.now() };
+        const role = pre ? pre.role : assignRole(room.members, b.level || 2);
+        const trial = role === "trial" ? (pre ? pre.trial : (room.members.filter(m => m.role === "trial").length % 3) + 1) : null;
+        me = { name, level: b.level || 2, role, trial, nTrial: pre ? pre.nTrial : 3, t: Date.now() };
         room.members.push(me);
         return room;
       });
@@ -178,7 +197,7 @@ export default async (req) => {
       const c = (b.correct || []).slice(0, 3).map(Boolean);
       await st.setJSON(key, { name, c, t: old ? old.t : Date.now() });
       let a = await getAlloc(cls); const ids = await listIds(subPrefix(cls));
-      if (a.done && !a.st[k]) a = await update(allocKey(cls), emptyAlloc, al => al.st[k] ? null : allocateOne(al, k, c, ids.length));
+      if (a.done && !a.st[k]) a = await update(allocKey(cls), emptyAlloc, al => al.st[k] ? null : roleForLatecomer(allocateOne(al, k, c, ids.length), k));
       return json({ done: a.done, n: ids.length, known: true, station: a.done ? (a.st[k] || null) : null });
     }
     if (op === "finished") {
@@ -205,7 +224,7 @@ export default async (req) => {
         for (const pre of [subPrefix(cls), finPrefix(cls)]) for (const id of await listIds(pre)) await s.delete(pre + id);
         return json({ ok: true });
       }
-      if (op === "allocate") { const subs = await loadAll(subPrefix(cls)); const a = await update(allocKey(cls), emptyAlloc, al => { al.subs = subs; allocateAll(al); delete al.subs; al.names = Object.fromEntries(Object.entries(subs).map(([k, v]) => [k, v.name])); return al; }); return json({ ok: true, st: a.st }); }
+      if (op === "allocate") { const subs = await loadAll(subPrefix(cls)); const a = await update(allocKey(cls), emptyAlloc, al => { al.subs = subs; allocateAll(al); assignTeamRoles(al, subs); delete al.subs; al.names = Object.fromEntries(Object.entries(subs).map(([k, v]) => [k, v.name])); return al; }); return json({ ok: true, st: a.st }); }
       if (op === "mixteams") { const fin = await loadAll(finPrefix(cls)); await update(allocKey(cls), emptyAlloc, al => { al.fin = fin; return mixAll(al); }); await update(classKey(cls), emptyClass, c => { c.unlock = true; return c; }); return json({ ok: true }); }
       if (op === "unmix") { await update(allocKey(cls), emptyAlloc, al => { al.mixed = false; al.mix = {}; return al; }); return json({ ok: true }); }
       if (op === "unallocate") { await update(allocKey(cls), emptyAlloc, al => { al.done = false; al.st = {}; return al; }); return json({ ok: true }); }
