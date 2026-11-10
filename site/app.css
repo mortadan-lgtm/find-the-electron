@@ -281,3 +281,30 @@ body:has(#pvbar.min){padding-bottom:20px}
 #rolereveal ul{margin:4px 0 4px 18px;padding:0;display:grid;gap:4px;font-size:.95rem;line-height:1.35}
 #rolereveal #rgo{align-self:flex-start;margin-top:6px}
 #rolereveal .rimg{flex:1 1 50%;background:#FAF7FC center/contain no-repeat;border-bottom:1px solid #EDE9FE}
+/* flashy role cards */
+#rolereveal .rfront{border:3px solid transparent;background:linear-gradient(#fff,#fff) padding-box,linear-gradient(135deg,var(--c1),var(--c2)) border-box}
+#rolereveal .rimg{position:relative;overflow:hidden;display:grid;place-items:center;background:radial-gradient(circle at 50% 45%,var(--c1),var(--c2) 75%);border-bottom:0}
+#rolereveal .rays{position:absolute;inset:-60%;background:repeating-conic-gradient(from 0deg,rgba(255,255,255,.18) 0 8deg,rgba(255,255,255,0) 8deg 20deg);animation:rspin 18s linear infinite}
+#rolereveal .glyph{position:relative;width:72%;max-width:340px;aspect-ratio:1;object-fit:contain;filter:drop-shadow(0 0 18px rgba(255,255,255,.75)) drop-shadow(0 8px 20px rgba(0,0,0,.25));animation:rpulse 2.4s ease-in-out infinite}
+#rolereveal .rimg::after{content:'';position:absolute;top:0;left:-60%;width:40%;height:100%;background:linear-gradient(100deg,transparent,rgba(255,255,255,.55),transparent);transform:skewX(-18deg);opacity:0}
+#rolereveal .flipped .rimg::after{animation:rshine 1.1s .9s ease-out}
+#rolereveal .sp{position:absolute;width:10px;height:10px;background:#fff;clip-path:polygon(50% 0,62% 38%,100% 50%,62% 62%,50% 100%,38% 62%,0 50%,38% 38%);animation:rtw 1.8s ease-in-out infinite;opacity:0}
+#rolereveal .sp:nth-of-type(1){top:14%;left:16%;animation-delay:.1s}
+#rolereveal .sp:nth-of-type(2){top:22%;right:14%;width:16px;height:16px;animation-delay:.6s}
+#rolereveal .sp:nth-of-type(3){bottom:18%;left:12%;width:14px;height:14px;animation-delay:1.1s}
+#rolereveal .sp:nth-of-type(4){bottom:12%;right:20%;animation-delay:.3s}
+#rolereveal .sp:nth-of-type(5){top:8%;left:52%;width:8px;height:8px;animation-delay:1.4s}
+#rolereveal .sp:nth-of-type(6){top:48%;left:6%;width:8px;height:8px;animation-delay:.9s}
+#rolereveal .sp:nth-of-type(7){top:52%;right:6%;width:12px;height:12px;animation-delay:1.6s}
+#rolereveal h2{background:linear-gradient(90deg,var(--c2),var(--c1));-webkit-background-clip:text;background-clip:text;color:transparent}
+#rolereveal .rk{color:var(--c2)}
+#rolereveal #rgo{background:linear-gradient(90deg,var(--c2),var(--c1));border:0;box-shadow:0 8px 20px rgba(0,0,0,.18)}
+#rolereveal .rback{background:radial-gradient(circle at 30% 20%,var(--c1),var(--c2) 55%,#0B1020);border-color:#fff}
+#rolereveal .rback::after{content:'';position:absolute;inset:-60%;background:repeating-conic-gradient(rgba(255,255,255,.12) 0 8deg,transparent 8deg 20deg);animation:rspin 10s linear infinite}
+#rolereveal .rq,#rolereveal .rbt{position:relative;z-index:1}
+#rolereveal .rq{color:#fff;text-shadow:0 0 30px rgba(255,255,255,.8);animation:rpulse 1s ease-in-out infinite}
+@keyframes rspin{to{transform:rotate(360deg)}}
+@keyframes rpulse{0%,100%{transform:scale(1)}50%{transform:scale(1.06)}}
+@keyframes rshine{0%{left:-60%;opacity:1}100%{left:130%;opacity:1}}
+@keyframes rtw{0%,100%{opacity:0;transform:scale(.4) rotate(0)}50%{opacity:1;transform:scale(1) rotate(45deg)}}
+@media (prefers-reduced-motion:reduce){#rolereveal .rays,#rolereveal .glyph,#rolereveal .sp,#rolereveal .rq{animation:none}}

@@ -469,18 +469,18 @@ async function rLab() {
 }
 /* ---------- role card: flips over the first time a student gets a role at a station ---------- */
 const ROLECARD = {
-  trial: { img: 'img/role-trial.webp', ic: '🎛️', name: 'Trial lead', jobs: n => [`You run <b>trial ${n}</b> on your team's shared apparatus.`, 'Change only the variable you are told to change, line up the marker and press Record.', 'Look at your reading before the next trial: does it fit the pattern?'] },
-  processor: { img: 'img/role-processor.webp', ic: '🧮', name: 'Data processor', jobs: () => ['You turn the readings into results.', 'Fill in the coloured columns using the formula in each header. A cell turns green when it is right.', 'If a reading does not fit, tell the trial leads so they can repeat it.'] },
-  leader: { img: 'img/role-leader.webp', ic: '⭐', name: 'Team leader', jobs: () => ['You lead the team prediction and keep everyone on time.', 'You also process the data with the processor.', 'When 3 rows are processed, ask the team: was our prediction right?'] }
+  trial: { img: 'img/glyph-trial.png', c1: '#22D3EE', c2: '#2563EB', ic: '🎛️', name: 'Trial lead', jobs: n => [`You run <b>trial ${n}</b> on your team's shared apparatus.`, 'Change only the variable you are told to change, line up the marker and press Record.', 'Look at your reading before the next trial: does it fit the pattern?'] },
+  processor: { img: 'img/glyph-processor.png', c1: '#A3E635', c2: '#059669', ic: '🧮', name: 'Data processor', jobs: () => ['You turn the readings into results.', 'Fill in the coloured columns using the formula in each header. A cell turns green when it is right.', 'If a reading does not fit, tell the trial leads so they can repeat it.'] },
+  leader: { img: 'img/glyph-leader.png', c1: '#F472B6', c2: '#7C3AED', ic: '⭐', name: 'Team leader', jobs: () => ['You lead the team prediction and keep everyone on time.', 'You also process the data with the processor.', 'When 3 rows are processed, ask the team: was our prediction right?'] }
 };
 function roleReveal() {
   const key = S.station + ':' + S.role + (S.role === 'trial' ? S.trial : '');
   if (!S.role || (S.roleShown || {})[key] || document.getElementById('rolereveal')) return;
   const c = ROLECARD[S.role] || ROLECARD.trial, sub = S.role === 'trial' ? `Trial lead ${S.trial}` : S.role === 'leader' ? 'Team leader + processor' : 'Data processor';
-  const ov = document.createElement('div'); ov.id = 'rolereveal';
+  const ov = document.createElement('div'); ov.id = 'rolereveal'; ov.style.setProperty('--c1', c.c1); ov.style.setProperty('--c2', c.c2);
   ov.innerHTML = `<div class="rcard"><div class="rflip">
     <div class="rface rback"><div class="rq">?</div><div class="rbt">Your role at Station ${S.station}</div></div>
-    <div class="rface rfront"><div class="rimg" style="background-image:url(${c.img})"></div>
+    <div class="rface rfront"><div class="rimg" style="--c1:${c.c1};--c2:${c.c2}"><div class="rays"></div>${'<i class="sp"></i>'.repeat(7)}<img class="glyph" src="${c.img}" alt=""></div>
       <div class="rtx"><div class="rk">Your role · Station ${S.station}</div><h2>${sub}</h2><ul>${c.jobs(S.trial).map(j => `<li>${j}</li>`).join('')}</ul>
       <div class="tiny muted">Anyone can help with any job if a teammate is stuck.</div><button class="btn primary" id="rgo">Got it</button></div></div></div></div>`;
   document.body.appendChild(ov);
